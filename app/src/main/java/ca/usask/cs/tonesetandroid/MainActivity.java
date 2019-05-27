@@ -50,10 +50,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 controller.handleHeardClick();
             }
         });
+        rampButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                controller.handleRampUpClick();
+            }
+        });
 
         // start
         this.modelChanged();
-
     }
 
     public void modelChanged() {

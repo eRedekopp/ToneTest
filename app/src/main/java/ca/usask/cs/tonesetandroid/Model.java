@@ -16,8 +16,8 @@ public class Model {
     // Vars for audio
     AudioTrack line;
     public static final int SAMPLE_RATE = 44100; // sample at 44.1 kHz always
-    public static final int DURATION_MS = 1500;  // sample for 1.5 seconds
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, 8000}; // From British Society of Audiology
+    public int duration_ms;
     double volume;
     byte[] buf;
     private int minBufferSize;
@@ -41,6 +41,7 @@ public class Model {
     }
 
     public void configureAudio() {
+        this.duration_ms = 1500;
         minBufferSize = AudioTrack.getMinBufferSize(44100,
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT);

@@ -42,7 +42,8 @@ public class HearingTestController {
                         justAudibleVol.clear();
                         while (!iModel.heardTwice) {
                             iModel.notHeard();
-                            for (int i = 0; i < Model.DURATION_MS * (float) 44100 / 1000; i++) { //1000 ms in 1 second
+                            for (int i = 0; i < model.duration_ms * (float) 44100 / 1000; i++) {
+                                //1000 ms in 1 second
                                 if (iModel.heard) {
                                     break;
                                 }
@@ -139,9 +140,84 @@ public class HearingTestController {
         thread.start();
     }
 
+    public void rampUpTest() {
+
+        iModel.notHeard();
+        model.clearResults();
+
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                model.configureAudio();
+                model.line.play();
+
+                double initialHeardVol = 32767;//default with the maximum possible volume (unless the user does not click a button/hit a key to indicate they heard the tone, this value will be overwritten)
+
+                //Loop through all of the frequencies for the hearing test
+                for (float freq : Model.FREQUENCIES) {
+                    double rateOfRamp = 1.05;
+                    rampUp(rateOfRamp, freq, 0.1); //play a tone for 50ms, then ramp up by 1.05 times until the tone is heard starting at a volume of 0.1
+                    initialHeardVol = model.volume; //record the volume of the last played tone, this will either be the volume when the user clicked the button, or the maximum possible volume)
+
+                    try {
+                        Thread.sleep((long) (Math.random() * 2000 + 1000));//introduce a slight pause between the first and second ramp
+                    } catch (InterruptedException e) { break; }
+
+                    rateOfRamp = 1.01;
+                    //redo the ramp up test, this time starting at 1/10th the volume previously required to hear the tone
+                    //ramp up at a slower rate
+                    //initially only went up to 1.5*initialHeardVol, but decided to go up to the max instead just incase the user accidently clicked the heard button unitentionally
+                    rampUp(rateOfRamp, freq, initialHeardVol / 10.0);
+
+                    FreqVolPair results = new FreqVolPair(freq, model.volume);//record the frequency volume pair (the current frequency, the just heard Volume)
+                    model.hearingTestResults.add(results);//add the frequency volume pair to the results array list
+
+                    try {
+                        Thread.sleep((long) (Math.random() * 2000 + 1000));
+                    } catch (InterruptedException e) { break; }
+                }
+                model.line.flush();
+                model.line.stop();
+
+                iModel.setTestMode(false);
+
+            }
+        });
+        thread.start();
+    }
+
+    public void rampUp(double rateOfRamp, float freq, double startingVol) {
+
+        for (model.volume = startingVol; model.volume < 32767; model.volume *= rateOfRamp) {
+            //notifySubscribers();
+            if (iModel.heard) {
+                iModel.notHeard();//reset the iModel for the next ramp
+                break;
+            }
+            model.duration_ms = 50; //play the tone at this volume for 0.05s
+            for (int i = 0; i < model.duration_ms * (float) 44100 / 1000; i++) { //1000 ms in 1 second
+                float period = (float) Model.SAMPLE_RATE / freq;
+                double angle = 2 * i / (period) * Math.PI;
+                short a = (short) (Math.sin(angle) * model.volume);
+                model.buf[0] = (byte) (a & 0xFF); //write 8bits ________WWWWWWWW out of 16
+                model.buf[1] = (byte) (a >> 8); //write 8bits WWWWWWWW________ out of 16
+                model.line.write(model.buf, 0, 2);
+            }
+        }
+    }
+
     public void handlePureToneClick() {
         this.iModel.setTestMode(true);
         pureTone();
+    }
+
+    public void handleRampUpClick() {
+        //Make it so the user can't begin another test
+        iModel.setTestMode(true);
+        iModel.notifySubscribers();
+
+        //Run the hearing test
+        rampUpTest();
     }
 
     public void handleHeardClick() {
