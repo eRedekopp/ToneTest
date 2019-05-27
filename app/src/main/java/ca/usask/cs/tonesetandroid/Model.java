@@ -30,6 +30,7 @@ public class Model {
         buf = new byte[2];
         subscribers = new ArrayList<>();
         hearingTestResults = new ArrayList<>();
+        this.setUpLine();
     }
 
     public void clearResults() {
@@ -42,18 +43,23 @@ public class Model {
 
     public void configureAudio() {
         this.duration_ms = 1500;
-        minBufferSize = AudioTrack.getMinBufferSize(44100,
-                AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT);
-        AudioAttributes audioAttributes =
-                new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
-        AudioFormat format =
-                new AudioFormat.Builder().setChannelMask(AudioFormat.CHANNEL_OUT_DEFAULT)
-                        .setSampleRate(44100).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
-        line = new AudioTrack(audioAttributes, format, minBufferSize,
-                AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
-        line.setVolume(1.5f);
+    }
+
+    private void setUpLine() {
+        if (line == null) {
+            minBufferSize = AudioTrack.getMinBufferSize(44100,
+                    AudioFormat.CHANNEL_OUT_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT);
+            AudioAttributes audioAttributes =
+                    new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
+            AudioFormat format =
+                    new AudioFormat.Builder().setChannelMask(AudioFormat.CHANNEL_OUT_DEFAULT)
+                            .setSampleRate(44100).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
+            line = new AudioTrack(audioAttributes, format, minBufferSize,
+                    AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
+            line.setVolume(1.5f);
+        }
     }
 
     public void addSubscriber(ModelListener newSub) {
