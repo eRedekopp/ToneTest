@@ -37,7 +37,7 @@ public class Model {
     }
 
     public boolean hasResults() {
-        return hearingTestResults.isEmpty();
+        return hearingTestResults.size() != 0;
     }
 
     public void configureAudio() {
