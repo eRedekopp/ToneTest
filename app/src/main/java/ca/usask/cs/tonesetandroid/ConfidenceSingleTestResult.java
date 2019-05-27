@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * A class to store the result of a single freq-vol pair test from a confidence test
  *
- * @author Eric Redekopp
+ * @author redekopp
  */
 public class ConfidenceSingleTestResult {
     private double frequency, expectedVol, actualVol, volRatio;

@@ -5,11 +5,17 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+/**
+ * Functions as a View and also performs initial setup
+ *
+ * @author redekopp
+ */
 public class MainActivity extends AppCompatActivity implements ModelListener {
 
     Model model;
     HearingTestInteractionModel iModel;
     HearingTestController controller;
+    FileNameController fileController;
 
     Button rampButton, pureButton, heardButton, saveButton, confidenceButton;
 
@@ -18,10 +24,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // set up models
+        // Create mvc elements
         Model newModel = new Model();
         HearingTestInteractionModel newIModel = new HearingTestInteractionModel();
-        final HearingTestController newController = new HearingTestController();
+        HearingTestController newController = new HearingTestController();
+        FileNameController newFController = new FileNameController();
+
+        // set up relations
+        this.setFileController(newFController);
         this.setController(newController);
         this.setModel(newModel);
         this.setIModel(newIModel);
@@ -55,17 +65,26 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 controller.handleRampUpClick();
             }
         });
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                fileController.handleSaveCalibClick();
+            }
+        });
 
         // start
         this.modelChanged();
     }
 
+    /**
+     * Enable/disable the buttons given the new status of the Model and iModel
+     */
     public void modelChanged() {
         rampButton.setEnabled(!iModel.isInTestMode());
         pureButton.setEnabled(!iModel.isInTestMode());
         heardButton.setEnabled(iModel.isInTestMode());
         confidenceButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
-        saveButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
+//        saveButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
+        saveButton.setEnabled(true); // todo: remove this after done testing
     }
 
     public void setModel(Model model) {
@@ -78,5 +97,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
     public void setController(HearingTestController controller) {
         this.controller = controller;
+    }
+
+    public void setFileController(FileNameController fileController) {
+        this.fileController = fileController;
     }
 }

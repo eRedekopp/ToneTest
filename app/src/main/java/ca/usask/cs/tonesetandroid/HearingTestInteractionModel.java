@@ -3,6 +3,7 @@ package ca.usask.cs.tonesetandroid;
 import java.util.ArrayList;
 
 /**
+ * A class for keeping track of interactions within a PureTone or RampUp test
  *
  * @author alexscott
  */

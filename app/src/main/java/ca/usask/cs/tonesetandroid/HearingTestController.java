@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * A class for performing PureTone and RampUp tests, and handling clicks on the main menu
+ *
+ * @author redekopp alexscott
+ */
 public class HearingTestController {
 
     Model model;
@@ -13,18 +18,20 @@ public class HearingTestController {
     private static float VOLUME_MULTIPLIER = 1.33f;
 
     /**
+     * Perform a Pure Tone test
+     *
      * Plays the specified tone (as denoted by frequency and amplitude) for
      * duration_ms milliseconds
      *
      * Play a tone loud enough that they should hear it Decrease by 10 dB until
      * they no longer hear it Increase by 5dB until they can hear it Go back to
      * the point they could not hear the tone at and increase again until they
-     * get two matching
+     * get two matching within 10%
      */
     public void pureTone() {
 
-        iModel.notHeard();
         model.clearResults();
+        iModel.notHeard();
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -140,6 +147,12 @@ public class HearingTestController {
         thread.start();
     }
 
+    /**
+     * Perform a ramp up test
+     *
+     * For each frequency, start quiet then get louder until user hears tone, then go to a fraction of that volume
+     * and ramp up again, but slower.
+     */
     public void rampUpTest() {
 
         iModel.notHeard();
@@ -186,6 +199,17 @@ public class HearingTestController {
         thread.start();
     }
 
+    /**
+     * A method to play a tone that ramps up at the rate specified by the input
+     * parameter This method was made to reduce redundancy in the rampUpTest
+     * method
+     *
+     * @param rateOfRamp: the rate that the volume is ramped up at
+     * @param freq: the frequency of the tone
+     * @param startingVol: the initial volume of the tone
+     *
+     * @author alexscott
+     */
     public void rampUp(double rateOfRamp, float freq, double startingVol) {
 
         for (model.volume = startingVol; model.volume < 32767; model.volume *= rateOfRamp) {

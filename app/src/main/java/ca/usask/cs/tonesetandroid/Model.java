@@ -7,6 +7,12 @@ import android.media.AudioTrack;
 
 import java.util.ArrayList;
 
+/**
+ * Contains information about the current/most recent test as well as an interface for generating
+ * sine wave audio
+ *
+ * @author redekopp, alexscott
+ */
 public class Model {
 
     public enum TestType {PureTone, Ramp}       // enum for types of hearing tests
@@ -17,11 +23,10 @@ public class Model {
     AudioTrack line;
     public static final int SAMPLE_RATE = 44100; // sample at 44.1 kHz always
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, 8000}; // From British Society of Audiology
-    public int duration_ms;
-    double volume;
+    public int duration_ms; // how long to play each tone in a test
+    double volume;          // amplitude multiplier
     byte[] buf;
-    private int minBufferSize;
-    
+
     // Vars for storing results
     ArrayList<FreqVolPair> hearingTestResults;  // The "just audible" volume for each frequency tested in the most 
                                                 // recent pure/ramp test (or loaded from file)
@@ -33,21 +38,33 @@ public class Model {
         this.setUpLine();
     }
 
+    /**
+     * Clear any results saved in the model
+     */
     public void clearResults() {
         hearingTestResults = new ArrayList<>();
     }
 
+    /**
+     * @return True if this model has results saved to it, else false
+     */
     public boolean hasResults() {
         return hearingTestResults.size() != 0;
     }
 
+    /**
+     * Configure the audio in preparation for a PureTone test
+     */
     public void configureAudio() {
         this.duration_ms = 1500;
     }
 
+    /**
+     * Perform first time setup of the audio track
+     */
     private void setUpLine() {
         if (line == null) {
-            minBufferSize = AudioTrack.getMinBufferSize(44100,
+            int minBufferSize = AudioTrack.getMinBufferSize(44100,
                     AudioFormat.CHANNEL_OUT_MONO,
                     AudioFormat.ENCODING_PCM_16BIT);
             AudioAttributes audioAttributes =
