@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -12,6 +14,8 @@ import android.widget.Button;
  */
 public class MainActivity extends AppCompatActivity implements ModelListener {
 
+    public static final int REQUEST_EXT_WRITE = 1;
+
     Model model;
     HearingTestInteractionModel iModel;
     HearingTestController controller;
@@ -21,6 +25,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        // get read/write permissions
+        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                           REQUEST_EXT_WRITE);
+
+        // instantiate self
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -28,7 +38,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         Model newModel = new Model();
         HearingTestInteractionModel newIModel = new HearingTestInteractionModel();
         HearingTestController newController = new HearingTestController();
-        FileNameController newFController = new FileNameController();
+        FileNameController newFController = new FileNameController(this);
 
         // set up relations
         this.setFileController(newFController);
@@ -84,7 +94,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         heardButton.setEnabled(iModel.isInTestMode());
         confidenceButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
 //        saveButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
-        saveButton.setEnabled(true); // todo: remove this after done testing
+        saveButton.setEnabled(true); // todo: remove this after done testing file io
     }
 
     public void setModel(Model model) {
@@ -101,5 +111,18 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
     public void setFileController(FileNameController fileController) {
         this.fileController = fileController;
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQUEST_EXT_WRITE) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                System.out.println("Permission successfully granted");
+            }
+            else System.out.println("Permission not granted");
+        }
+        else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
     }
 }

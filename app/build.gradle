@@ -4,7 +4,7 @@ android {
     compileSdkVersion 28
     defaultConfig {
         applicationId "ca.usask.cs.tonesetandroid"
-        minSdkVersion 21
+        minSdkVersion 23
         targetSdkVersion var
         versionCode 1
         versionName "1.0"
