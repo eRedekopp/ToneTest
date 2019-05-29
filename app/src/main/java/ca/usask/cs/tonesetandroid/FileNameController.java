@@ -9,8 +9,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 /**
@@ -61,6 +63,88 @@ public class FileNameController {
                 System.out.println("Error creating HearingTestResults directory");
         return subDir;
     }
+
+    /**
+     * Set up directory structure for a new test subject. Directory must not already exist.
+     *
+     * @param id The ID of the new test subject
+     */
+    public void createDirForSubjectID(int id) {
+        File newSubjectDir = new File(this.resultsDir, "subject" + id);
+        if (newSubjectDir.exists())
+            throw new IllegalArgumentException("Directory already exists for subject with ID " + id);
+        boolean subDirWasCreated = newSubjectDir.mkdir();
+        if (! subDirWasCreated)
+            throw new RuntimeException("Error: directory " + newSubjectDir.getPath() + " not successfully created");
+        File[] newDirs =  { new File(newSubjectDir.getPath() + "/CalibrationTests"),
+                            new File(newSubjectDir.getPath() + "/ConfidenceTests"),
+                            new File(newSubjectDir.getPath() + "/Graphs") };
+        for (File dir : newDirs) {
+            boolean dirWasCreated = dir.mkdir();
+            if (! dirWasCreated)
+                throw new RuntimeException("Error: directory " + dir.getPath() + " not successfully created");
+        }
+    }
+
+    /**
+     * Set model.hearingTestResults to the results of a previous test stored in the given file, and initialize
+     * information about the last test
+     *
+     * @param file The file from which to read test results
+     * @param model The model to be initialized from the file
+     */
+    public static void initializeModelFromFileData(File file, Model model) {
+        Scanner scanner;
+        ArrayList<FreqVolPair> newList = new ArrayList<>();
+        try {
+            scanner = new Scanner(file);
+        } catch (FileNotFoundException e) {
+            System.out.println("Error: file not found");
+            e.printStackTrace();
+            return;
+        }
+
+        // parse test information
+        scanner.useDelimiter("\\s");
+
+        // bg noise settings : skipped in Android version but leaving here for now just in case
+//        scanner.next(); // skip label
+//        String lastNoiseType = scanner.next();
+//        // set last noise type from file
+//        switch (lastNoiseType) {
+//            case "White":  model.setLastNoiseType(Model.NoiseType.White); break;
+//            case "Crowd":  model.setLastNoiseType(Model.NoiseType.Crowd); break;
+//            case "None" :  model.setLastNoiseType(Model.NoiseType.None);  break;
+//            default: throw new RuntimeException("Unexpected noise type in file: " + lastNoiseType);
+//        }
+//        scanner.next(); // skip label
+//        model.setLastBgNoiseVol(Double.parseDouble(scanner.next()));
+
+        scanner.next(); // skip label
+        String lastTestType = scanner.next();
+        switch(lastTestType) {
+            case "PureTone" : model.setLastTestType(Model.TestType.PureTone); break;
+            case "Ramp"     : model.setLastTestType(Model.TestType.Ramp);     break;
+            default: throw new RuntimeException("Unexpected test type: " + lastTestType);
+        }
+
+        scanner.nextLine(); scanner.nextLine(); // skip rest of line and header line
+        try {
+            while (scanner.hasNext()) {
+                double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
+                newList.add(new FreqVolPair((float) nextFreq, nextVol));
+                if (scanner.hasNextLine()) scanner.nextLine();
+            }
+            model.hearingTestResults = newList;
+        } catch (NoSuchElementException e) {
+            System.out.println("Error reading file: EOF reached before input finished");
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            System.out.println("Unknown error while reading file");
+            e.printStackTrace();
+        } finally { scanner.close(); }
+    }
+
 
     /**
      * A sample method that writes a file called "foo_dir/bar.txt" to the external storage

@@ -31,6 +31,7 @@ public class Model {
     ArrayList<FreqVolPair> hearingTestResults;  // The "just audible" volume for each frequency tested in the most 
                                                 // recent pure/ramp test (or loaded from file)
     private int subjectId = 0;
+    private TestType lastTestType;
 
 
     public Model() {
@@ -91,6 +92,10 @@ public class Model {
 
     public int getSubjectId() {
         return this.subjectId;
+    }
+
+    public void setLastTestType(TestType type) {
+        this.lastTestType = type;
     }
 
 }
