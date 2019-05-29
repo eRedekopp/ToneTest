@@ -1,21 +1,23 @@
 package ca.usask.cs.tonesetandroid;
 
-import android.Manifest;
 import android.content.Context;
 import android.media.MediaScannerConnection;
 import android.os.Environment;
-import android.support.v4.content.ContextCompat;
-import android.view.View;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 /**
- * A class for handling file IO
+ * A class for handling file IO.
+ *
+ * Note: Directory structure starts at resultsDir, then each subject gets a folder named
+ * Subject##, which contains subdirectories HearingTestResults and ConfidenceTestResults
  *
  * @author redekopp
  */
@@ -23,12 +25,41 @@ public class FileNameController {
 
     private Context context;
 
+    private final File resultsDir;
+
     public FileNameController(Context context) {
         this.context = context;
+        this.resultsDir = this.getResultsDir();
     }
 
     public void handleSaveCalibClick() {
 
+    }
+
+    /**
+     * Return true if a folder named "subject##" found in the results directory (where ## is the
+     * subject's ID number)
+     *
+     * @param subjectId The id number of the subject being searched
+     * @return True if the subject's folder was found, else false
+     */
+    public boolean directoryExistsForSubject(int subjectId) {
+        List<String> subjectDirectoryNames = Arrays.asList(resultsDir.list());
+        return subjectDirectoryNames.contains("subject"+subjectId);
+    }
+
+    /**
+     * Return the directory which stores the results, and create it if it does not exist
+     */
+    private File getResultsDir() {
+        File extDir = Environment.getExternalStorageDirectory();
+        File subDir = new File(extDir, "HearingTestResults");
+
+        // make results directory if doesn't already exist
+        if (!subDir.isDirectory())
+            if (! subDir.mkdir())
+                System.out.println("Error creating HearingTestResults directory");
+        return subDir;
     }
 
     /**
@@ -80,24 +111,6 @@ public class FileNameController {
             scanner = new Scanner(newFile);
             System.out.println("File read: " + scanner.nextLine());
         } catch (FileNotFoundException e) { System.out.println("Unknown error: file not found"); }
-    }
-
-    private File getPublicDirectory() {
-        return new File(
-                Environment.getExternalStorageDirectory(),
-                "test_file.txt"
-                );
-    }
-
-    private void setupDirectoryStructure() {
-        File resultsFolder = new File(Environment.getExternalStorageDirectory() +
-                                      "/HearingTestResults");
-        boolean isPresent = resultsFolder.exists();
-        if (!resultsFolder.exists()) {
-            isPresent = resultsFolder.mkdir();
-        }
-        if (isPresent) System.out.println("Successfully set up directory structure");
-        else System.out.println("Error setting up directory structure");
     }
 
 

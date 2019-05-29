@@ -30,7 +30,9 @@ public class Model {
     // Vars for storing results
     ArrayList<FreqVolPair> hearingTestResults;  // The "just audible" volume for each frequency tested in the most 
                                                 // recent pure/ramp test (or loaded from file)
-    
+    private int subjectId = 0;
+
+
     public Model() {
         buf = new byte[2];
         subscribers = new ArrayList<>();
@@ -81,6 +83,14 @@ public class Model {
 
     public void addSubscriber(ModelListener newSub) {
         subscribers.add(newSub);
+    }
+
+    public void setSubjectId(int id) {
+        this.subjectId = id;
+    }
+
+    public int getSubjectId() {
+        return this.subjectId;
     }
 
 }
