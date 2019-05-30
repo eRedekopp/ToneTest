@@ -30,7 +30,7 @@ public class Model {
     // Vars for storing results
     ArrayList<FreqVolPair> hearingTestResults;  // The "just audible" volume for each frequency tested in the most 
                                                 // recent pure/ramp test (or loaded from file)
-    private int subjectId = 0;
+    private int subjectId = -1;     // -1 indicates not set
     private TestType lastTestType;
 
 

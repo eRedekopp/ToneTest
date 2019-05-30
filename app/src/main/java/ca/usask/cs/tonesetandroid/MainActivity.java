@@ -1,17 +1,12 @@
 package ca.usask.cs.tonesetandroid;
 
 import android.Manifest;
-import android.content.DialogInterface;
 import android.content.pm.PackageManager;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 
 /**
  * Perform initial setup and launch
@@ -21,8 +16,6 @@ import java.io.FileNotFoundException;
 public class MainActivity extends AppCompatActivity implements ModelListener {
 
     public static final int REQUEST_EXT_WRITE = 1;
-
-    private String dialogSelectedString; // for getSelectionFromDialog
 
     Model model;
     HearingTestInteractionModel iModel;
@@ -47,7 +40,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         HearingTestInteractionModel newIModel = new HearingTestInteractionModel();
         HearingTestController newController = new HearingTestController();
         final FileNameController newFController = new FileNameController(this);
-        final InitialSetupController newIController = new InitialSetupController();
         final MasterController newMController = new MasterController();
 
         // set up relations
@@ -61,50 +53,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.iModel.addSubscriber(this);
         this.controller.setModel(newModel);
         this.controller.setiModel(newIModel);
-
-        // set up view elements for login screen
-        final Button idEntryButton =      findViewById(R.id.idEntryButton);
-        final Button skipButton =         findViewById(R.id.skipButton);
-        final Button loadButton =         findViewById(R.id.loadButton);
-        final EditText idEntryEditText =  findViewById(R.id.idEntryEditText);
-
-        // set up event listeners for login screen
-        idEntryButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int entry = Integer.parseInt(idEntryEditText.getText().toString());
-                newIController.handleSubjectIdClick(entry);
-            }
-        });
-        skipButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                newIController.handleSubjectIdClick(0);
-            }
-        });
-        loadButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                int entry = Integer.parseInt(idEntryEditText.getText().toString());
-                if (! newFController.directoryExistsForSubject(entry))
-                    showErrorDialog("No configurations saved for subject with id " + entry);
-                else {
-                    String[] subjectFileNames;
-                    try {
-                        subjectFileNames = newFController.getFileNamesFromCalibDir(entry);
-                    } catch (FileNotFoundException e) {
-                        showErrorDialog(e.getMessage());
-                        e.printStackTrace();
-                        return;
-                    }
-                    if (subjectFileNames.length == 0)
-                        showErrorDialog("No configurations saved for subject with id " + entry);
-                    else {
-                        getSelectionAndInitialize(subjectFileNames, entry);
-                    }
-                }
-            }
-        });
 
         // set up view elements for main screen
         rampButton =        findViewById(R.id.rampButton);
@@ -171,61 +119,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
     public void setMasterController(MasterController masterController) {
         this.masterController = masterController;
-    }
-
-    /**
-     * Show a dialog with title "Error" and the given message
-     * @param message The message to be displayed
-     */
-    public void showErrorDialog(String message) {
-        AlertDialog.Builder warningBuilder = new AlertDialog.Builder(this);
-        warningBuilder.setTitle("Error");
-        warningBuilder.setMessage(message);
-        warningBuilder.show();
-    }
-
-    /**
-     * Get a user selection from the given list of filename strings, then initialize the model from
-     * that file and tell the MasterController to go to the main menu. Note: the filenames in options
-     * must belong to the user with the given subjectID
-     *
-     * Kind of a lot of stuff for one function, but due to scoping issues and the fact that it uses
-     * callback functions, this is really the easiest way I can think of
-     *
-     * @param options A list of calibration filenames for the given subject
-     * @param subjectID The subject to whom the "options" files belong
-     */
-    public void getSelectionAndInitialize(final String[] options, final int subjectID) {
-        AlertDialog.Builder optBuilder = new AlertDialog.Builder(this);
-        optBuilder.setSingleChoiceItems(options, -1, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                setDialogSelectedItem(options[which]);
-            }
-        });
-        optBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                File inFile;
-                try {
-                    inFile = fileController.getCalibFileFromName(subjectID, getDialogSelectedString());
-                } catch (FileNotFoundException e) {
-                    showErrorDialog("Unknown error: selected file not found in directory");
-                    e.printStackTrace();
-                    return;
-                }
-                FileNameController.initializeModelFromFileData(inFile, model);
-                masterController.setMode(MasterController.Mode.MAIN);
-            }
-        });
-    }
-
-    public void setDialogSelectedItem(String item) {
-       this.dialogSelectedString = item;
-    }
-
-    public String getDialogSelectedString() {
-        return this.dialogSelectedString;
     }
 
     @Override
