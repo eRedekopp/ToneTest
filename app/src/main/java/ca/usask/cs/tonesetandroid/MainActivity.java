@@ -11,9 +11,10 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 /**
- * Functions as a View and also performs initial setup
+ * Perform initial setup and launch
  *
  * @author redekopp
  */
@@ -35,8 +36,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     protected void onCreate(Bundle savedInstanceState) {
 
         // get read/write permissions
-        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                           REQUEST_EXT_WRITE);
+        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_WRITE);
 
         // instantiate self
         super.onCreate(savedInstanceState);
@@ -89,7 +89,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 if (! newFController.directoryExistsForSubject(entry))
                     showErrorDialog("No configurations saved for subject with id " + entry);
                 else {
-                    String[] subjectFileNames = newFController.getFileNamesFromCalibDir(entry);
+                    String[] subjectFileNames;
+                    try {
+                        subjectFileNames = newFController.getFileNamesFromCalibDir(entry);
+                    } catch (FileNotFoundException e) {
+                        showErrorDialog(e.getMessage());
+                        e.printStackTrace();
+                        return;
+                    }
                     if (subjectFileNames.length == 0)
                         showErrorDialog("No configurations saved for subject with id " + entry);
                     else {
@@ -199,7 +206,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         optBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialog) {
-                File inFile = fileController.getFileFromName(subjectID, getDialogSelectedString());
+                File inFile;
+                try {
+                    inFile = fileController.getCalibFileFromName(subjectID, getDialogSelectedString());
+                } catch (FileNotFoundException e) {
+                    showErrorDialog("Unknown error: selected file not found in directory");
+                    e.printStackTrace();
+                    return;
+                }
                 FileNameController.initializeModelFromFileData(inFile, model);
                 masterController.setMode(MasterController.Mode.MAIN);
             }

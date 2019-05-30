@@ -43,14 +43,62 @@ public class FileNameController {
      *
      * @param id The id of the test subject whose directory is to be searched
      * @return An array of all the saved calibration file names in the subject's directory
+     * @throws FileNotFoundException If the subject's calibration directory doesn't exist
      */
-    public String[] getFileNamesFromCalibDir(int id) {
-        // todo
-        return null;
+    public String[] getFileNamesFromCalibDir(int id) throws FileNotFoundException {
+        // check if directory exists, return a list of files within if it does
+        File subjectCalibDir = getSubjectCalibDir(id);
+        if (!subjectCalibDir.exists())
+            throw new FileNotFoundException("Subject's calibration directory does not exist");
+        if (!subjectCalibDir.isDirectory())
+            throw new RuntimeException("Subject's calibration pathname found but is not a directory");
+
+        return subjectCalibDir.list(); // return array of filenames
     }
 
-    public File getFileFromName(int id, String fileName) {
-        return null;
+    /**
+     * Return the file of the given name from within the given subject's calibration directory
+     *
+     * @param id The ID of the subject whose calibration directory is to be searched
+     * @param fileName The filename to be retrieved from the subject's calibration directory
+     * @return The requested file from the subject's calibration directory
+     * @throws FileNotFoundException If the file does not exist within the subject's calibration directory, or
+     *                               the directory does not exist
+     */
+    public File getCalibFileFromName(int id, String fileName) throws FileNotFoundException {
+        File subjectCalibDir = getSubjectCalibDir(id);
+        if (! subjectCalibDir.isDirectory())
+            throw new FileNotFoundException("Subject's calibration directory not found");
+        List<String> calibFileNames = Arrays.asList(subjectCalibDir.list());
+        if (! calibFileNames.contains(fileName))
+            throw new FileNotFoundException("Filename not found in subject's calibration directory");
+        else
+            return new File(subjectCalibDir, fileName);
+    }
+
+    /**
+     * Return a new File with the abstract pathname for the given subject's directory
+     *
+     * Note: does not check whether the directory exists
+     *
+     * @param id The id number of the subject whose directory is to be found
+     * @return A new File with the abstract pathname for the given subject's directory
+     */
+    private File getSubjectParentDir(int id) {
+        return new File(this.resultsDir, "subject"+id);
+    }
+
+    /**
+     * Return a new File with the abstract pathname for the given subject's calibration
+     * test subdirectory
+     *
+     * Note: does not check whether the directory exists
+     *
+     * @param id The id number of the subject whose calibration directory is to be found
+     * @return A new File with the abstract pathname for the given subject's calibration directory
+     */
+    private File getSubjectCalibDir(int id) {
+        return new File(this.getSubjectParentDir(id), "CalibrationTests");
     }
 
     /**
@@ -211,6 +259,4 @@ public class FileNameController {
             System.out.println("File read: " + scanner.nextLine());
         } catch (FileNotFoundException e) { System.out.println("Unknown error: file not found"); }
     }
-
-
 }
