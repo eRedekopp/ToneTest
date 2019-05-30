@@ -9,7 +9,6 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.NumberPicker;
 
 import java.io.File;
 
@@ -22,10 +21,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
     public static final int REQUEST_EXT_WRITE = 1;
 
+    private String dialogSelectedString; // for getSelectionFromDialog
+
     Model model;
     HearingTestInteractionModel iModel;
     HearingTestController controller;
     FileNameController fileController;
+    MasterController masterController;
 
     Button rampButton, pureButton, heardButton, saveButton, confidenceButton;
 
@@ -53,6 +55,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.setController(newController);
         this.setModel(newModel);
         this.setIModel(newIModel);
+        this.setMasterController(newMController);
+
         this.model.addSubscriber(this);
         this.iModel.addSubscriber(this);
         this.controller.setModel(newModel);
@@ -83,16 +87,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
             public void onClick(View v) {
                 int entry = Integer.parseInt(idEntryEditText.getText().toString());
                 if (! newFController.directoryExistsForSubject(entry))
-                    showWarningDialog("No configurations saved for subject with id " + entry);
+                    showErrorDialog("No configurations saved for subject with id " + entry);
                 else {
                     String[] subjectFileNames = newFController.getFileNamesFromCalibDir(entry);
                     if (subjectFileNames.length == 0)
-                        showWarningDialog("No configurations saved for subject with id " + entry);
+                        showErrorDialog("No configurations saved for subject with id " + entry);
                     else {
-                        String fileName = getStringSelectionFromDialog(subjectFileNames);
-                        File inFile = newFController.getFileFromName(entry, fileName);
-                        FileNameController.initializeModelFromFileData(inFile, newModel);
-                        newMController.setMode(MasterController.Mode.MAIN);
+                        getSelectionAndInitialize(subjectFileNames, entry);
                     }
                 }
             }
@@ -161,61 +162,56 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.fileController = fileController;
     }
 
-    public void showWarningDialog(String message) {
-        // todo
-    }
-
-    public String getStringSelectionFromDialog(String[] options) {
-        // todo
-        return "";
+    public void setMasterController(MasterController masterController) {
+        this.masterController = masterController;
     }
 
     /**
-     * Prompt the user to input the ID number for the current test subject and update the model
-     * with that number
-     *
-     * To be performed during initial setup only
+     * Show a dialog with title "Error" and the given message
+     * @param message The message to be displayed
      */
-    private void setModelSubjectId() { // todo: not good mvc design
-        // set up number picker object
-        final NumberPicker numSelect = new NumberPicker(this);
-        numSelect.setMinValue(0);
-        numSelect.setMaxValue(100);
-        numSelect.setWrapSelectorWheel(true);
-        numSelect.setOnValueChangedListener(new NumberPicker.OnValueChangeListener() {
-            @Override
-            public void onValueChange(NumberPicker picker, int oldVal, int newVal) {
-                model.setSubjectId(newVal); // change model ID every time the value changes until
-            }                               // dialog box is closed
-        });
+    public void showErrorDialog(String message) {
+        AlertDialog.Builder warningBuilder = new AlertDialog.Builder(this);
+        warningBuilder.setTitle("Error");
+        warningBuilder.setMessage(message);
+        warningBuilder.show();
+    }
 
-        // set up dialog box
-        AlertDialog.Builder entryBuilder = new AlertDialog.Builder(this);
-        entryBuilder.setTitle("Enter Subject ID");
-        entryBuilder.setView(numSelect);
-        entryBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+    /**
+     * Get a user selection from the given list of filename strings, then initialize the model from
+     * that file and tell the MasterController to go to the main menu. Note: the filenames in options
+     * must belong to the user with the given subjectID
+     *
+     * Kind of a lot of stuff for one function, but due to scoping issues and the fact that it uses
+     * callback functions, this is really the easiest way I can think of
+     *
+     * @param options A list of calibration filenames for the given subject
+     * @param subjectID The subject to whom the "options" files belong
+     */
+    public void getSelectionAndInitialize(final String[] options, final int subjectID) {
+        AlertDialog.Builder optBuilder = new AlertDialog.Builder(this);
+        optBuilder.setSingleChoiceItems(options, -1, new DialogInterface.OnClickListener() {
             @Override
-            public void onCancel(DialogInterface dialog) {
-                warnIfSubjectIdAlreadyUsed(model.getSubjectId()); // warn if reusing ID
+            public void onClick(DialogInterface dialog, int which) {
+                setDialogSelectedItem(options[which]);
             }
         });
-        entryBuilder.show();
+        optBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialog) {
+                File inFile = fileController.getFileFromName(subjectID, getDialogSelectedString());
+                FileNameController.initializeModelFromFileData(inFile, model);
+                masterController.setMode(MasterController.Mode.MAIN);
+            }
+        });
     }
 
-    /**
-     * Show a dialog box warning the user if the given subject ID already exists within the
-     * directory structure
-     *
-     * @param id The subject ID to be checked
-     */
-    private void warnIfSubjectIdAlreadyUsed(int id) {
-        if (this.fileController.directoryExistsForSubject(id)) {
-            System.out.println("printing warning message");
-            AlertDialog.Builder warnBuilder = new AlertDialog.Builder(this);
-            warnBuilder.setMessage("Warning: subject ID " + id + " has already been used");
-            warnBuilder.show();
-        }
-        else System.out.println("New subject id: " + id);
+    public void setDialogSelectedItem(String item) {
+       this.dialogSelectedString = item;
+    }
+
+    public String getDialogSelectedString() {
+        return this.dialogSelectedString;
     }
 
     @Override
