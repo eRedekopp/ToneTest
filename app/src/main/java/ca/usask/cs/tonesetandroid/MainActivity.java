@@ -8,7 +8,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.NumberPicker;
+
+import java.io.File;
 
 /**
  * Functions as a View and also performs initial setup
@@ -38,10 +41,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         setContentView(R.layout.activity_main);
 
         // Create mvc elements
-        Model newModel = new Model();
+        final Model newModel = new Model();
         HearingTestInteractionModel newIModel = new HearingTestInteractionModel();
         HearingTestController newController = new HearingTestController();
-        FileNameController newFController = new FileNameController(this);
+        final FileNameController newFController = new FileNameController(this);
+        final InitialSetupController newIController = new InitialSetupController();
+        final MasterController newMController = new MasterController();
 
         // set up relations
         this.setFileController(newFController);
@@ -53,14 +58,54 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.controller.setModel(newModel);
         this.controller.setiModel(newIModel);
 
-        // set up view elements
+        // set up view elements for login screen
+        final Button idEntryButton =      findViewById(R.id.idEntryButton);
+        final Button skipButton =         findViewById(R.id.skipButton);
+        final Button loadButton =         findViewById(R.id.loadButton);
+        final EditText idEntryEditText =  findViewById(R.id.idEntryEditText);
+
+        // set up event listeners for login screen
+        idEntryButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int entry = Integer.parseInt(idEntryEditText.getText().toString());
+                newIController.handleSubjectIdClick(entry);
+            }
+        });
+        skipButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                newIController.handleSubjectIdClick(0);
+            }
+        });
+        loadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                int entry = Integer.parseInt(idEntryEditText.getText().toString());
+                if (! newFController.directoryExistsForSubject(entry))
+                    showWarningDialog("No configurations saved for subject with id " + entry);
+                else {
+                    String[] subjectFileNames = newFController.getFileNamesFromCalibDir(entry);
+                    if (subjectFileNames.length == 0)
+                        showWarningDialog("No configurations saved for subject with id " + entry);
+                    else {
+                        String fileName = getStringSelectionFromDialog(subjectFileNames);
+                        File inFile = newFController.getFileFromName(entry, fileName);
+                        FileNameController.initializeModelFromFileData(inFile, newModel);
+                        newMController.setMode(MasterController.Mode.MAIN);
+                    }
+                }
+            }
+        });
+
+        // set up view elements for main screen
         rampButton =        findViewById(R.id.rampButton);
         pureButton =        findViewById(R.id.pureButton);
         heardButton =       findViewById(R.id.heardButton);
         saveButton =        findViewById(R.id.saveButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
 
-        // set up event listeners
+        // set up event listeners for main screen
         pureButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -84,11 +129,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
             }
         });
 
-        // get subject ID before starting
-        this.setModelSubjectId();
-
-        // start
-        this.modelChanged();
+        // start in init mode
+        newMController.setMode(MasterController.Mode.INIT);
     }
 
     /**
@@ -117,6 +159,15 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
     public void setFileController(FileNameController fileController) {
         this.fileController = fileController;
+    }
+
+    public void showWarningDialog(String message) {
+        // todo
+    }
+
+    public String getStringSelectionFromDialog(String[] options) {
+        // todo
+        return "";
     }
 
     /**

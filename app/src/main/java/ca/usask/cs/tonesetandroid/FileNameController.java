@@ -35,7 +35,22 @@ public class FileNameController {
     }
 
     public void handleSaveCalibClick() {
+        // todo
+    }
 
+    /**
+     * Return an array of all the saved calibration file names in the directory for the given subject
+     *
+     * @param id The id of the test subject whose directory is to be searched
+     * @return An array of all the saved calibration file names in the subject's directory
+     */
+    public String[] getFileNamesFromCalibDir(int id) {
+        // todo
+        return null;
+    }
+
+    public File getFileFromName(int id, String fileName) {
+        return null;
     }
 
     /**
