@@ -27,11 +27,10 @@ public class FileNameController {
 
     private Context context;
 
-    private final File resultsDir;
+    private static final File RESULTS_DIR = getResultsDir();
 
     public FileNameController(Context context) {
         this.context = context;
-        this.resultsDir = this.getResultsDir();
     }
 
     public void handleSaveCalibClick() {
@@ -45,7 +44,7 @@ public class FileNameController {
      * @return An array of all the saved calibration file names in the subject's directory
      * @throws FileNotFoundException If the subject's calibration directory doesn't exist
      */
-    public String[] getFileNamesFromCalibDir(int id) throws FileNotFoundException {
+    public static String[] getFileNamesFromCalibDir(int id) throws FileNotFoundException {
         // check if directory exists, return a list of files within if it does
         File subjectCalibDir = getSubjectCalibDir(id);
         if (!subjectCalibDir.exists())
@@ -65,7 +64,7 @@ public class FileNameController {
      * @throws FileNotFoundException If the file does not exist within the subject's calibration directory, or
      *                               the directory does not exist
      */
-    public File getCalibFileFromName(int id, String fileName) throws FileNotFoundException {
+    public static File getCalibFileFromName(int id, String fileName) throws FileNotFoundException {
         File subjectCalibDir = getSubjectCalibDir(id);
         if (! subjectCalibDir.isDirectory())
             throw new FileNotFoundException("Subject's calibration directory not found");
@@ -84,8 +83,8 @@ public class FileNameController {
      * @param id The id number of the subject whose directory is to be found
      * @return A new File with the abstract pathname for the given subject's directory
      */
-    private File getSubjectParentDir(int id) {
-        return new File(this.resultsDir, "subject"+id);
+    private static File getSubjectParentDir(int id) {
+        return new File(RESULTS_DIR, "subject"+id);
     }
 
     /**
@@ -97,8 +96,8 @@ public class FileNameController {
      * @param id The id number of the subject whose calibration directory is to be found
      * @return A new File with the abstract pathname for the given subject's calibration directory
      */
-    private File getSubjectCalibDir(int id) {
-        return new File(this.getSubjectParentDir(id), "CalibrationTests");
+    private static File getSubjectCalibDir(int id) {
+        return new File(getSubjectParentDir(id), "CalibrationTests");
     }
 
     /**
@@ -108,15 +107,15 @@ public class FileNameController {
      * @param subjectId The id number of the subject being searched
      * @return True if the subject's folder was found, else false
      */
-    public boolean directoryExistsForSubject(int subjectId) {
-        List<String> subjectDirectoryNames = Arrays.asList(resultsDir.list());
+    public static boolean directoryExistsForSubject(int subjectId) {
+        List<String> subjectDirectoryNames = Arrays.asList(RESULTS_DIR.list());
         return subjectDirectoryNames.contains("subject"+subjectId);
     }
 
     /**
      * Return the directory which stores the results, and create it if it does not exist
      */
-    private File getResultsDir() {
+    private static File getResultsDir() {
         File extDir = Environment.getExternalStorageDirectory();
         File subDir = new File(extDir, "HearingTestResults");
 
@@ -132,8 +131,8 @@ public class FileNameController {
      *
      * @param id The ID of the new test subject
      */
-    public void createDirForSubjectID(int id) {
-        File newSubjectDir = new File(this.resultsDir, "subject" + id);
+    public static  void createDirForSubjectID(int id) {
+        File newSubjectDir = new File(RESULTS_DIR, "subject" + id);
         if (newSubjectDir.exists())
             throw new IllegalArgumentException("Directory already exists for subject with ID " + id);
         boolean subDirWasCreated = newSubjectDir.mkdir();

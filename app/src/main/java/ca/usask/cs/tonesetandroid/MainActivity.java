@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -119,6 +120,16 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
     public void setMasterController(MasterController masterController) {
         this.masterController = masterController;
+    }
+
+    /**
+     * Starts an InitActivity which initializes the model with an ID number and possibly data
+     */
+    private void goToInit() {
+        // declare intent
+        Intent initIntent = new Intent(this, InitActivity.class);
+
+        // pass mvc objects
     }
 
     @Override

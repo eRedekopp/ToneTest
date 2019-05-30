@@ -19,8 +19,9 @@ import java.io.FileNotFoundException;
  * to caller (which should be MainActivity)
  */
 public class InitActivity extends Activity {
-    
-    private FileNameController fController;
+
+    // todo add to manifest
+
     private Model model;
 
     private String dialogSelectedString; // for getSelectionFromDialog
@@ -30,25 +31,6 @@ public class InitActivity extends Activity {
         // init self
         super.onCreate(savedInstanceState);
         setContentView(R.layout.initial_setup_view);
-
-        // get mvc elements
-        Intent callerActivity = getIntent();
-        try {
-            // todo pass FileController to this from MainActivity
-            this.fController = (FileNameController) callerActivity.getExtras().get("fileController");
-        } catch (NullPointerException e) {
-            System.out.println("No file controller passed to InitActivity");
-            e.printStackTrace();
-            System.exit(1);
-        }
-        try {
-            // todo pass Model to this from MainActivity
-            this.model = (Model) callerActivity.getExtras().get("model");
-        } catch (NullPointerException e) {
-            System.out.println("No Model passed to InitActivity");
-            e.printStackTrace();
-            System.exit(1);
-        }
 
         // set up view elements
         final Button idEntryButton =      findViewById(R.id.idEntryButton);
@@ -74,12 +56,12 @@ public class InitActivity extends Activity {
             @Override
             public void onClick(View v) {
                 int entry = Integer.parseInt(idEntryEditText.getText().toString());
-                if (! fController.directoryExistsForSubject(entry))
+                if (! FileNameController.directoryExistsForSubject(entry))
                     showErrorDialog("No configurations saved for subject with id " + entry);
                 else {
                     String[] subjectFileNames;
                     try {
-                        subjectFileNames = fController.getFileNamesFromCalibDir(entry);
+                        subjectFileNames = FileNameController.getFileNamesFromCalibDir(entry);
                     } catch (FileNotFoundException e) {
                         showErrorDialog(e.getMessage());
                         e.printStackTrace();
@@ -118,7 +100,7 @@ public class InitActivity extends Activity {
             public void onCancel(DialogInterface dialog) {
                 File inFile;
                 try {
-                    inFile = fController.getCalibFileFromName(subjectID, getDialogSelectedString());
+                    inFile = FileNameController.getCalibFileFromName(subjectID, getDialogSelectedString());
                 } catch (FileNotFoundException e) {
                     showErrorDialog("Unknown error: selected file not found in directory");
                     e.printStackTrace();
