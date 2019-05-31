@@ -207,6 +207,8 @@ public class FileNameController {
             System.out.println("Unknown error while reading file");
             e.printStackTrace();
         } finally { scanner.close(); }
+
+        model.printResultsToConsole();
     }
 
 

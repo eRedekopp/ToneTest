@@ -101,6 +101,13 @@ public class InitActivity extends Activity {
                 returnToCaller(subjectID, inFile.getAbsolutePath());
             }
         });
+        optBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+        optBuilder.show();
     }
 
     /**

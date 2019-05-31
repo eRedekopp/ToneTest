@@ -4,6 +4,7 @@ import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -96,6 +97,22 @@ public class Model {
 
     public void setLastTestType(TestType type) {
         this.lastTestType = type;
+    }
+
+    /**
+     * Print the contents of hearingTestResults to the console (for testing)
+     */
+    public void printResultsToConsole() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("### Test Results ###\n");
+        builder.append(String.format("Test Subject ID: %d | Test Type: %s\n", this.subjectId, this.lastTestType));
+        if (hearingTestResults.isEmpty())
+            System.out.println("No results stored in model");
+        else for (FreqVolPair fvp : hearingTestResults) {
+            builder.append(fvp.toString());
+            builder.append('\n');
+        }
+        Log.i("Model Results", builder.toString());
     }
 
 }
