@@ -3,20 +3,25 @@ package ca.usask.cs.tonesetandroid;
 import android.content.Context;
 import android.media.MediaScannerConnection;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 /**
- * A class for handling file IO.
+ * A class for handling file IO. Methods for reading files are static; must be instantiated
+ * to save files
  *
  * Note: Directory structure starts at resultsDir, then each subject gets a folder named
  * Subject##, which contains subdirectories HearingTestResults and ConfidenceTestResults
@@ -25,7 +30,11 @@ import java.util.Scanner;
  */
 public class FileNameController {
 
+    // todo centralize the methods for getting subject-specific directories
+    //  so paths can be changed more easily if needed
+
     private Context context;
+    Model model;
 
     private static final File RESULTS_DIR = getResultsDir();
 
@@ -33,8 +42,79 @@ public class FileNameController {
         this.context = context;
     }
 
+    public void setModel(Model model) {
+        this.model = model;
+    }
+
     public void handleSaveCalibClick() {
-        // todo
+        if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
+
+        BufferedWriter out = null;
+        File fout = null;
+        try {
+            fout = getDestinationFile();
+            if (! fout.createNewFile())
+                throw new RuntimeException("Unable to create output file");
+            out = new BufferedWriter(new FileWriter(fout));
+            out.write(String.format("TestType: %s", model.getLastTestType()));
+            out.newLine();
+            out.write("Frequency(Hz)" + "\t" + "Volume");
+            out.newLine();
+            for (FreqVolPair pair : model.getHearingTestResults()) {
+                out.write(pair.getFreq() + "\t" + pair.getVol());
+                out.newLine();
+            }
+        } catch (FileNotFoundException e) {
+            // File was not found
+            Log.e("FileNameController", "Output file not found");
+            e.printStackTrace();
+        } catch (IOException e) {
+            // Problem when writing to the file
+            Log.e("FileNameController", "Unable to write to output file");
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null) out.close();
+            } catch (IOException e) {
+                Log.e("FileNameController", "Error closing test result file");
+                e.printStackTrace();
+            }
+        }
+        for (FreqVolPair pair : model.hearingTestResults) {
+            System.out.println(pair);
+        }
+
+        // make the scanner aware of the new files
+        MediaScannerConnection.scanFile(
+                this.context,
+                new String[]{fout.getAbsolutePath()},
+                new String[]{"text/csv"},
+                null);
+    }
+
+    /**
+     * Get the file where results are to be saved. All parent directories of the file are
+     * guaranteed to exist if this method did not throw errors
+     *
+     * @return The file where the results are to be saved for the current model state
+     */
+    private File getDestinationFile() {
+        int subID = this.model.getSubjectId();
+
+        if (! directoryExistsForSubject(subID)) {
+            createDirForSubjectID(subID);
+        }
+        File subjectCalibDir = getSubjectCalibDir(subID);
+
+        // get and format current date
+        Date date = Calendar.getInstance().getTime();
+        SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd_hh:mma");
+        String formattedDate = dFormat.format(date);
+
+        // eg. subject2/CalibrationTests/sub2_RAMP_2019-05-31_02:35PM.csv
+        return new File(subjectCalibDir,
+                "sub" + subID + '_' + this.model.getLastTestType() + '_' + formattedDate + ".csv"
+        );
     }
 
     /**
@@ -131,7 +211,7 @@ public class FileNameController {
      *
      * @param id The ID of the new test subject
      */
-    public static  void createDirForSubjectID(int id) {
+    public static void createDirForSubjectID(int id) {
         File newSubjectDir = new File(RESULTS_DIR, "subject" + id);
         if (newSubjectDir.exists())
             throw new IllegalArgumentException("Directory already exists for subject with ID " + id);
@@ -170,19 +250,6 @@ public class FileNameController {
 
         // parse test information
         scanner.useDelimiter("\\s");
-
-        // bg noise settings : skipped in Android version but leaving here for now just in case
-//        scanner.next(); // skip label
-//        String lastNoiseType = scanner.next();
-//        // set last noise type from file
-//        switch (lastNoiseType) {
-//            case "White":  model.setLastNoiseType(Model.NoiseType.White); break;
-//            case "Crowd":  model.setLastNoiseType(Model.NoiseType.Crowd); break;
-//            case "None" :  model.setLastNoiseType(Model.NoiseType.None);  break;
-//            default: throw new RuntimeException("Unexpected noise type in file: " + lastNoiseType);
-//        }
-//        scanner.next(); // skip label
-//        model.setLastBgNoiseVol(Double.parseDouble(scanner.next()));
 
         scanner.next(); // skip label
         String lastTestType = scanner.next();

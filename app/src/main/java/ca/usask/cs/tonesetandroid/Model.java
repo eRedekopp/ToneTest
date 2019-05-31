@@ -99,6 +99,14 @@ public class Model {
         this.lastTestType = type;
     }
 
+    public TestType getLastTestType() {
+        return this.lastTestType;
+    }
+
+    public ArrayList<FreqVolPair> getHearingTestResults() {
+        return this.hearingTestResults;
+    }
+
     /**
      * Print the contents of hearingTestResults to the console (for testing)
      */

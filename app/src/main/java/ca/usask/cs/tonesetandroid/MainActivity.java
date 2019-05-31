@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -49,11 +50,11 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.setController(newController);
         this.setModel(newModel);
         this.setIModel(newIModel);
-
         this.model.addSubscriber(this);
         this.iModel.addSubscriber(this);
         this.controller.setModel(newModel);
         this.controller.setiModel(newIModel);
+        this.fileController.setModel(this.model);
 
         // set up view elements for main screen
         rampButton =        findViewById(R.id.rampButton);
@@ -86,9 +87,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
             }
         });
 
-        // start in init mode
+        // Initialize model with InitActivity, then onActivityResult will call modelChanged() and set up this screen
         this.goToInit();
-        this.modelChanged();
     }
 
     /**
@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 e.printStackTrace();
                 System.exit(1);
             }
-        System.out.println("Returned from init with SubjectID " + model.getSubjectId());
+        this.modelChanged();
     }
 
     @Override
@@ -156,9 +156,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                                            int[] grantResults) {
         if (requestCode == REQUEST_EXT_WRITE) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                System.out.println("Permission successfully granted");
+                Log.i("Main","Permission successfully granted");
             }
-            else System.out.println("Permission not granted");
+            else Log.i("Main", "Permission not granted");
         }
         else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
