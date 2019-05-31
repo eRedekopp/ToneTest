@@ -22,6 +22,10 @@
         <activity
             android:name=".InitActivity" android:screenOrientation="portrait" android:theme="@style/AppTheme"
         />
+
+        <activity
+            android:name=".ConfidenceActivity" android:screenOrientation="portrait" android:theme="@style/AppTheme"
+        />
     </application>
 
 </manifest>

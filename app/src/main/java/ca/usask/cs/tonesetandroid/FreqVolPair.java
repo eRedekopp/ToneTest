@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
+import java.io.Serializable;
+
 /**
  * A data structure for storing a frequency, volume pair
  *

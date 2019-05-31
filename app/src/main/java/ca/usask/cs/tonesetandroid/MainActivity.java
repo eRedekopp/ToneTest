@@ -14,7 +14,7 @@ import java.io.FileNotFoundException;
 
 
 /**
- * Perform initial setup and launch
+ * Launch application, setup main menu
  *
  * @author redekopp
  */
@@ -86,6 +86,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 fileController.handleSaveCalibClick();
             }
         });
+        confidenceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goToConfidence();
+            }
+        });
 
         // Initialize model with InitActivity, then onActivityResult will call modelChanged() and set up this screen
         this.goToInit();
@@ -128,6 +134,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         int reqCode = 1;
 
         startActivityForResult(initIntent, reqCode);
+    }
+
+    private void goToConfidence() {
+        Intent confIntent = new Intent(this, ConfidenceActivity.class);
+        confIntent.putExtra("model", this.model);
+
+        startActivity(confIntent);
     }
 
     @Override
