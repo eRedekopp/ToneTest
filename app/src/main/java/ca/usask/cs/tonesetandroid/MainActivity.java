@@ -25,7 +25,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     HearingTestInteractionModel iModel;
     HearingTestController controller;
     FileNameController fileController;
-    MasterController masterController;
 
     Button rampButton, pureButton, heardButton, saveButton, confidenceButton;
 
@@ -44,14 +43,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         HearingTestInteractionModel newIModel = new HearingTestInteractionModel();
         HearingTestController newController = new HearingTestController();
         final FileNameController newFController = new FileNameController(this);
-        final MasterController newMController = new MasterController();
 
         // set up relations
         this.setFileController(newFController);
         this.setController(newController);
         this.setModel(newModel);
         this.setIModel(newIModel);
-        this.setMasterController(newMController);
 
         this.model.addSubscriber(this);
         this.iModel.addSubscriber(this);
@@ -120,10 +117,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
     public void setFileController(FileNameController fileController) {
         this.fileController = fileController;
-    }
-
-    public void setMasterController(MasterController masterController) {
-        this.masterController = masterController;
     }
 
     /**
