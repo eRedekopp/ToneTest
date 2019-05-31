@@ -6,8 +6,9 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.util.Log;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * Contains information about the current/most recent test as well as an interface for generating
@@ -16,6 +17,8 @@ import java.util.ArrayList;
  * @author redekopp, alexscott
  */
 public class Model {
+
+    // todo force volume to max while app open
 
     public enum TestType {PureTone, Ramp}       // enum for types of hearing tests
 
@@ -35,11 +38,18 @@ public class Model {
     private int subjectId = -1;     // -1 indicates not set
     private TestType lastTestType;
 
+    // vars for confidence test
+    private ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
+    private ArrayList<FreqVolPair> confidenceCalibPairs; // freq-vol pairs used to calibrate the next confidence test
+    public static final float[] CONF_FREQS   = {220, 440, 880, 1760, 3520, 7040};  // 6 octaves of A
+    ArrayList<ConfidenceSingleTestResult> confidenceTestResults;
 
     public Model() {
         buf = new byte[2];
         subscribers = new ArrayList<>();
         hearingTestResults = new ArrayList<>();
+        confidenceTestPairs = new ArrayList<>();
+        confidenceTestResults = new ArrayList<>();
         this.setUpLine();
     }
 
@@ -65,6 +75,35 @@ public class Model {
     }
 
     /**
+     * Configure the array of frequency volume pairs that are to be used during the confidence test
+     * This includes +/- 0%, +/-20%, -30%, and +/-40% above/below the calibration volume of
+     * the nearest frequency
+     */
+    public void configureConfidenceTestPairs(){
+        configureConfidenceTestPairs(hearingTestResults);
+    }
+
+    /**
+     * Same as the other method except calibrate based on the results in calibList instead of hearingTestResults
+     *
+     * @param calibList A list of calibration frequencies and volumes
+     */
+    public void configureConfidenceTestPairs(List<FreqVolPair> calibList) {
+        confidenceCalibPairs = (ArrayList<FreqVolPair>) calibList;
+        for(float freq: CONF_FREQS) {
+            double vol = getEstimatedMinVolume(freq, calibList);
+            confidenceTestPairs.add(new FreqVolPair(freq, vol));      // +/-0%
+            confidenceTestPairs.add(new FreqVolPair(freq, vol*1.2));  // +20%
+            confidenceTestPairs.add(new FreqVolPair(freq, vol*0.8));  // -20%
+            confidenceTestPairs.add(new FreqVolPair(freq, vol*1.4));  // +40%
+            confidenceTestPairs.add(new FreqVolPair(freq, vol*0.6));  // -40%
+            confidenceTestPairs.add(new FreqVolPair(freq, vol*0.7));  // -30%
+//            confidenceTestPairs.add(new FreqVolPair(freq, vol*1.1));  // +10%
+//            confidenceTestPairs.add(new FreqVolPair(freq, vol*0.9));  // -10%
+        }
+    }
+
+    /**
      * Perform first time setup of the audio track
      */
     private void setUpLine() {
@@ -82,6 +121,49 @@ public class Model {
                     AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
             line.setVolume(1.5f);
         }
+    }
+
+    /**
+     * Gets the estimated "just audible" volume for the given frequency, given the results of the hearing test
+     *
+     * @param freq The frequency whose just audible volume is to be estimated
+     * @return The estimated just audible volume of freq
+     */
+    public double getEstimatedMinVolume(float freq) {
+        // Estimate by using the volume of the closest calibrated frequency
+        if (!this.hasResults()) throw new IllegalStateException("No test results loaded");
+        HashMap<Float, Double> resultMap = new HashMap<>();
+        for (FreqVolPair p : hearingTestResults) resultMap.put(p.freq, p.vol);
+        return resultMap.get(ConfidenceController.getClosestKey(freq, resultMap));
+    }
+
+    /**
+     * Gets the estimated "just audible" volume for the given frequency, given the results in the calibList
+     *
+     * @param freq The frequency whose just audible volume is to be estimated
+     * @param calibList A list of calibration frequencies and volumes
+     * @return The estimated just audible volume of freq
+     */
+    public double getEstimatedMinVolume(float freq, List<FreqVolPair> calibList) {
+        if (calibList.isEmpty()) throw new IllegalArgumentException("Calibration list is empty");
+        HashMap<Float, Double> resultMap = new HashMap<>();
+        for (FreqVolPair p : calibList) resultMap.put(p.freq, p.vol);
+        return resultMap.get(ConfidenceController.getClosestKey(freq, resultMap));
+    }
+
+    /**
+     * Clear the contents of the arrayList containing the results of the confidence test
+     */
+    public void clearConfidenceTestResults(){
+        this.confidenceTestResults.clear();
+    }
+
+    /**
+     * Accessor method to return the confidenceTest ArrayList
+     * @return the confidence test array list
+     */
+    public ArrayList<FreqVolPair> getConfidenceTestPairs(){
+        return confidenceTestPairs;
     }
 
     public void addSubscriber(ModelListener newSub) {

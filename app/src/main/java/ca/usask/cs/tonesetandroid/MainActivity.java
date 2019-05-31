@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.Nullable;
@@ -21,6 +22,8 @@ import java.io.FileNotFoundException;
 public class MainActivity extends AppCompatActivity implements ModelListener {
 
     public static final int REQUEST_EXT_WRITE = 1;
+
+    private Context context = this; // for passing to FileNameController classes from inner methods
 
     Model model;
     HearingTestInteractionModel iModel;
@@ -43,7 +46,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         final Model newModel = new Model();
         HearingTestInteractionModel newIModel = new HearingTestInteractionModel();
         HearingTestController newController = new HearingTestController();
-        final FileNameController newFController = new FileNameController(this);
+        final FileNameController newFController = new FileNameController();
 
         // set up relations
         this.setFileController(newFController);
@@ -55,6 +58,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.controller.setModel(newModel);
         this.controller.setiModel(newIModel);
         this.fileController.setModel(this.model);
+
+        ConfidenceActivity.setModel(this.model);
+        ConfidenceActivity.setFileController(this.fileController);
 
         // set up view elements for main screen
         rampButton =        findViewById(R.id.rampButton);
@@ -83,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         });
         saveButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                fileController.handleSaveCalibClick();
+                fileController.handleSaveCalibClick(context);
             }
         });
         confidenceButton.setOnClickListener(new View.OnClickListener() {
@@ -129,17 +135,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
      * Starts an InitActivity which initializes the model with an ID number and possibly data
      */
     private void goToInit() {
-        // declare intent
         Intent initIntent = new Intent(this, InitActivity.class);
         int reqCode = 1;
-
         startActivityForResult(initIntent, reqCode);
     }
 
     private void goToConfidence() {
         Intent confIntent = new Intent(this, ConfidenceActivity.class);
-        confIntent.putExtra("model", this.model);
-
         startActivity(confIntent);
     }
 

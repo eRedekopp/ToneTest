@@ -14,7 +14,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
@@ -30,26 +32,21 @@ import java.util.Scanner;
  */
 public class FileNameController {
 
-    private Context context;
     Model model;
 
     private static final File RESULTS_DIR = getResultsDir();
-
-    public FileNameController(Context context) {
-        this.context = context;
-    }
 
     public void setModel(Model model) {
         this.model = model;
     }
 
-    public void handleSaveCalibClick() {
+    public void handleSaveCalibClick(Context context) {
         if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
 
         BufferedWriter out = null;
         File fout = null;
         try {
-            fout = getDestinationFile();
+            fout = getDestinationFileCalib();
             if (! fout.createNewFile())
                 throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
@@ -81,9 +78,9 @@ public class FileNameController {
             System.out.println(pair);
         }
 
-        // make the scanner aware of the new files
+        // make the scanner aware of the new file
         MediaScannerConnection.scanFile(
-                this.context,
+                context,
                 new String[]{fout.getAbsolutePath()},
                 new String[]{"text/csv"},
                 null);
@@ -95,7 +92,7 @@ public class FileNameController {
      *
      * @return The file where the results are to be saved for the current model state
      */
-    private File getDestinationFile() {
+    private File getDestinationFileCalib() {
         int subID = this.model.getSubjectId();
 
         if (! directoryExistsForSubject(subID)) {
@@ -111,6 +108,23 @@ public class FileNameController {
         // eg. subject2/CalibrationTests/sub2_RAMP_2019-05-31_02:35PM.csv
         return new File(subjectCalibDir,
                 "sub" + subID + '_' + this.model.getLastTestType() + '_' + formattedDate + ".csv"
+        );
+    }
+
+    private File getDestinationFileConf() {
+        int subID = this.model.getSubjectId();
+        File subjectConfDir = getSubjectConfDir(subID);
+        if (! subjectConfDir.isDirectory())
+            throw new IllegalStateException("No directory exists for subject with ID " + subID);
+
+        // get and format current date
+        Date date = Calendar.getInstance().getTime();
+        SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd_hh:mma");
+        String formattedDate = dFormat.format(date);
+
+        // eg. subject2/ConfidenceTests/sub2_conf_2019-05-31_02:35PM.csv
+        return new File(subjectConfDir,
+                "sub" + subID + "_conf_" + formattedDate + ".csv"
         );
     }
 
@@ -153,6 +167,147 @@ public class FileNameController {
     }
 
     /**
+     * This method is for saving the results of the confidence hearing test
+     * A separate method is used for saving the results of the ramp up hearing test
+     *
+     * When the user clicks on the get save button, display the results of the
+     * confidence hearing test (list the frequencies of the tones and the amplitude they
+     * were heard at) Also create a csv file containing the data
+     */
+    public void handleConfSaveClick(Context context) {
+
+        BufferedWriter out = null;
+
+        try {
+            File fout = getDestinationFileConf();
+
+            // todo disable save button after user saves, rather than doing this
+            if (fout.exists()) return; // in case the user saves twice in < 1 minute, skip this
+            else if (! fout.createNewFile()) Log.e("HandleConfSaveClick", "Unable to write to confidence file");
+
+            // make the scanner aware of the new file
+            MediaScannerConnection.scanFile(
+                    context,
+                    new String[]{fout.getAbsolutePath()},
+                    new String[]{"text/csv"},
+                    null);
+
+            out = new BufferedWriter(new FileWriter(fout));
+
+            // write information about test
+            out.write("Calibration: " + model.confidenceTestResults.get(0).getCalibPairs().toString());
+            out.newLine();
+            out.write("Frequency(Hz)" + "\t" + "Vol_Ratio" +"\t" + "Expected" + "\t" + "Actual");
+            out.newLine();
+
+            // Keep track of performance at each volume ratio, frequency, and both ratio and frequency
+            int totalResults = 0, totalCorrect = 0;
+            // results = how many correct for each ratio, totals = how many total for each ratio
+            // "low" = tests with volume ratio < 1, "high" = tests with volume ratio >= 1
+            HashMap<Double, Integer> ratioResults = new HashMap<>(), ratioTotals = new HashMap<>(),
+                    freqResults = new HashMap<>(), freqTotals = new HashMap<>(),
+                    lowResults = new HashMap<>(), lowTotals = new HashMap<>(),
+                    highResults = new HashMap<>(), highTotals = new HashMap<>();
+
+            for (ConfidenceSingleTestResult result : model.confidenceTestResults) {
+                String line = String.format("%f\t%f\t%b\t\t%b\n", result.getFrequency(), result.getVolRatio(),
+                        result.getExpectedResult(), result.getActualResult());
+                out.write(line);
+
+                // update HashMaps for final tally
+                boolean wasCorrect = result.getExpectedResult() == result.getActualResult();
+                totalResults++;
+                if (!ratioResults.containsKey(result.getVolRatio())) { // set up ratio maps
+                    ratioResults.put(result.getVolRatio(), 0);
+                    ratioTotals.put(result.getVolRatio(), 1);
+                } else {
+                    incrMap(ratioTotals, result.getVolRatio());
+                }
+                if (wasCorrect) {
+                    totalCorrect++;
+                    if (ratioResults.containsKey(result.getVolRatio())) {
+                        incrMap(ratioResults, result.getVolRatio());
+                    }
+                }
+                if (!freqResults.containsKey(result.getFrequency())) { // set up frequency maps
+                    freqResults.put(result.getFrequency(), 0);
+                    freqTotals.put(result.getFrequency(), 1);
+                } else {
+                    incrMap(freqTotals, result.getFrequency());
+                }
+                if (wasCorrect) {
+                    incrMap(freqResults, result.getFrequency());
+                }
+                if (result.getVolRatio() < 1) { // set up low maps
+                    if (!lowResults.containsKey(result.getFrequency())) {
+                        lowResults.put(result.getFrequency(), 0);
+                        lowTotals.put(result.getFrequency(), 1);
+                    } else {
+                        incrMap(lowTotals, result.getFrequency());
+                    }
+                    if (wasCorrect) {
+                        incrMap(lowResults, result.getFrequency());
+                    }
+                } else {                       // set up high maps
+                    if (!highResults.containsKey(result.getFrequency())) {
+                        highResults.put(result.getFrequency(), 0);
+                        highTotals.put(result.getFrequency(), 1);
+                    } else {
+                        incrMap(highTotals, result.getFrequency());
+                    }
+                    if (wasCorrect) {
+                        incrMap(highResults, result.getFrequency());
+                    }
+                }
+            }
+
+            // Sort data for nicer output
+            ArrayList<Double> ratioList = new ArrayList<>(ratioTotals.keySet()),
+                    freqList  = new ArrayList<>(freqTotals.keySet());
+            Collections.sort(ratioList);
+            Collections.sort(freqList);
+
+            // write totals for each ratio
+            out.write("------------------ ratios -----------------\n");
+            for (Double ratio : ratioList) {
+                out.write(
+                        String.format("Volume ratio: %f, Total tests performed: %d, Total correct: %d, Accuracy: %f\n",
+                                ratio, ratioTotals.get(ratio), ratioResults.get(ratio),
+                                ((double)ratioResults.get(ratio))/ratioTotals.get(ratio)));
+            }
+            // write totals for each frequency
+            out.write("--------------- frequencies ---------------\n");
+            for (Double freq : freqList) {
+                out.write(String.format("Frequency: %f, Total tests performed: %d, Total correct: %d, Accuracy: %f\n",
+                        freq, freqTotals.get(freq), freqResults.get(freq),
+                        ((double)freqResults.get(freq))/freqTotals.get(freq)));
+                out.write(String.format("\tQuiet tests performed: %d, Total correct: %d, Accuracy: %f\n",
+                        lowTotals.get(freq), lowResults.get(freq), ((double)lowResults.get(freq))/lowTotals.get(freq)));
+                out.write(String.format("\tLoud tests performed: %d, Total correct: %d, Accuracy: %f\n",
+                        highTotals.get(freq), highResults.get(freq),
+                        ((double)highResults.get(freq))/highTotals.get(freq)));
+            }
+            out.write("------------------- total -------------------\n");
+            out.write(String.format("Total tests performed: %d, Total correct: %d, Accuracy: %f",
+                    totalResults, totalCorrect, ((double)totalCorrect)/totalResults));
+
+        } catch (FileNotFoundException e) {
+            // File was not found
+            e.printStackTrace();
+        } catch (IOException e) {
+            // Problem when writing to the file
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null) out.close();
+            } catch (IOException e) {
+                System.out.println("Error closing confidence test result file");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
      * Return a new File with the abstract pathname for the given subject's directory
      *
      * Note: does not check whether the directory exists
@@ -175,6 +330,19 @@ public class FileNameController {
      */
     private static File getSubjectCalibDir(int id) {
         return new File(getSubjectParentDir(id), "CalibrationTests");
+    }
+
+    /**
+     * Return a new File with the abstract pathname for the given subject's confidence
+     * test subdirectory
+     *
+     * Note: does not check whether the directory exists
+     *
+     * @param id The id number of the subject whose confidence directory is to be found
+     * @return A new File with the abstract pathname for the given subject's confidence directory
+     */
+    private static File getSubjectConfDir(int id) {
+        return new File(getSubjectParentDir(id), "ConfidenceTests");
     }
 
     /**
@@ -275,55 +443,15 @@ public class FileNameController {
         model.printResultsToConsole();
     }
 
-
     /**
-     * A sample method that writes a file called "foo_dir/bar.txt" to the external storage
-     * directory and writes some sample text to it, then reads that text. Delete this after you
-     * get the hang of it.
+     * Increases the integer value associated with the given key by 1 in the given map
+     *
+     * @param map The map to be edited
+     * @param key The key in the map whose associated value is to be incremented
      */
-    private void sampleWriteFile() {
-        // get public directory
-        File parentDir = Environment.getExternalStorageDirectory();
-        if (parentDir.exists()) System.out.println(parentDir.getAbsolutePath());
-        else System.out.println("getExternalStorageDirectory() returned nonexistent file");
-
-        // make new directory in public directory
-        File newDir = new File(parentDir, "foo_dir");
-        if (newDir.mkdir()) System.out.println(newDir.getAbsolutePath());
-        else System.out.println("newDir.mkdir failed");
-
-        // make new file in new directory
-        File newFile = new File(newDir, "bar.txt");
-        try {
-            if (newFile.createNewFile()) System.out.println(newFile.getAbsolutePath());
-            else { System.out.println("newFile.createNewFile returned false"); }
-        } catch (IOException e) { System.out.println("newFile.createNewFile failed"); }
-
-        // grant permissions for new file
-        if (newFile.setReadable(true)) System.out.println("Read permissions successfully granted");
-        else System.out.println("Read permissions not granted");
-
-        // make the scanner aware of the new files
-        MediaScannerConnection.scanFile(
-                this.context,
-                new String[]{newFile.getAbsolutePath()},
-                new String[]{"text/plain"},
-                null);
-
-        // write to new file
-        try {
-            String text = "Foo Bar Baz";
-            BufferedWriter writer = new BufferedWriter(new FileWriter(newFile));
-            writer.write(text, 0, text.length());
-            System.out.println("Successfully wrote to file");
-            writer.close();
-        } catch (IOException e) { System.out.println("Writing to file failed"); }
-
-        // read the new file
-        Scanner scanner = null;
-        try {
-            scanner = new Scanner(newFile);
-            System.out.println("File read: " + scanner.nextLine());
-        } catch (FileNotFoundException e) { System.out.println("Unknown error: file not found"); }
+    private static void incrMap(HashMap<Double, Integer> map, Double key) {
+        int old = map.get(key);
+        map.remove(key);
+        map.put(key, ++old);
     }
 }

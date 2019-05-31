@@ -39,6 +39,7 @@ public class InitActivity extends Activity {
         idEntryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // todo crashes if nothing typed into text box
                 int entry = Integer.parseInt(idEntryEditText.getText().toString());
                 handleSubjectIdClick(entry);
             }
