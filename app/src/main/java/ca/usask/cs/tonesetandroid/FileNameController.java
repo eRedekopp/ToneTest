@@ -30,9 +30,6 @@ import java.util.Scanner;
  */
 public class FileNameController {
 
-    // todo centralize the methods for getting subject-specific directories
-    //  so paths can be changed more easily if needed
-
     private Context context;
     Model model;
 
@@ -184,12 +181,12 @@ public class FileNameController {
      * Return true if a folder named "subject##" found in the results directory (where ## is the
      * subject's ID number)
      *
-     * @param subjectId The id number of the subject being searched
+     * @param id The id number of the subject being searched
      * @return True if the subject's folder was found, else false
      */
-    public static boolean directoryExistsForSubject(int subjectId) {
+    public static boolean directoryExistsForSubject(int id) {
         List<String> subjectDirectoryNames = Arrays.asList(RESULTS_DIR.list());
-        return subjectDirectoryNames.contains("subject"+subjectId);
+        return subjectDirectoryNames.contains(getSubjectParentDir(id).getName());
     }
 
     /**
@@ -212,7 +209,7 @@ public class FileNameController {
      * @param id The ID of the new test subject
      */
     public static void createDirForSubjectID(int id) {
-        File newSubjectDir = new File(RESULTS_DIR, "subject" + id);
+        File newSubjectDir = getSubjectParentDir(id);
         if (newSubjectDir.exists())
             throw new IllegalArgumentException("Directory already exists for subject with ID " + id);
         boolean subDirWasCreated = newSubjectDir.mkdir();
