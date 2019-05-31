@@ -14,17 +14,12 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 /**
- * Activity for initial setup "login" screen. Either initialize a test subject with a new ID, or load a
- * test subject's calibration file. Either way, update the model passed by the caller directly then return
- * to caller (which should be MainActivity)
+ * Gets a subject ID from the user and goes back to caller with the subject ID and a pathname from which
+ * to read calibration results (or "" if not applicable)
  */
 public class InitActivity extends Activity {
 
-    // todo add to manifest
-
-    private Model model;
-
-    private String dialogSelectedString; // for getSelectionFromDialog
+    private String dialogSelectedString; // for getSelectionAndGoBack
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -70,7 +65,7 @@ public class InitActivity extends Activity {
                     if (subjectFileNames.length == 0)
                         showErrorDialog("No configurations saved for subject with id " + entry);
                     else {
-                        getSelectionAndInitialize(subjectFileNames, entry);
+                        getSelectionAndGoBack(subjectFileNames, entry);
                     }
                 }
             }
@@ -78,16 +73,13 @@ public class InitActivity extends Activity {
     }
 
     /**
-     * For loading calibration results from file
-     *
-     * Get a user selection from the given list of filename strings, then initialize the model from
-     * that file and tell the MasterController to go to the main menu. Note: the filenames in options
-     * must belong to the user with the given subjectID.
+     * For loading calibration results from file. Get a user selection from the given list of filename strings,
+     * then go back to caller passing the data retrieved from user
      *
      * @param options A list of calibration filenames for the given subject
      * @param subjectID The subject to whom the "options" files belong
      */
-    private void getSelectionAndInitialize(final String[] options, final int subjectID) {
+    private void getSelectionAndGoBack(final String[] options, final int subjectID) {
         AlertDialog.Builder optBuilder = new AlertDialog.Builder(this);
         optBuilder.setSingleChoiceItems(options, -1, new DialogInterface.OnClickListener() {
             @Override
@@ -106,8 +98,7 @@ public class InitActivity extends Activity {
                     e.printStackTrace();
                     return;
                 }
-                FileNameController.initializeModelFromFileData(inFile, model);
-                handleSubjectIdClick(subjectID); // enter subject id and return to caller after initializing data
+                returnToCaller(subjectID, inFile.getAbsolutePath());
             }
         });
     }
@@ -131,17 +122,35 @@ public class InitActivity extends Activity {
         return this.dialogSelectedString;
     }
 
-    private void handleSubjectIdClick(int id) {
-        this.model.setSubjectId(id);
-        returnToCaller();
+    private void handleSubjectIdClick(final int id) {
+        if (FileNameController.directoryExistsForSubject(id))
+            new AlertDialog.Builder(this)
+                    .setMessage("This subject ID has already been used")
+                    .setTitle("Warning")
+                    .setOnCancelListener(new DialogInterface.OnCancelListener() {
+                        @Override
+                        public void onCancel(DialogInterface dialog) {
+                            dialog.dismiss();
+                            returnToCaller(id, "");
+                        }
+                    })
+                    .show();
     }
 
-    private void returnToCaller() {
-        if (this.model.getSubjectId() == -1)
-            throw new IllegalStateException("Returned from InitActivity without setting subject id");
+    /**
+     * Return to the caller method with extras "Subject ID" to indicate the ID of this test subject retrieved from
+     * the user, and "Path Name" to indicate the path from which to load test results (or "" if not applicable)
+     *
+     * @param subjectID The subject ID retrieved from the user
+     * @param pathName The absolute path name retrieved from the user, or ""
+     */
+    private void returnToCaller(int subjectID, String pathName) {
 
-        // no data sent back because model gets updated directly
-        this.setResult(RESULT_OK);
+        // create intent and pass parameters
+        Intent goBackIntent = new Intent();
+        goBackIntent.putExtra("subjectID", subjectID);
+        goBackIntent.putExtra("pathName", pathName);
+        this.setResult(RESULT_OK, goBackIntent);
 
         // close this activity; shouldn't be called again until program restart
         this.finish();

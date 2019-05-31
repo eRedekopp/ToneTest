@@ -3,10 +3,14 @@ package ca.usask.cs.tonesetandroid;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+
+import java.io.File;
+import java.io.FileNotFoundException;
 
 
 /**
@@ -87,7 +91,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         });
 
         // start in init mode
-        newMController.setMode(MasterController.Mode.INIT);
+        this.goToInit();
+        this.modelChanged();
     }
 
     /**
@@ -128,8 +133,30 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     private void goToInit() {
         // declare intent
         Intent initIntent = new Intent(this, InitActivity.class);
+        int reqCode = 1;
 
-        // pass mvc objects
+        startActivityForResult(initIntent, reqCode);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        int subjectID = data.getIntExtra("subjectID", -1);
+        String pathName = data.getStringExtra("pathName");
+
+        if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
+
+        this.model.setSubjectId(subjectID);
+        if (!pathName.equals(""))
+            try {
+                FileNameController.initializeModelFromFileData(pathName, this.model);
+            } catch (FileNotFoundException e) {
+                System.err.println(e.getMessage());
+                e.printStackTrace();
+                System.exit(1);
+            }
+        System.out.println("Returned from init with SubjectID " + model.getSubjectId());
     }
 
     @Override

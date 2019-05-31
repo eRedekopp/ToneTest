@@ -152,10 +152,12 @@ public class FileNameController {
      * Set model.hearingTestResults to the results of a previous test stored in the given file, and initialize
      * information about the last test
      *
-     * @param file The file from which to read test results
+     * @param filePath The absolute pathname of the file to be read
      * @param model The model to be initialized from the file
      */
-    public static void initializeModelFromFileData(File file, Model model) {
+    public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
+        File file = new File(filePath);
+        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
         Scanner scanner;
         ArrayList<FreqVolPair> newList = new ArrayList<>();
         try {
