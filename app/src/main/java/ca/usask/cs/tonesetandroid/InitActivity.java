@@ -16,6 +16,8 @@ import java.io.FileNotFoundException;
 /**
  * Gets a subject ID from the user and goes back to caller with the subject ID and a pathname from which
  * to read calibration results (or "" if not applicable)
+ *
+ * @author redekopp
  */
 public class InitActivity extends Activity {
 

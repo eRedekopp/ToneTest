@@ -26,7 +26,7 @@ import java.util.Scanner;
  * Note: Directory structure starts at resultsDir, then each subject gets a folder named
  * Subject##, which contains subdirectories HearingTestResults and ConfidenceTestResults
  *
- * @author redekopp
+ * @author redekopp, alexscott
  */
 public class FileNameController {
 

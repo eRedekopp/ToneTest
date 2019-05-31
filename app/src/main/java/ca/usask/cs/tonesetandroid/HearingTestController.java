@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * A class for performing PureTone and RampUp tests, and handling clicks on the main menu
  *
- * @author redekopp alexscott
+ * @author redekopp, alexscott
  */
 public class HearingTestController {
 
