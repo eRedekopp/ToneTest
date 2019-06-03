@@ -39,7 +39,6 @@ public class InitActivity extends Activity {
         idEntryButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // todo crashes if nothing typed into text box
                 try {
                     int entry = Integer.parseInt(idEntryEditText.getText().toString());
                     handleSubjectIdClick(entry);
@@ -143,8 +142,8 @@ public class InitActivity extends Activity {
     }
 
     private void handleSubjectIdClick(final int id) {
-        if (FileNameController.directoryExistsForSubject(id)) // show warning dialog if name already used
-            new AlertDialog.Builder(this)
+        if (id != 0 && FileNameController.directoryExistsForSubject(id)) // show warning dialog if ID already used
+            new AlertDialog.Builder(this)                                // unless it's subject ID 0 (dummy ID)
                     .setMessage("This subject ID has already been used")
                     .setTitle("Warning")
                     .setOnCancelListener(new DialogInterface.OnCancelListener() {

@@ -11,7 +11,6 @@ public class HearingTestInteractionModel {
 
     boolean heard; //boolean value to indicate that the tone was heard
     boolean heardTwice; //this is used for the pure tone only
-    boolean reachedMaxVolume; //boolean value to indicate whether the maximum possible value was reached (used to prevent overflow during the pure tone test)
 
     //Boolean values representing whether the buttons are enabled or not
     private boolean testMode;
@@ -48,6 +47,7 @@ public class HearingTestInteractionModel {
 
     public void setTestMode(boolean b) {
         this.testMode = b;
+        this.notifySubscribers();
     }
 
     /**

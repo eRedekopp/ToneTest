@@ -1,5 +1,8 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -33,6 +36,10 @@ public class HearingTestController {
         model.clearResults();
         iModel.notHeard();
 
+        // for updating gui elements in main thread
+        final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -48,6 +55,8 @@ public class HearingTestController {
                         double notHeardVol = 1;//initially assign to 1;
                         justAudibleVol.clear();
                         while (!iModel.heardTwice) {
+                            model.enforceMaxVoume();  // force max volume always
+                            if (! model.audioPlaying()) return;
                             iModel.notHeard();
                             for (int i = 0; i < model.duration_ms * (float) 44100 / 1000; i++) {
                                 //1000 ms in 1 second
@@ -133,18 +142,21 @@ public class HearingTestController {
                     }
                     model.line.stop();
                 } finally {
-                    model.line.stop();
-                    model.line.release();
+                    model.audioTrackCleanup();
                 }
 
-                //Allow the user to click the get results button
                 //The user can no longer click the heard button since the test is over
                 //The user can now start a new hearing test
-                iModel.setTestMode(false);
-                iModel.notifySubscribers();
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        iModel.setTestMode(false);
+                    }
+                });
             }
         });
         thread.start();
+        model.setLastTestType(Model.TestType.PureTone);
     }
 
     /**
@@ -158,6 +170,9 @@ public class HearingTestController {
         iModel.notHeard();
         model.clearResults();
 
+        // for updating gui elements on main thread
+        final Handler mainHandler = new Handler(Looper.getMainLooper());
+
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -169,7 +184,10 @@ public class HearingTestController {
                 //Loop through all of the frequencies for the hearing test
                 for (float freq : Model.FREQUENCIES) {
                     double rateOfRamp = 1.05;
-                    rampUp(rateOfRamp, freq, 0.1); //play a tone for 50ms, then ramp up by 1.05 times until the tone is heard starting at a volume of 0.1
+                    if (model.audioPlaying())
+                        rampUp(rateOfRamp, freq, 0.1); //play a tone for 50ms, then ramp up by 1.05 times until the tone is heard starting at a volume of 0.1
+                    else return;
+
                     initialHeardVol = model.volume; //record the volume of the last played tone, this will either be the volume when the user clicked the button, or the maximum possible volume)
 
                     try {
@@ -189,14 +207,18 @@ public class HearingTestController {
                         Thread.sleep((long) (Math.random() * 2000 + 1000));
                     } catch (InterruptedException e) { break; }
                 }
-                model.line.flush();
-                model.line.stop();
+                model.audioTrackCleanup();
 
-                iModel.setTestMode(false);
-
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        iModel.setTestMode(false);
+                    }
+                });
             }
         });
         thread.start();
+        model.setLastTestType(Model.TestType.Ramp);
     }
 
     /**
@@ -213,7 +235,9 @@ public class HearingTestController {
     public void rampUp(double rateOfRamp, float freq, double startingVol) {
 
         for (model.volume = startingVol; model.volume < 32767; model.volume *= rateOfRamp) {
-            //notifySubscribers();
+            if (! model.audioPlaying()) return;
+            model.enforceMaxVoume(); // force max volume always
+
             if (iModel.heard) {
                 iModel.notHeard();//reset the iModel for the next ramp
                 break;

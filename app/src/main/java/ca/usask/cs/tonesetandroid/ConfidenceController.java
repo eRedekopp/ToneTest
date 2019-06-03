@@ -54,7 +54,7 @@ public class ConfidenceController {
      * @param frequencies The frequencies of the subset
      * @return The subset containing only the pairs with the given frequencies
      */
-    private ArrayList<FreqVolPair> subsetTestResults(float[] frequencies) {
+    public ArrayList<FreqVolPair> subsetTestResults(float[] frequencies) {
         ArrayList<FreqVolPair> newList = new ArrayList<>();
         for (FreqVolPair p: model.hearingTestResults) if (arrayContains(frequencies, p.freq)) newList.add(p);
         return newList;
@@ -69,87 +69,23 @@ public class ConfidenceController {
     }
 
     /**
-     * Get the requested subset of model.hearingTestResults. Subsets are indicated by an identifying number, see
-     * inner code for details
-     *
-     * @param subsetNumber The identifier of the requested subset
-     * @return The requested subset
+     * Perform the confidence test, generating estimates from the given subset of the test results
      */
-    @SuppressWarnings("unchecked")
-    private ArrayList<FreqVolPair> getSubset(int subsetNumber) {
-        // TODO : make the whole system of getting subsets less janky
-        // if you add a new subset here, be sure to update beginConfidenceTest as well
-        // if you change the calibration frequencies in Model.java, be sure to update them here too
-        switch (subsetNumber) {
-            case 1:
-                return (ArrayList<FreqVolPair>) model.hearingTestResults.clone(); // all frequencies
-            case 2:
-                float[] freqs2 = {200, 1000, 4000}; // Only calibrate with the frequencies in freqs
-                return subsetTestResults(freqs2);
-            case 3:
-                float[] freqs3 = {500, 2000, 8000};
-                return subsetTestResults(freqs3);
-            case 4:
-                float[] freqs4 = {500, 4000};
-                return subsetTestResults(freqs4);
-            case 5:
-                float[] freqs5 = {200, 2000};
-                return subsetTestResults(freqs5);
-            default:
-                return null;
-        }
-    }
-
-    /**
-     * Perform the confidence test
-     */
-    public void beginConfidenceTest() {
+    public void beginConfidenceTest(List<FreqVolPair> subset) {
 
         //set up an array of frequency volume pairs that is to be used for the confidence test
         model.clearConfidenceTestResults();
 
-        // todo allow choosing different subsets
-//        // Choose which freq-vol pairs to use for calibration
-//        String[] choices = {"All", "Subset 1", "Subset 2", "Subset 3", "Subset 4"};
-//        ChoiceDialog<String> subsetChoiceDialog = new ChoiceDialog<>(choices[0], choices);
-//        subsetChoiceDialog.setHeaderText(null);
-//        subsetChoiceDialog.setContentText("Estimate volumes with which frequencies?");
-//        subsetChoiceDialog.showAndWait();
-//        String subsetChoice = subsetChoiceDialog.getSelectedItem();
-
-        String subsetChoice = "All";
-
-        final ArrayList<FreqVolPair> subSet;
-        switch (subsetChoice) {
-            case "All":
-                subSet = getSubset(1);
-                break;
-            case "Subset 1":
-                subSet = getSubset(2);
-                break;
-            case "Subset 2":
-                subSet = getSubset(3);
-                break;
-            case "Subset 3":
-                subSet = getSubset(4);
-                break;
-            case "Subset 4":
-                subSet = getSubset(5);
-                break;
-            default:
-                throw new RuntimeException("Error getting subset: found unexpected string " + subsetChoice);
-        }
-
-        model.configureConfidenceTestPairs(subSet);
+        model.configureConfidenceTestPairs(subset);
 
         iModel.disableSave();
 
-        this.setTestThread(subSet);
+        this.setTestThread(subset);
 
         testThread.start();
     }
 
-    public void setTestThread(final List<FreqVolPair> subSet) {
+    public void setTestThread(final List<FreqVolPair> subset) {
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -159,6 +95,8 @@ public class ConfidenceController {
 
                 // for updating GUI elements on main thread
                 Handler mainHandler = new Handler(Looper.getMainLooper());
+
+                System.out.println(subset);
 
                 try {
                     // test each freq twice
@@ -184,6 +122,8 @@ public class ConfidenceController {
                             // hasn't pushed a button indicating they heard it or not
                             int index = 0;
                             while (iModel.waitingForClick()) {
+                                if (! model.audioPlaying()) return;
+                                model.enforceMaxVoume();  // force max volume always
                                 float period = (float) Model.SAMPLE_RATE / freq;
                                 double angle = 2 * index / (period) * Math.PI;
                                 short a = (short) (Math.sin(angle) * volume);
@@ -193,7 +133,7 @@ public class ConfidenceController {
                                 index++;
                             }
 
-                            double estimatedVolume = model.getEstimatedMinVolume(pair.getFreq(), subSet);
+                            double estimatedVolume = model.getEstimatedMinVolume(pair.getFreq(), subset);
 
                             //record the results
                             if (iModel.yesPushed) {
@@ -206,7 +146,7 @@ public class ConfidenceController {
                                     }
                                 });
                                 model.confidenceTestResults.add(
-                                        new ConfidenceSingleTestResult(pair, estimatedVolume, true, subSet));
+                                        new ConfidenceSingleTestResult(pair, estimatedVolume, true, subset));
                                 try {
                                     Thread.sleep((long) (500));//introduce a delay between playing the subsequent tone
                                 } catch (InterruptedException e) {
@@ -223,7 +163,7 @@ public class ConfidenceController {
                                     }
                                 });
                                 model.confidenceTestResults.add(
-                                        new ConfidenceSingleTestResult(pair, estimatedVolume, false, subSet));
+                                        new ConfidenceSingleTestResult(pair, estimatedVolume, false, subset));
                                 try {
                                     Thread.sleep((long) (500));//introduce a delay between playing the subsequent tone
                                 } catch (InterruptedException e) {
@@ -234,8 +174,7 @@ public class ConfidenceController {
                         }
                     }
                 } finally {
-                    model.line.stop();
-                    model.line.release();
+                    model.audioTrackCleanup();
                 }
 
                 //after completing the confidence test, make it so the user can no longer click the yes or no button
@@ -265,6 +204,10 @@ public class ConfidenceController {
      */
     public void handleNoClick() {
         iModel.noBtnClicked();
+    }
+
+    public void handleExitClick() {
+
     }
 
 }

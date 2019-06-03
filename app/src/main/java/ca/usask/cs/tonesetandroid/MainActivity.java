@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.os.Build;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -37,7 +38,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     protected void onCreate(Bundle savedInstanceState) {
 
         // get read/write permissions
-        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_WRITE);
+        if (Build.VERSION.SDK_INT >= 23)
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_WRITE);
 
         // instantiate self
         super.onCreate(savedInstanceState);

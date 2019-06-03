@@ -1,7 +1,6 @@
 package ca.usask.cs.tonesetandroid;
 
 import android.media.AudioAttributes;
-import android.media.AudioFocusRequest;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -19,13 +18,13 @@ import java.util.List;
  */
 public class Model {
 
-    // todo force volume to max while app open
-
     public enum TestType {PureTone, Ramp}       // enum for types of hearing tests
 
     private ArrayList<ModelListener> subscribers;
 
     private AudioManager audioManager;
+
+    private boolean audioPlaying;
 
     // Vars for audio
     AudioTrack line;
@@ -70,10 +69,30 @@ public class Model {
     }
 
     /**
-     * Configure the audio in preparation for a PureTone test
+     * Configure the audio in preparation for a PureTone test - only call directly before a test
      */
     public void configureAudio() {
+        this.setUpLine();
+        this.getAudioFocus();
+        this.enforceMaxVoume();
         this.duration_ms = 1500;
+        this.audioPlaying = true;
+    }
+
+    /**
+     * Close out audio line after audio play complete - only call directly after a test
+     */
+    public void audioTrackCleanup() {
+        try {
+            this.line.stop();
+            this.line.flush();
+            this.line.release();
+        } catch (IllegalStateException e) {
+            Log.i("audioTrackCleanup", "IllegalStateException caused");
+            e.printStackTrace();
+        }
+        this.audioManager.abandonAudioFocus(null);
+        this.audioPlaying = false;
     }
 
     /**
@@ -109,7 +128,8 @@ public class Model {
      * Perform first time setup of the audio track
      */
     public void setUpLine() {
-        if (line == null) {  // do not run if line already initialized
+        // do not run if line already initialized
+        if (line == null || line.getState() == AudioTrack.STATE_UNINITIALIZED) {
             int minBufferSize = AudioTrack.getMinBufferSize(44100,
                     AudioFormat.CHANNEL_OUT_MONO,
                     AudioFormat.ENCODING_PCM_16BIT);
@@ -121,14 +141,26 @@ public class Model {
                             .setSampleRate(44100).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
             line = new AudioTrack(audioAttributes, format, minBufferSize,
                     AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
-            line.setVolume(1.0f);
-
-            // todo does this actually work?
-            audioManager.setStreamVolume( // pin volume to max
-                    AudioManager.STREAM_MUSIC,
-                    audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
-                    AudioManager.FLAG_PLAY_SOUND);
+            line.setVolume(1.0f); // unity gain - no amplification
         }
+    }
+
+    /**
+     * Forces the volume of the output stream to max
+     */
+    public void enforceMaxVoume() {
+        audioManager.setStreamVolume( // pin volume to max
+                AudioManager.STREAM_MUSIC,
+                audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
+                AudioManager.FLAG_PLAY_SOUND);
+    }
+
+    public void getAudioFocus() {
+        audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
+    }
+
+    public void relinquishAudioFocus() {
+        audioManager.abandonAudioFocus(null);
     }
 
     /**
@@ -200,6 +232,14 @@ public class Model {
 
     public void setAudioManager(AudioManager audioManager) {
         this.audioManager = audioManager;
+    }
+
+    public boolean audioPlaying() {
+        return audioPlaying;
+    }
+
+    public void stopAudio() {
+        this.audioPlaying = false;
     }
 
     /**
