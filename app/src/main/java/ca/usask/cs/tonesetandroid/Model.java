@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
 import android.media.AudioAttributes;
+import android.media.AudioFocusRequest;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
@@ -23,6 +24,8 @@ public class Model {
     public enum TestType {PureTone, Ramp}       // enum for types of hearing tests
 
     private ArrayList<ModelListener> subscribers;
+
+    private AudioManager audioManager;
 
     // Vars for audio
     AudioTrack line;
@@ -50,7 +53,6 @@ public class Model {
         hearingTestResults = new ArrayList<>();
         confidenceTestPairs = new ArrayList<>();
         confidenceTestResults = new ArrayList<>();
-        this.setUpLine();
     }
 
     /**
@@ -106,8 +108,8 @@ public class Model {
     /**
      * Perform first time setup of the audio track
      */
-    private void setUpLine() {
-        if (line == null) {
+    public void setUpLine() {
+        if (line == null) {  // do not run if line already initialized
             int minBufferSize = AudioTrack.getMinBufferSize(44100,
                     AudioFormat.CHANNEL_OUT_MONO,
                     AudioFormat.ENCODING_PCM_16BIT);
@@ -119,7 +121,13 @@ public class Model {
                             .setSampleRate(44100).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
             line = new AudioTrack(audioAttributes, format, minBufferSize,
                     AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
-            line.setVolume(1.5f);
+            line.setVolume(1.0f);
+
+            // todo does this actually work?
+            audioManager.setStreamVolume( // pin volume to max
+                    AudioManager.STREAM_MUSIC,
+                    audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
+                    AudioManager.FLAG_PLAY_SOUND);
         }
     }
 
@@ -188,6 +196,10 @@ public class Model {
 
     public ArrayList<FreqVolPair> getHearingTestResults() {
         return this.hearingTestResults;
+    }
+
+    public void setAudioManager(AudioManager audioManager) {
+        this.audioManager = audioManager;
     }
 
     /**

@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -99,6 +100,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
             }
         });
 
+        // configure audio
+        model.setAudioManager((AudioManager) this.getSystemService(Context.AUDIO_SERVICE));
+        model.setUpLine();
+
         // Initialize model with InitActivity, then onActivityResult will call modelChanged() and set up this screen
         this.goToInit();
     }
@@ -112,7 +117,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         heardButton.setEnabled(iModel.isInTestMode());
         confidenceButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
         saveButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
-//        saveButton.setEnabled(true); // todo: remove this after done testing file io
     }
 
     public void setModel(Model model) {

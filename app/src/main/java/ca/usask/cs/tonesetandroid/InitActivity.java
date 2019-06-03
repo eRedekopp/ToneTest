@@ -40,8 +40,12 @@ public class InitActivity extends Activity {
             @Override
             public void onClick(View v) {
                 // todo crashes if nothing typed into text box
-                int entry = Integer.parseInt(idEntryEditText.getText().toString());
-                handleSubjectIdClick(entry);
+                try {
+                    int entry = Integer.parseInt(idEntryEditText.getText().toString());
+                    handleSubjectIdClick(entry);
+                } catch (NumberFormatException e) {
+                    showErrorDialog("Invalid subject id number");
+                }
             }
         });
         skipButton.setOnClickListener(new View.OnClickListener() {
@@ -53,7 +57,13 @@ public class InitActivity extends Activity {
         loadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                int entry = Integer.parseInt(idEntryEditText.getText().toString());
+                int entry;
+                try {
+                    entry = Integer.parseInt(idEntryEditText.getText().toString());
+                } catch (NumberFormatException e) {
+                    showErrorDialog("Invalid subject id number");
+                    return;
+                }
                 if (! FileNameController.directoryExistsForSubject(entry))
                     showErrorDialog("No configurations saved for subject with id " + entry);
                 else {
@@ -133,7 +143,7 @@ public class InitActivity extends Activity {
     }
 
     private void handleSubjectIdClick(final int id) {
-        if (FileNameController.directoryExistsForSubject(id))
+        if (FileNameController.directoryExistsForSubject(id)) // show warning dialog if name already used
             new AlertDialog.Builder(this)
                     .setMessage("This subject ID has already been used")
                     .setTitle("Warning")
@@ -145,6 +155,7 @@ public class InitActivity extends Activity {
                         }
                     })
                     .show();
+        else returnToCaller(id, "");
     }
 
     /**
