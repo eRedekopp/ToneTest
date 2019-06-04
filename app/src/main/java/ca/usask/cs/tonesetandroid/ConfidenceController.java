@@ -37,6 +37,7 @@ public class ConfidenceController {
 
     /**
      * Given a Float:Double hashmap, return the Float key closest to the given float f
+     *
      * @param f The number that the answer should be closest to
      * @param map The map containing Float:Double pairs
      * @return The closest key to f in the map
@@ -104,6 +105,8 @@ public class ConfidenceController {
                         //Randomize the order of the frequency volume pairs used for the confidence test
                         Collections.shuffle(model.getConfidenceTestPairs());
                         for (FreqVolPair pair : model.getConfidenceTestPairs()) {
+                            model.enforceMaxVoume();  // force max volume always
+
                             // Enable yes and no buttons
                             mainHandler.post(new Runnable() {
                                 @Override
@@ -123,7 +126,6 @@ public class ConfidenceController {
                             int index = 0;
                             while (iModel.waitingForClick()) {
                                 if (! model.audioPlaying()) return;
-                                model.enforceMaxVoume();  // force max volume always
                                 float period = (float) Model.SAMPLE_RATE / freq;
                                 double angle = 2 * index / (period) * Math.PI;
                                 short a = (short) (Math.sin(angle) * volume);

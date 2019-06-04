@@ -234,9 +234,10 @@ public class HearingTestController {
      */
     public void rampUp(double rateOfRamp, float freq, double startingVol) {
 
+        model.enforceMaxVoume(); // force max volume always
+
         for (model.volume = startingVol; model.volume < 32767; model.volume *= rateOfRamp) {
             if (! model.audioPlaying()) return;
-            model.enforceMaxVoume(); // force max volume always
 
             if (iModel.heard) {
                 iModel.notHeard();//reset the iModel for the next ramp
