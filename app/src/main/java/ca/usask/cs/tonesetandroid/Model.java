@@ -73,7 +73,7 @@ public class Model {
      */
     public void configureAudio() {
         this.setUpLine();
-        this.getAudioFocus();
+//        this.getAudioFocus();
         this.enforceMaxVoume();
         this.duration_ms = 1500;
         this.audioPlaying = true;
@@ -91,7 +91,7 @@ public class Model {
             Log.i("audioTrackCleanup", "IllegalStateException caused");
             e.printStackTrace();
         }
-        this.audioManager.abandonAudioFocus(null);
+//        this.audioManager.abandonAudioFocus(null);
         this.audioPlaying = false;
     }
 
