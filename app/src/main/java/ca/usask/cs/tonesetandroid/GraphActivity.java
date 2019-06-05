@@ -75,7 +75,7 @@ public class GraphActivity extends Activity {
                 ""
         );
         LineAndPointFormatter lpFormatter = new LineAndPointFormatter(
-                0x07A911,       // nicer green than Color.GREEN
+                Color.BLACK,
                 Color.BLACK,
                 Color.TRANSPARENT,
                 null

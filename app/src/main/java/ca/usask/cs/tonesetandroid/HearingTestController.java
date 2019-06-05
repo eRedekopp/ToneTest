@@ -329,6 +329,7 @@ public class HearingTestController {
     /**
      * @return the freqvolpairs using the same code as AutoTest
      */
+    //todo delet this
     public FreqVolPair[] DeleteMeLater() {
         int SAMPLE_SIZE = 2048;
         int FREQ_BIN_WIDTH = Model.INPUT_SAMPLE_RATE / SAMPLE_SIZE;
@@ -336,8 +337,9 @@ public class HearingTestController {
         // Object for performing FFTs: handle real inputs of size SAMPLE_SIZE
         NoiseOptimized noise = Noise.real().optimized().init(SAMPLE_SIZE, true);
 
-        // apply hann window to reduce noise
-        float[] rawMicData = model.getAudioSample(SAMPLE_SIZE);
+        // apply Hann window to reduce noise
+        float[] rawMicData = model.sineWave(1200, SAMPLE_SIZE);
+        System.out.println(Arrays.toString(rawMicData));
         float[] fftInput = applyHannWindow(rawMicData);
 
         // perform FFT

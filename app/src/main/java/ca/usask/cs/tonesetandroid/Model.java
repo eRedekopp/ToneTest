@@ -10,7 +10,6 @@ import android.os.Build;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -155,6 +154,27 @@ public class Model {
         }
 
         return lineDataFloat;
+    }
+
+    /**
+     * For testing: return samples of a sine wave with the given frequency at the given INPUT sample rate
+     *
+     * @param nSamples The number of samples to generate
+     * @param freq The frequency of the sine wave
+     * @return PCM float values corresponding to a sine wave of the given frequency
+     */
+    public float[] sineWave(int freq, int nSamples) {
+
+        float[] output = new float[nSamples];
+        float period = Model.INPUT_SAMPLE_RATE / (float) freq;
+        System.out.println(period);
+
+        for (int i = 0; i < nSamples; i++) {
+            float angle = 2.0f * (float) Math.PI * i / period;
+            output[i] = (float) Math.sin(angle);
+//            System.out.println(angle);
+        }
+        return output;
     }
 
     /**
