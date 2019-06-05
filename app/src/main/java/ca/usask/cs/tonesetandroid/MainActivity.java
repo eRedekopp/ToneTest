@@ -110,11 +110,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         model.setAudioManager((AudioManager) this.getSystemService(Context.AUDIO_SERVICE));
         model.setUpLineOut();
 
-////        //todo remove this
-//        GraphActivity.setData(controller.DeleteMeLater());
-//        startActivity(new Intent(this, GraphActivity.class));
-
-
         // Initialize model with InitActivity, then onActivityResult will call modelChanged() and set up this screen
         this.goToInit();
     }

@@ -287,21 +287,36 @@ public class HearingTestController {
      * @author redekopp
      */
     public void autoTest() {
+        
+        FreqVolPair[] periodogram = this.getPeriodogramFromLineIn(2048);
 
-        int SAMPLE_SIZE = 2048;
-        int FREQ_BIN_WIDTH = Model.INPUT_SAMPLE_RATE / SAMPLE_SIZE;
 
-        // Object for performing FFTs: handle real inputs of size SAMPLE_SIZE
-        NoiseOptimized noise = Noise.real().optimized().init(SAMPLE_SIZE, true);
+        
+
+
+    }
+
+    /**
+     * Get a sample of audio from the line in, then perform an FFT and get a periodogram from it
+     *
+     * @param sampleSize The number of audio samples to use for the calculations (must be a power of 2)
+     * @return FreqVolPairs representing each frequency bin and its corresponding amplitude in the periodogram
+     */
+    private FreqVolPair[] getPeriodogramFromLineIn(int sampleSize) {
+        // todo : take multiple samples and average them?
+
+        int freqBinWidth = Model.INPUT_SAMPLE_RATE / sampleSize;
+
+        // Object for performing FFTs: handle real inputs of size sampleSize
+        NoiseOptimized noise = Noise.real().optimized().init(sampleSize, true);
 
         // apply hann window to reduce noise
-        float[] rawMicData = model.getAudioSample(SAMPLE_SIZE);
+        float[] rawMicData = model.getAudioSample(sampleSize);
         float[] fftInput = applyHannWindow(rawMicData);
 
         // perform FFT
         float[] fftResult = noise.fft(fftInput); // noise.fft() returns from DC bin to Nyquist bin, no slicing req'd
 
-        // todo: do this a few times and average it?
         // convert to power spectral density
         float[] psd =  new float[fftInput.length / 2 + 1];
         for (int i = 0; i < fftResult.length / 2; i++) {
@@ -310,73 +325,16 @@ public class HearingTestController {
             // Power Spectral Density in dB= 20 * log10(sqrt(re^2 + im^2)) using first N/2 complex numbers of FFT output
             // from StackOverflow user Ernest Barkowski
             // https://stackoverflow.com/questions/6620544/fast-fourier-transform-fft-input-and-output-to-analyse-the-frequency-of-audio
-            psd[i] = (float) (20 * Math.log10(Math.sqrt(Math.pow(realPart, 2.0f) + Math.pow(imagPart, 2.0f))));
+            psd[i] = (float) (20 * Math.log10(Math.sqrt(Math.pow(realPart, 2) + Math.pow(imagPart, 2))));
         }
 
-        FreqVolPair[] spectroBins = new FreqVolPair[psd.length];
+        FreqVolPair[] freqBins = new FreqVolPair[psd.length];
         for (int i = 0; i < psd.length; i++) {
-            float freq = (float) i * FREQ_BIN_WIDTH;
+            float freq = (float) i * freqBinWidth;
             double vol = psd[i];
-            spectroBins[i] = new FreqVolPair(freq, vol);
+            freqBins[i] = new FreqVolPair(freq, vol);
         }
-
-//        Log.d("foo", Arrays.toString(spectroBins));
-
-
-
-    }
-
-    /**
-     * @return the freqvolpairs using the same code as AutoTest
-     */
-    //todo delet this
-    public FreqVolPair[] DeleteMeLater() {
-        int SAMPLE_SIZE = 2048;
-        int FREQ_BIN_WIDTH = Model.INPUT_SAMPLE_RATE / SAMPLE_SIZE;
-
-        // Object for performing FFTs: handle real inputs of size SAMPLE_SIZE
-        NoiseOptimized noise = Noise.real().optimized().init(SAMPLE_SIZE, true);
-
-        // apply Hann window to reduce noise
-        float[] rawMicData = model.sineWave(1200, SAMPLE_SIZE);
-        System.out.println(Arrays.toString(rawMicData));
-        float[] fftInput = applyHannWindow(rawMicData);
-
-        // perform FFT
-        float[] fftResult = noise.fft(fftInput); // noise.fft() returns from DC bin to Nyquist bin, no slicing req'd
-
-        // todo: do this a few times and average it?
-        // convert to power spectral density
-        float[] psd =  new float[fftInput.length / 2 + 1];
-        for (int i = 0; i < fftResult.length / 2; i++) {
-            float realPart = fftResult[i * 2];
-            float imagPart = fftResult[i * 2 + 1];
-            // Power Spectral Density in dB= 20 * log10(sqrt(re^2 + im^2)) using first N/2 complex numbers of FFT output
-            // from StackOverflow user Ernest Barkowski
-            // https://stackoverflow.com/questions/6620544/fast-fourier-transform-fft-input-and-output-to-analyse-the-frequency-of-audio
-            psd[i] = (float) (20 * Math.log10(Math.sqrt(Math.pow(realPart, 2.0f) + Math.pow(imagPart, 2.0f))));
-        }
-
-        FreqVolPair[] spectroBins = new FreqVolPair[psd.length];
-        for (int i = 0; i < psd.length; i++) {
-            float freq = (float) i * FREQ_BIN_WIDTH;
-            double vol = psd[i];
-            spectroBins[i] = new FreqVolPair(freq, vol);
-        }
-
-        return spectroBins;
-    }
-
-    /**
-     * How is there not a built-in method for this in Java????
-     *
-     * @param arr An array of floats
-     * @return The mean of the array
-     */
-    private float mean(float[] arr) {
-        float sum = 0;
-        for (float f : arr) sum += f;
-        return sum / (float) arr.length;
+        return freqBins;
     }
 
     public void handlePureToneClick() {
@@ -419,5 +377,15 @@ public class HearingTestController {
         return false;
     }
 
-
+    /**
+     * How isn't there a built-in method for this??
+     *
+     * @param arr An array of floats
+     * @return The mean of the array
+     */
+    private float mean(float[] arr) {
+        float sum = 0;
+        for (float f : arr) sum += f;
+        return sum / (float) arr.length;
+    }
 }
