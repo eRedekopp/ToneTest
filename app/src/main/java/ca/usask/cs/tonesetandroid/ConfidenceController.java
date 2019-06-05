@@ -92,12 +92,10 @@ public class ConfidenceController {
             public void run() {
                 //set up the audio output stream
                 model.configureAudio();
-                model.line.play();
+                model.lineOut.play();
 
                 // for updating GUI elements on main thread
                 Handler mainHandler = new Handler(Looper.getMainLooper());
-
-                System.out.println(subset);
 
                 try {
                     // test each freq twice
@@ -126,12 +124,12 @@ public class ConfidenceController {
                             int index = 0;
                             while (iModel.waitingForClick()) {
                                 if (! model.audioPlaying()) return;
-                                float period = (float) Model.SAMPLE_RATE / freq;
+                                float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
                                 double angle = 2 * index / (period) * Math.PI;
                                 short a = (short) (Math.sin(angle) * volume);
                                 model.buf[0] = (byte) (a & 0xFF); //write lower 8bits (________WWWWWWWW) out of 16
                                 model.buf[1] = (byte) (a >> 8); //write upper 8bits (WWWWWWWW________) out of 16
-                                model.line.write(model.buf, 0, 2);
+                                model.lineOut.write(model.buf, 0, 2);
                                 index++;
                             }
 

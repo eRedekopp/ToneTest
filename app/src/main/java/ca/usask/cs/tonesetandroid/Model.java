@@ -3,10 +3,14 @@ package ca.usask.cs.tonesetandroid;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.MediaRecorder;
+import android.os.Build;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,8 +31,9 @@ public class Model {
     private boolean audioPlaying;
 
     // Vars for audio
-    AudioTrack line;
-    public static final int SAMPLE_RATE = 44100; // sample at 44.1 kHz always
+    AudioTrack lineOut;
+    public static final int OUTPUT_SAMPLE_RATE  = 44100; // output samples at 44.1 kHz always
+    public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, 8000}; // From British Society of Audiology
     public int duration_ms; // how long to play each tone in a test
     double volume;          // amplitude multiplier
@@ -72,8 +77,7 @@ public class Model {
      * Configure the audio in preparation for a PureTone test - only call directly before a test
      */
     public void configureAudio() {
-        this.setUpLine();
-//        this.getAudioFocus();
+        this.setUpLineOut();
         this.enforceMaxVoume();
         this.duration_ms = 1500;
         this.audioPlaying = true;
@@ -84,15 +88,73 @@ public class Model {
      */
     public void audioTrackCleanup() {
         try {
-            this.line.stop();
-            this.line.flush();
-            this.line.release();
+            this.lineOut.stop();
+            this.lineOut.flush();
+            this.lineOut.release();
         } catch (IllegalStateException e) {
             Log.i("audioTrackCleanup", "IllegalStateException caused");
             e.printStackTrace();
         }
-//        this.audioManager.abandonAudioFocus(null);
         this.audioPlaying = false;
+    }
+
+    /**
+     * Gets a short clip of audio from the microphone and returns it as an array of floats
+     *
+     * @param size The number of samples in the clip
+     * @return A float array of the given size representing the PCM values of the recorded clip
+     */
+    public float[] getAudioSample(int size) {
+
+        int minBufferSize = AudioRecord.getMinBufferSize(
+                INPUT_SAMPLE_RATE,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT
+        );
+        if (size < minBufferSize)
+            throw new IllegalArgumentException("Audio sample size must have length >= " + minBufferSize);
+
+        // build AudioRecord: input from mic and output as floats
+        AudioRecord recorder;
+        if (Build.VERSION.SDK_INT >= 23)
+            recorder = new AudioRecord.Builder()
+                .setAudioSource(MediaRecorder.AudioSource.MIC)
+                .setAudioFormat(new AudioFormat.Builder()
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setSampleRate(INPUT_SAMPLE_RATE)
+                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                        .build())
+                .setBufferSizeInBytes(size)
+                .build();
+        else
+            recorder = new AudioRecord(
+                    MediaRecorder.AudioSource.MIC,
+                    INPUT_SAMPLE_RATE,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT,
+                    size
+            );
+        if (recorder.getState() == AudioRecord.STATE_UNINITIALIZED)
+            throw new IllegalStateException("AudioRecord not properly initialized");
+
+        // Record the audio
+        short[] lineData = new short[size];
+        recorder.startRecording();
+        for (int i = 0; i < size; i++) {
+            recorder.read(lineData, i, 1);
+        }
+        recorder.stop();
+        recorder.release();
+
+        // convert to float[]
+        float[] lineDataFloat = new float[size];
+        for (int i = 0; i < size; i++) {
+            lineDataFloat[i] = (float) lineData[i] / (float) Short.MAX_VALUE;
+            if (lineDataFloat[i] > 1) lineDataFloat[i] = 1;
+            else if (lineDataFloat[i] < -1) lineDataFloat[i] = -1;
+        }
+
+        return lineDataFloat;
     }
 
     /**
@@ -127,9 +189,9 @@ public class Model {
     /**
      * Perform first time setup of the audio track
      */
-    public void setUpLine() {
+    public void setUpLineOut() {
         // do not run if line already initialized
-        if (line == null || line.getState() == AudioTrack.STATE_UNINITIALIZED) {
+        if (lineOut == null || lineOut.getState() == AudioTrack.STATE_UNINITIALIZED) {
             int minBufferSize = AudioTrack.getMinBufferSize(44100,
                     AudioFormat.CHANNEL_OUT_MONO,
                     AudioFormat.ENCODING_PCM_16BIT);
@@ -139,9 +201,9 @@ public class Model {
             AudioFormat format =
                     new AudioFormat.Builder().setChannelMask(AudioFormat.CHANNEL_OUT_DEFAULT)
                             .setSampleRate(44100).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
-            line = new AudioTrack(audioAttributes, format, minBufferSize,
+            lineOut = new AudioTrack(audioAttributes, format, minBufferSize,
                     AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
-            line.setVolume(1.0f); // unity gain - no amplification
+            lineOut.setVolume(1.0f); // unity gain - no amplification
         }
     }
 
@@ -153,14 +215,6 @@ public class Model {
                 AudioManager.STREAM_MUSIC,
                 audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
                 AudioManager.FLAG_PLAY_SOUND);
-    }
-
-    public void getAudioFocus() {
-        audioManager.requestAudioFocus(null, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN_TRANSIENT);
-    }
-
-    public void relinquishAudioFocus() {
-        audioManager.abandonAudioFocus(null);
     }
 
     /**

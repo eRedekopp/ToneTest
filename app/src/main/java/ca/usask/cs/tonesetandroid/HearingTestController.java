@@ -2,9 +2,15 @@ package ca.usask.cs.tonesetandroid;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
+
+import com.paramsen.noise.Noise;
+import com.paramsen.noise.NoiseOptimized;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -45,7 +51,7 @@ public class HearingTestController {
             public void run() {
                 model.configureAudio();
                 try {
-                    model.line.play();
+                    model.lineOut.play();
                     ArrayList<Double> justAudibleVol = new ArrayList<>();
                     for (float freq : Model.FREQUENCIES) {
                         iModel.notHeardTwice();
@@ -63,12 +69,12 @@ public class HearingTestController {
                                 if (iModel.heard) {
                                     break;
                                 }
-                                float period = (float) Model.SAMPLE_RATE / freq;
+                                float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
                                 double angle = 2 * i / (period) * Math.PI;
                                 short a = (short) (Math.sin(angle) * model.volume);
                                 model.buf[0] = (byte) (a & 0xFF); //write lower 8bits (________WWWWWWWW) out of 16
                                 model.buf[1] = (byte) (a >> 8); //write upper 8bits (WWWWWWWW________) out of 16
-                                model.line.write(model.buf, 0, 2);
+                                model.lineOut.write(model.buf, 0, 2);
                             }
 
                             if (model.volume == 32767) {
@@ -140,7 +146,7 @@ public class HearingTestController {
                             System.out.println("Freq: " + freq + ", Vol: " + model.volume + "Just audible vol: " + justAudibleVol);
                         }
                     }
-                    model.line.stop();
+                    model.lineOut.stop();
                 } finally {
                     model.audioTrackCleanup();
                 }
@@ -177,7 +183,7 @@ public class HearingTestController {
             @Override
             public void run() {
                 model.configureAudio();
-                model.line.play();
+                model.lineOut.play();
 
                 double initialHeardVol = 32767;//default with the maximum possible volume (unless the user does not click a button/hit a key to indicate they heard the tone, this value will be overwritten)
 
@@ -245,14 +251,90 @@ public class HearingTestController {
             }
             model.duration_ms = 50; //play the tone at this volume for 0.05s
             for (int i = 0; i < model.duration_ms * (float) 44100 / 1000; i++) { //1000 ms in 1 second
-                float period = (float) Model.SAMPLE_RATE / freq;
+                float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
                 double angle = 2 * i / (period) * Math.PI;
                 short a = (short) (Math.sin(angle) * model.volume);
                 model.buf[0] = (byte) (a & 0xFF); //write 8bits ________WWWWWWWW out of 16
                 model.buf[1] = (byte) (a >> 8); //write 8bits WWWWWWWW________ out of 16
-                model.line.write(model.buf, 0, 2);
+                model.lineOut.write(model.buf, 0, 2);
             }
         }
+    }
+
+    /**
+     * Applies a Hann Window to the data set to improve the overall accuracy
+     * This function is slightly less general than a typical Hann window function
+     * Typically, you also want to know the starting index of the data to be windowed
+     * In this case, the index will always begin at 0
+     *
+     * @param data The data that will be windowed
+     * @return The windowed data set
+     *
+     * @author alexscott
+     */
+    private static float[] applyHannWindow(float[] data) {
+        int length = data.length;
+        for (int i = 0; i < length; i++) {
+            data[i] = (float) (data[i] * 0.5 * (1.0 - Math.cos(2.0 * Math.PI * i / length)));
+        }
+        return data;
+    }
+
+    /**
+     * Populate model.hearingTestResults with results automatically through the microphone
+     *
+     * @author redekopp
+     */
+    public void autoTest() {
+
+        int SAMPLE_SIZE = 2048;
+        int FREQ_BIN_WIDTH = Model.INPUT_SAMPLE_RATE / SAMPLE_SIZE;
+
+        // Object for performing FFTs: handle real inputs of size SAMPLE_SIZE
+        NoiseOptimized noise = Noise.real().optimized().init(SAMPLE_SIZE, true);
+
+        // apply hann window to reduce noise
+        float[] rawMicData = model.getAudioSample(SAMPLE_SIZE);
+        float[] fftInput = applyHannWindow(rawMicData);
+
+        // perform FFT
+        float[] fftResult = noise.fft(fftInput); // noise.fft() returns from DC bin to Nyquist bin, no slicing req'd
+
+        // todo: do this a few times and average it?
+        // convert to power spectral density
+        float[] psd =  new float[fftInput.length / 2 + 1];
+        for (int i = 0; i < fftResult.length / 2; i++) {
+            float realPart = fftResult[i * 2];
+            float imagPart = fftResult[i * 2 + 1];
+            // Power Spectral Density in dB= 20 * log10(sqrt(re^2 + im^2)) using first N/2 complex numbers of FFT output
+            // from StackOverflow user Ernest Barkowski
+            // https://stackoverflow.com/questions/6620544/fast-fourier-transform-fft-input-and-output-to-analyse-the-frequency-of-audio
+            psd[i] = (float) (20 * Math.log10(Math.sqrt(Math.pow(realPart, 2.0f) + Math.pow(imagPart, 2.0f))));
+        }
+
+        FreqVolPair[] spectroBins = new FreqVolPair[psd.length];
+        for (int i = 0; i < psd.length; i++) {
+            float freq = (float) i * FREQ_BIN_WIDTH;
+            double vol = psd[i];
+            spectroBins[i] = new FreqVolPair(freq, vol);
+        }
+
+        Log.d("foo", Arrays.toString(spectroBins));
+
+
+
+    }
+
+    /**
+     * How is there not a built-in method for this in Java????
+     *
+     * @param arr An array of floats
+     * @return The mean of the array
+     */
+    private float mean(float[] arr) {
+        float sum = 0;
+        for (float f : arr) sum += f;
+        return sum / (float) arr.length;
     }
 
     public void handlePureToneClick() {

@@ -23,7 +23,7 @@ import java.io.FileNotFoundException;
  */
 public class MainActivity extends AppCompatActivity implements ModelListener {
 
-    public static final int REQUEST_EXT_WRITE = 1;
+    public static final int REQUEST_PERMISSIONS = 1;
 
     private Context context = this; // for passing to FileNameController classes from inner methods
 
@@ -39,7 +39,11 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
         // get read/write permissions
         if (Build.VERSION.SDK_INT >= 23)
-            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_WRITE);
+            requestPermissions(new String[]{
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.RECORD_AUDIO
+                    },
+                    REQUEST_PERMISSIONS);
 
         // instantiate self
         super.onCreate(savedInstanceState);
@@ -104,7 +108,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
 
         // configure audio
         model.setAudioManager((AudioManager) this.getSystemService(Context.AUDIO_SERVICE));
-        model.setUpLine();
+        model.setUpLineOut();
+
+//        //todo remove this
+//        controller.autoTest();
 
         // Initialize model with InitActivity, then onActivityResult will call modelChanged() and set up this screen
         this.goToInit();
@@ -175,7 +182,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions,
                                            int[] grantResults) {
-        if (requestCode == REQUEST_EXT_WRITE) {
+        if (requestCode == REQUEST_PERMISSIONS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.i("Main","Permission successfully granted");
             }
