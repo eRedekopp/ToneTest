@@ -1,5 +1,6 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -319,10 +320,49 @@ public class HearingTestController {
             spectroBins[i] = new FreqVolPair(freq, vol);
         }
 
-        Log.d("foo", Arrays.toString(spectroBins));
+//        Log.d("foo", Arrays.toString(spectroBins));
 
 
 
+    }
+
+    /**
+     * @return the freqvolpairs using the same code as AutoTest
+     */
+    public FreqVolPair[] DeleteMeLater() {
+        int SAMPLE_SIZE = 2048;
+        int FREQ_BIN_WIDTH = Model.INPUT_SAMPLE_RATE / SAMPLE_SIZE;
+
+        // Object for performing FFTs: handle real inputs of size SAMPLE_SIZE
+        NoiseOptimized noise = Noise.real().optimized().init(SAMPLE_SIZE, true);
+
+        // apply hann window to reduce noise
+        float[] rawMicData = model.getAudioSample(SAMPLE_SIZE);
+        float[] fftInput = applyHannWindow(rawMicData);
+
+        // perform FFT
+        float[] fftResult = noise.fft(fftInput); // noise.fft() returns from DC bin to Nyquist bin, no slicing req'd
+
+        // todo: do this a few times and average it?
+        // convert to power spectral density
+        float[] psd =  new float[fftInput.length / 2 + 1];
+        for (int i = 0; i < fftResult.length / 2; i++) {
+            float realPart = fftResult[i * 2];
+            float imagPart = fftResult[i * 2 + 1];
+            // Power Spectral Density in dB= 20 * log10(sqrt(re^2 + im^2)) using first N/2 complex numbers of FFT output
+            // from StackOverflow user Ernest Barkowski
+            // https://stackoverflow.com/questions/6620544/fast-fourier-transform-fft-input-and-output-to-analyse-the-frequency-of-audio
+            psd[i] = (float) (20 * Math.log10(Math.sqrt(Math.pow(realPart, 2.0f) + Math.pow(imagPart, 2.0f))));
+        }
+
+        FreqVolPair[] spectroBins = new FreqVolPair[psd.length];
+        for (int i = 0; i < psd.length; i++) {
+            float freq = (float) i * FREQ_BIN_WIDTH;
+            double vol = psd[i];
+            spectroBins[i] = new FreqVolPair(freq, vol);
+        }
+
+        return spectroBins;
     }
 
     /**

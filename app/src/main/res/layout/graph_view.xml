@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:ap="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <com.androidplot.xy.XYPlot
+        android:id="@+id/plot"
+        style="@style/AppTheme"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        ap:title="Current Noise"
+        ap:domainTitle="Frequency (Hz)"
+        ap:rangeTitle="Amplitude (dB)"
+        ap:lineLabels="left|bottom"
+        ap:lineLabelRotationBottom="-45"
+
+        ap:marginTop="10dp"
+        ap:marginBottom="10dp"
+        ap:marginLeft="10dp"
+        ap:marginRight="10dp"
+        ap:graphMarginTop="40dp"
+        ap:graphMarginBottom="40dp"
+        ap:graphMarginLeft="40dp"
+        ap:graphMarginRight="40dp"
+        />
+
+
+</android.support.constraint.ConstraintLayout>

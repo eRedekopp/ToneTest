@@ -29,6 +29,10 @@
         <activity
             android:name=".ConfidenceActivity" android:screenOrientation="portrait" android:theme="@style/AppTheme"
         />
+
+        <activity
+            android:name=".GraphActivity" android:screenOrientation="landscape" android:theme="@style/AppTheme"
+        />
     </application>
 
 </manifest>

@@ -111,9 +111,11 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         model.setUpLineOut();
 
 //        //todo remove this
-//        controller.autoTest();
+//        GraphActivity.setData(controller.DeleteMeLater());
+//        startActivity(new Intent(this, GraphActivity.class));
 
-        // Initialize model with InitActivity, then onActivityResult will call modelChanged() and set up this screen
+
+//        // Initialize model with InitActivity, then onActivityResult will call modelChanged() and set up this screen
         this.goToInit();
     }
 
