@@ -181,9 +181,7 @@ public class FileNameController {
         try {
             File fout = getDestinationFileConf();
 
-            // todo disable save button after user saves, rather than doing this
-            if (fout.exists()) return; // in case the user saves twice in < 1 minute, skip this
-            else if (! fout.createNewFile()) Log.e("HandleConfSaveClick", "Unable to write to confidence file");
+            if (! fout.createNewFile()) Log.e("HandleConfSaveClick", "Unable to write to confidence file");
 
             // make the scanner aware of the new file
             MediaScannerConnection.scanFile(

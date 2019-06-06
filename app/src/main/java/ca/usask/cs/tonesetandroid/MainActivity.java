@@ -2,11 +2,13 @@ package ca.usask.cs.tonesetandroid;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.os.Build;
 import android.support.annotation.Nullable;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -116,7 +118,24 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         resetButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                goToInit();
+                // Show warning dialog, then reset and return to InitActivity if user confirms
+                AlertDialog.Builder warningBuilder = new AlertDialog.Builder(context);
+                warningBuilder.setTitle("Warning");
+                warningBuilder.setMessage("All unsaved results will be lost. Continue?");
+                warningBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                        goToInit();
+                    }
+                });
+                warningBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                warningBuilder.show();
             }
         });
 
