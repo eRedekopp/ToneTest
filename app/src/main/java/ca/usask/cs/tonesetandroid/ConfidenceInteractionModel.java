@@ -19,6 +19,9 @@ public class ConfidenceInteractionModel  {
     boolean noEnabled;
     boolean saveEnabled;
 
+    // saved status
+    boolean resultsSaved;
+
     ArrayList<ModelListener> subscribers;
 
     /**
@@ -27,6 +30,7 @@ public class ConfidenceInteractionModel  {
      */
     public ConfidenceInteractionModel() {
         subscribers = new ArrayList<>();
+        resultsSaved = false;
     }
 
     /**
@@ -68,6 +72,15 @@ public class ConfidenceInteractionModel  {
     public void clearBtns() {
         yesPushed = false;
         noPushed = false;
+    }
+
+    public boolean resultsSaved() {
+        return resultsSaved;
+    }
+
+    public void setResultsSaved(boolean resultsSaved) {
+        this.resultsSaved = resultsSaved;
+        this.notifySubscribers();
     }
 
     /**

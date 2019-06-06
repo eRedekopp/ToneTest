@@ -15,7 +15,7 @@ import java.util.List;
  */
 public class ConfidenceController {
 
-    private static final int NUM_OF_TESTS = 2;
+    private static final int NUM_OF_TESTS = 1;
 
     Model model;
     ConfidenceInteractionModel iModel;
@@ -185,6 +185,7 @@ public class ConfidenceController {
                         iModel.disableYes();
                         iModel.disableNo();
                         iModel.enableSave();
+                        iModel.setResultsSaved(false);
                     }
                 });
             }

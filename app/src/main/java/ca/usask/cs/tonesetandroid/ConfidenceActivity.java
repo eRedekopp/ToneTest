@@ -11,7 +11,6 @@ import android.view.View;
 import android.widget.Button;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Setup view for confidence activity
@@ -33,7 +32,6 @@ public class ConfidenceActivity extends Activity implements ModelListener {
     private Button yesButton, noButton, confSaveButton, exitButton;
 
     private String dialogSelectedItem; // for getSubsetFromUser()
-
 
     public static void setModel(Model aModel) {  // should be called from previous activity
         model = aModel;
@@ -94,6 +92,7 @@ public class ConfidenceActivity extends Activity implements ModelListener {
             @Override
             public void onClick(View v) {
                 fileController.handleConfSaveClick(context);
+                iModel.setResultsSaved(true);
             }
         });
 
@@ -162,7 +161,6 @@ public class ConfidenceActivity extends Activity implements ModelListener {
                     default:
                         throw new RuntimeException("Found unexpected selection value: " + dialogSelectedItem);
                 }
-                Log.d("optBuilder.onCancel", "subset = " + subset);
                 confController.beginConfidenceTest(subset);
             }
         });
@@ -172,7 +170,7 @@ public class ConfidenceActivity extends Activity implements ModelListener {
     public void modelChanged() {
         yesButton.setEnabled(iModel.yesEnabled);
         noButton.setEnabled(iModel.noEnabled);
-        confSaveButton.setEnabled(iModel.saveEnabled);
-        exitButton.setEnabled(true);
+        confSaveButton.setEnabled(iModel.saveEnabled && !iModel.resultsSaved);  // do not allow save if results already
+        exitButton.setEnabled(true);                                            // saved
     }
 }
