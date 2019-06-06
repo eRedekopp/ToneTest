@@ -169,8 +169,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
      * Performs an autoTest and sets HearingTestResults, then displays the current noise to a graph in a GraphActivity
      */
     private void goToAuto() {
-        Log.e("goToAuto", "Method not yet supported");
-        return;
+
+        // todo set hearing test results
+
+        FreqVolPair[] periodogram = controller.getPeriodogramFromLineIn(2048);
+        GraphActivity.setData(periodogram);
+
+        Intent graphIntent = new Intent(this, GraphActivity.class);
+        startActivity(graphIntent);
     }
 
     @Override
