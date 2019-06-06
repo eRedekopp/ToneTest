@@ -302,7 +302,7 @@ public class HearingTestController {
      * @param sampleSize The number of audio samples to use for the calculations (must be a power of 2)
      * @return FreqVolPairs representing each frequency bin and its corresponding amplitude in the periodogram
      */
-    private FreqVolPair[] getPeriodogramFromLineIn(int sampleSize) {
+    public FreqVolPair[] getPeriodogramFromLineIn(int sampleSize) {
         // todo : take multiple samples and average them?
 
         int freqBinWidth = Model.INPUT_SAMPLE_RATE / sampleSize;

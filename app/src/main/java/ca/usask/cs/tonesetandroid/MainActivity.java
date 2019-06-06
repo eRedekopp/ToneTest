@@ -32,12 +32,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     HearingTestController controller;
     FileNameController fileController;
 
-    Button rampButton, pureButton, heardButton, saveButton, confidenceButton;
+    Button rampButton, pureButton, autoButton,heardButton, saveButton, confidenceButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        // get read/write permissions
+        // get read/write/microphone permissions
         if (Build.VERSION.SDK_INT >= 23)
             requestPermissions(new String[]{
                             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         heardButton =       findViewById(R.id.heardButton);
         saveButton =        findViewById(R.id.saveButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
+        autoButton =        findViewById(R.id.autoButton);
 
         // set up event listeners for main screen
         pureButton.setOnClickListener(new View.OnClickListener() {
@@ -103,6 +104,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
             @Override
             public void onClick(View v) {
                 goToConfidence();
+            }
+        });
+        autoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goToAuto();
             }
         });
 
@@ -150,9 +157,20 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         startActivityForResult(initIntent, reqCode);
     }
 
+    /**
+     * Starts a Confidence Activity. Ensure that ConfidenceActivity.model is set before calling this
+     */
     private void goToConfidence() {
         Intent confIntent = new Intent(this, ConfidenceActivity.class);
         startActivity(confIntent);
+    }
+
+    /**
+     * Performs an autoTest and sets HearingTestResults, then displays the current noise to a graph in a GraphActivity
+     */
+    private void goToAuto() {
+        Log.e("goToAuto", "Method not yet supported");
+        return;
     }
 
     @Override
