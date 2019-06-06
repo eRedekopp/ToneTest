@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     HearingTestController controller;
     FileNameController fileController;
 
-    Button rampButton, pureButton, autoButton,heardButton, saveButton, confidenceButton;
+    Button rampButton, pureButton, autoButton,heardButton, saveButton, confidenceButton, resetButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         saveButton =        findViewById(R.id.saveButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
         autoButton =        findViewById(R.id.autoButton);
+        resetButton =       findViewById(R.id.resetButton);
 
         // set up event listeners for main screen
         pureButton.setOnClickListener(new View.OnClickListener() {
@@ -112,6 +113,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 goToAuto();
             }
         });
+        resetButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goToInit();
+            }
+        });
 
         // configure audio
         model.setAudioManager((AudioManager) this.getSystemService(Context.AUDIO_SERVICE));
@@ -127,9 +134,11 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     public void modelChanged() {
         rampButton.setEnabled(!iModel.isInTestMode());
         pureButton.setEnabled(!iModel.isInTestMode());
+        autoButton.setEnabled(!iModel.isInTestMode());
         heardButton.setEnabled(iModel.isInTestMode());
         confidenceButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
         saveButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
+        resetButton.setEnabled(!iModel.isInTestMode());
     }
 
     public void setModel(Model model) {
@@ -170,7 +179,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
      */
     private void goToAuto() {
 
-        // todo set hearing test results
+        // todo set hearing test results from periodogram
 
         FreqVolPair[] periodogram = controller.getPeriodogramFromLineIn(2048);
         GraphActivity.setData(periodogram);
@@ -179,6 +188,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         startActivity(graphIntent);
     }
 
+    /**
+     * Handle data received from InitActivity
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -189,6 +201,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
 
         this.model.setSubjectId(subjectID);
+        this.model.clearConfidenceTestResults();
+        this.model.clearResults();
+        this.model.setLastTestType(null);
         if (!pathName.equals(""))
             try {
                 FileNameController.initializeModelFromFileData(pathName, this.model);
