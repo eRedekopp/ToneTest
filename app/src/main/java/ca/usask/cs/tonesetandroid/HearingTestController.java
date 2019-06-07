@@ -163,7 +163,45 @@ public class HearingTestController {
             }
         });
         thread.start();
-        model.setLastTestType(Model.TestType.PureTone);
+    }
+
+    // todo update javadoc
+    /**
+     * see new-test-design.txt
+     *
+     * @author redekopp
+     */
+    public void hearingTest() {
+        // todo add a visual cue when tone plays?
+        int REDUCTION_RATE = 10;
+
+        // get upper estimates with rampUpTest()
+        this.rampUpTest();
+
+        // find lower limits by lowering volume
+        while (! this.model.currentVolumes.isEmpty()) {
+            this.model.reduceCurrentVolumes(); // todo
+            this.testFrequencies();
+        }
+        this.model.bottomVolEstimates = this.model.currentVolumes.clone(); // todo shoot lower?
+
+        // configure pairs to be tested
+        ArrayList<FreqVolPair> testVolumes = new ArrayList<>();
+            // ...
+
+        // test each pair
+        // todo new Object for storing results?
+            // ...
+
+    }
+
+    /**
+     * Test all frequencies in currentVolumes, remove from currentVolumes if not heard
+     */
+    private void testFrequencies() {
+        // todo require not heard twice?
+        // todo this
+        return;
     }
 
     /**
@@ -208,7 +246,7 @@ public class HearingTestController {
                     rampUp(rateOfRamp, freq, initialHeardVol / 10.0);
 
                     FreqVolPair results = new FreqVolPair(freq, model.volume);//record the frequency volume pair (the current frequency, the just heard Volume)
-                    model.hearingTestResults.add(results);//add the frequency volume pair to the results array list
+                    model.topVolEstimates.add(results);//add the frequency volume pair to the results array list
 
                     try {
                         Thread.sleep((long) (Math.random() * 2000 + 1000));
@@ -223,9 +261,9 @@ public class HearingTestController {
                     }
                 });
             }
+            model.setCurrentVolumes(model.getTopVolEstimates.clone());
         });
         thread.start();
-        model.setLastTestType(Model.TestType.Ramp);
     }
 
     /**
@@ -335,6 +373,20 @@ public class HearingTestController {
             freqBins[i] = new FreqVolPair(freq, vol);
         }
         return freqBins;
+    }
+
+    /**
+     * Reduce the volume component of each FreqVolPair in the list by the given percentage
+     * Mutates the original list
+     *
+     * @param lst A list of FreqVolPairs
+     * @param pct The percentage (in [0, 100]) by which to reduce each volume
+     */
+    public static void reduceAllByPercentage(List<FreqVolPair> lst, int pct) {
+        lst.forEach((fvp) -> {
+            lst.remove(fvp);
+            lst.add(new FreqVolPair(fvp.getFreq(), fvp.getVol() * (1 - pct/100)))
+        });
     }
 
     public void handlePureToneClick() {

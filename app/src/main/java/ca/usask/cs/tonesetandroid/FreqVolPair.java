@@ -7,7 +7,7 @@ import java.io.Serializable;
  *
  * @author alexscott
  */
-public class FreqVolPair {
+public class FreqVolPair implements Cloneable {
 
     float freq;
     double vol;
@@ -37,6 +37,10 @@ public class FreqVolPair {
 
     public String toString() {
         return String.format("Frequency: %f | Volume: %f", freq, vol);
+    }
+
+    public FreqVolPair clone() {
+        return new FreqVolPair(this.freq, this.vol);
     }
 
 }

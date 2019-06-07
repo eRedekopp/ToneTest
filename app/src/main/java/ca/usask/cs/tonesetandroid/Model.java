@@ -21,8 +21,6 @@ import java.util.List;
  */
 public class Model {
 
-    public enum TestType {PureTone, Ramp}       // enum for types of hearing tests
-
     private ArrayList<ModelListener> subscribers;
 
     private AudioManager audioManager;
@@ -39,10 +37,11 @@ public class Model {
     byte[] buf;
 
     // Vars for storing results
-    ArrayList<FreqVolPair> hearingTestResults;  // The "just audible" volume for each frequency tested in the most 
-                                                // recent pure/ramp test (or loaded from file)
+    // todo clean up getters and setters messed up cause of this
+    ArrayList<FreqVolPair> topVolEstimates;     // The rough estimates for volumes which have P(heard) = 1
+    ArrayList<FreqVolPair> bottomVolEstimates;  // The rough estimates for volumes which have P(heard) = 0
+    ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
     private int subjectId = -1;     // -1 indicates not set
-    private TestType lastTestType;
 
     // vars for confidence test
     private ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
@@ -287,14 +286,6 @@ public class Model {
 
     public int getSubjectId() {
         return this.subjectId;
-    }
-
-    public void setLastTestType(TestType type) {
-        this.lastTestType = type;
-    }
-
-    public TestType getLastTestType() {
-        return this.lastTestType;
     }
 
     public ArrayList<FreqVolPair> getHearingTestResults() {
