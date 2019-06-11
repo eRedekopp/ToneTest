@@ -21,15 +21,26 @@ import java.util.List;
  */
 public class Model {
 
-    public enum TestType {PureTone, Ramp}       // enum for types of hearing tests
-
     private ArrayList<ModelListener> subscribers;
 
     private AudioManager audioManager;
 
-    private boolean audioPlaying;
+    private boolean audioPlaying;  // todo delete?
 
-    // Vars for audio
+    // vars/values for hearing test
+    private static final float HEARING_TEST_REDUCE_RATE = 0.1f; // reduce by 10% each time
+    static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;
+    static final int NUMBER_OF_VOLS_PER_FREQ = 5;  // number of volumes to test for each frequency
+    static final int NUMBER_OF_TESTS_PER_VOL = 3;  // number of times to repeat each freq-vol combination in the test
+    ArrayList<FreqVolPair> topVolEstimates;     // The rough estimates for volumes which have P(heard) = 1
+    ArrayList<FreqVolPair> bottomVolEstimates;  // The rough estimates for volumes which have P(heard) = 0
+    ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
+    HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
+    // (for finding bottom estimates)
+    ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
+    HearingTestResultsContainer testResults;  // final results of test
+
+    // Vars/values for audio
     AudioTrack lineOut;
     public static final int OUTPUT_SAMPLE_RATE  = 44100; // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
@@ -38,38 +49,83 @@ public class Model {
     double volume;          // amplitude multiplier
     byte[] buf;
 
-    // Vars for storing results
-    ArrayList<FreqVolPair> hearingTestResults;  // The "just audible" volume for each frequency tested in the most 
-                                                // recent pure/ramp test (or loaded from file)
+    // Vars for participant config
     private int subjectId = -1;     // -1 indicates not set
-    private TestType lastTestType;
 
     // vars for confidence test
-    private ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
-    private ArrayList<FreqVolPair> confidenceCalibPairs; // freq-vol pairs used to calibrate the next confidence test
-    public static final float[] CONF_FREQS   = {220, 440, 880, 1760, 3520, 7040};  // 6 octaves of A
+    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 6;
+    ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
+    ArrayList<FreqVolPair> confidenceCalibPairs; // freq-vol pairs used to calibrate the next confidence test
+    public static final float[][] CONF_FREQS   = {};
     ArrayList<ConfidenceSingleTestResult> confidenceTestResults;
 
     public Model() {
         buf = new byte[2];
         subscribers = new ArrayList<>();
-        hearingTestResults = new ArrayList<>();
         confidenceTestPairs = new ArrayList<>();
         confidenceTestResults = new ArrayList<>();
+        topVolEstimates = new ArrayList<>();
+        bottomVolEstimates = new ArrayList<>();
+        currentVolumes = new ArrayList<>();
+        confidenceTestResults = new ArrayList<>();
+        testPairs = new ArrayList<>();
     }
 
     /**
      * Clear any results saved in the model
      */
     public void clearResults() {
-        hearingTestResults = new ArrayList<>();
+        this.topVolEstimates = new ArrayList<>();
+        this.bottomVolEstimates = new ArrayList<>();
+        this.currentVolumes = new ArrayList<>();
+        this.confidenceTestResults = new ArrayList<>();
+        this.testPairs = new ArrayList<>();
     }
 
     /**
-     * @return True if this model has results saved to it, else false
+     * @return True if this model has hearing test results saved to it, else false
      */
     public boolean hasResults() {
-        return hearingTestResults.size() != 0;
+        return this.testResults.isEmpty();
+    }
+
+    /**
+     * @return True if there are still frequencies that need to be tested, else False
+     */
+    public boolean continueTest() {
+        if (currentVolumes.isEmpty()) return false;
+        else
+            for (Integer n : timesNotHeardPerFreq.values()) if (n < TIMES_NOT_HEARD_BEFORE_STOP) return true;
+        return false;
+    }
+
+    /**
+     * Set currentVolumes to contain all frequencies and volumes to be tested during the main stage of the hearing test
+     */
+    public void configureTestPairs() {
+        for (float freq : this.testResults.getFreqs()) {
+            double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
+            double topVolEst = getVolForFreq(topVolEstimates, freq);
+            for (double vol = bottomVolEst; // todo does this add an extra one to the list since it's <= ?
+                 vol <= topVolEst;
+                 vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
+                testPairs.add(new FreqVolPair(freq, vol));
+            }
+        }
+    }
+
+    public void configureConfidenceTestPairs() {
+        // todo
+    }
+
+    public float getProbabilityFVP(float freq, double vol) {
+        if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
+        return this.testResults.getProbOfHearingFVP(freq, vol);
+    }
+
+    public float getProbabilityFVP(FreqVolPair fvp) {
+        if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
+        return this.testResults.getProbOfHearingFVP(fvp.getFreq(), fvp.getVol());
     }
 
     /**
@@ -77,7 +133,7 @@ public class Model {
      */
     public void configureAudio() {
         this.setUpLineOut();
-        this.enforceMaxVoume();
+        this.enforceMaxVolume();
         this.duration_ms = 1500;
         this.audioPlaying = true;
     }
@@ -117,14 +173,14 @@ public class Model {
         AudioRecord recorder;
         if (Build.VERSION.SDK_INT >= 23)
             recorder = new AudioRecord.Builder()
-                .setAudioSource(MediaRecorder.AudioSource.MIC)
-                .setAudioFormat(new AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(INPUT_SAMPLE_RATE)
-                        .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
-                        .build())
-                .setBufferSizeInBytes(size)
-                .build();
+                    .setAudioSource(MediaRecorder.AudioSource.MIC)
+                    .setAudioFormat(new AudioFormat.Builder()
+                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                            .setSampleRate(INPUT_SAMPLE_RATE)
+                            .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
+                            .build())
+                    .setBufferSizeInBytes(size)
+                    .build();
         else
             recorder = new AudioRecord(
                     MediaRecorder.AudioSource.MIC,
@@ -175,31 +231,14 @@ public class Model {
     }
 
     /**
-     * Configure the array of frequency volume pairs that are to be used during the confidence test
-     * This includes +/- 0%, +/-20%, -30%, and +/-40% above/below the calibration volume of
-     * the nearest frequency
+     * Reduce all elements of currentVolumes by
      */
-    public void configureConfidenceTestPairs(){
-        configureConfidenceTestPairs(hearingTestResults);
-    }
-
-    /**
-     * Same as the other method except calibrate based on the results in calibList instead of hearingTestResults
-     *
-     * @param calibList A list of calibration frequencies and volumes
-     */
-    public void configureConfidenceTestPairs(List<FreqVolPair> calibList) {
-        confidenceCalibPairs = (ArrayList<FreqVolPair>) calibList;
-        for(float freq: CONF_FREQS) {
-            double vol = getEstimatedMinVolume(freq, calibList);
-            confidenceTestPairs.add(new FreqVolPair(freq, vol));      // +/-0%
-            confidenceTestPairs.add(new FreqVolPair(freq, vol*1.2));  // +20%
-            confidenceTestPairs.add(new FreqVolPair(freq, vol*0.8));  // -20%
-            confidenceTestPairs.add(new FreqVolPair(freq, vol*1.4));  // +40%
-            confidenceTestPairs.add(new FreqVolPair(freq, vol*0.6));  // -40%
-            confidenceTestPairs.add(new FreqVolPair(freq, vol*0.7));  // -30%
-//            confidenceTestPairs.add(new FreqVolPair(freq, vol*1.1));  // +10%
-//            confidenceTestPairs.add(new FreqVolPair(freq, vol*0.9));  // -10%
+    public void reduceCurrentVolumes() {
+        for (FreqVolPair fvp : currentVolumes) {
+            // only reduce volumes of frequencies still being tested
+            if (timesNotHeardPerFreq.get(fvp.getFreq()) > TIMES_NOT_HEARD_BEFORE_STOP) continue;
+            currentVolumes.remove(fvp);
+            currentVolumes.add(new FreqVolPair(fvp.getFreq(), fvp.getVol() * (1 - HEARING_TEST_REDUCE_RATE)));
         }
     }
 
@@ -227,25 +266,30 @@ public class Model {
     /**
      * Forces the volume of the output stream to max
      */
-    public void enforceMaxVoume() {
+    public void enforceMaxVolume() {
         audioManager.setStreamVolume( // pin volume to max
                 AudioManager.STREAM_MUSIC,
                 audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
                 AudioManager.FLAG_PLAY_SOUND);
     }
 
-    /**
-     * Gets the estimated "just audible" volume for the given frequency, given the results of the hearing test
-     *
-     * @param freq The frequency whose just audible volume is to be estimated
-     * @return The estimated just audible volume of freq
-     */
-    public double getEstimatedMinVolume(float freq) {
-        // Estimate by using the volume of the closest calibrated frequency
-        if (!this.hasResults()) throw new IllegalStateException("No test results loaded");
-        HashMap<Float, Double> resultMap = new HashMap<>();
-        for (FreqVolPair p : hearingTestResults) resultMap.put(p.freq, p.vol);
-        return resultMap.get(ConfidenceController.getClosestKey(freq, resultMap));
+    public float getProbOfHearing(FreqVolPair fvp) {
+        float freq = fvp.getFreq();
+        double vol = fvp.getVol();
+
+        // find frequencies tested just above and below fvp.freq
+        float freqAbove = findNearestAbove(fvp.getFreq(), this.testResults.getFreqs());
+        float freqBelow = findNearestBelow(fvp.getFreq(), this.testResults.getFreqs());
+
+        // find the probabilities of each of these frequencies
+        float probAbove = this.testResults.getProbOfHearingFVP(freqAbove, vol);
+        float probBelow = this.testResults.getProbOfHearingFVP(freqBelow, vol);
+
+        // how far of the way between freqBelow and freqAbove is fvp.freq?
+        float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
+
+        // estimate this probability linearly between the results above and below
+        return probBelow + pctBetween * (probAbove - probBelow);
     }
 
     /**
@@ -289,17 +333,9 @@ public class Model {
         return this.subjectId;
     }
 
-    public void setLastTestType(TestType type) {
-        this.lastTestType = type;
-    }
-
-    public TestType getLastTestType() {
-        return this.lastTestType;
-    }
-
-    public ArrayList<FreqVolPair> getHearingTestResults() {
-        return this.hearingTestResults;
-    }
+//    public ArrayList<FreqVolPair> getHearingTestResults() {
+//        return this.hearingTestResults;
+//    }
 
     public void setAudioManager(AudioManager audioManager) {
         this.audioManager = audioManager;
@@ -313,20 +349,62 @@ public class Model {
         this.audioPlaying = false;
     }
 
+    public ArrayList<FreqVolPair> getCurrentVolumes() {
+        return currentVolumes;
+    }
+
+    public void setCurrentVolumes(ArrayList<FreqVolPair> currentVolumes) {
+        this.currentVolumes = currentVolumes;
+    }
+
+    /**
+     * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being greater than f
+     */
+    public static float findNearestAbove(float f, Float[] lst) {
+        float closest = -1f;
+        float distance = Float.MAX_VALUE;
+        for (float freq : lst) {
+            if (0 < freq - f && freq - f < distance) {
+                closest = freq;
+                distance = freq - f;
+            }
+        }
+        return closest;
+    }
+
+    /**
+     * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being less than f
+     */
+    public static float findNearestBelow(float f, Float[] lst) {
+        float closest = -1f;
+        float distance = Float.MAX_VALUE;
+        for (float freq : lst) {
+            if (0 < f - freq && f - freq < distance) {
+                closest = freq;
+                distance = f - freq;
+            }
+        }
+        return closest;
+    }
+
+    /**
+     * Given a list of FreqVolPairs, return the volume associated with the given frequency in a pair
+     *
+     * @param list A list of freqvolpairs
+     * @param freq The frequency whose corresponding volume is to be returned
+     * @throws IllegalArgumentException if there is no pair with the given frequency
+     */
+    public static double getVolForFreq(List<FreqVolPair> list, Float freq) throws IllegalArgumentException {
+        for (FreqVolPair fvp : list) if (fvp.getFreq() == freq) return fvp.getVol();
+        throw new IllegalArgumentException("Requested frequency not present in list");
+    }
+
     /**
      * Print the contents of hearingTestResults to the console (for testing)
      */
     public void printResultsToConsole() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("### Test Results ###\n");
-        builder.append(String.format("Test Subject ID: %d | Test Type: %s\n", this.subjectId, this.lastTestType));
-        if (hearingTestResults.isEmpty())
-            System.out.println("No results stored in model");
-        else for (FreqVolPair fvp : hearingTestResults) {
-            builder.append(fvp.toString());
-            builder.append('\n');
-        }
-        Log.i("Model Results", builder.toString());
+        if (testResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
+        else Log.i("printResultsToConsole", testResults.toString());
     }
 
 }

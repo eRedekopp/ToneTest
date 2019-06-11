@@ -68,9 +68,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.controller.setiModel(newIModel);
         this.fileController.setModel(this.model);
 
-        ConfidenceActivity.setModel(this.model);
-        ConfidenceActivity.setFileController(this.fileController);
-
         // set up view elements for main screen
         rampButton =        findViewById(R.id.rampButton);
         pureButton =        findViewById(R.id.pureButton);
@@ -101,12 +98,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         saveButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 fileController.handleSaveCalibClick(context);
-            }
-        });
-        confidenceButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                goToConfidence();
             }
         });
         autoButton.setOnClickListener(new View.OnClickListener() {
@@ -186,14 +177,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     }
 
     /**
-     * Starts a Confidence Activity. Ensure that ConfidenceActivity.model is set before calling this
-     */
-    private void goToConfidence() {
-        Intent confIntent = new Intent(this, ConfidenceActivity.class);
-        startActivity(confIntent);
-    }
-
-    /**
      * Performs an autoTest and sets HearingTestResults, then displays the current noise to a graph in a GraphActivity
      */
     private void goToAuto() {
@@ -222,7 +205,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.model.setSubjectId(subjectID);
         this.model.clearConfidenceTestResults();
         this.model.clearResults();
-        this.model.setLastTestType(null);
         if (!pathName.equals(""))
             try {
                 FileNameController.initializeModelFromFileData(pathName, this.model);

@@ -24,161 +24,163 @@ public class HearingTestController {
     Model model;
     HearingTestInteractionModel iModel;
 
-
-    private static float VOLUME_MULTIPLIER = 1.33f;
+    private static final int TONE_DURATION_MS = 1500;
 
     /**
-     * Perform a Pure Tone test
+     * Perform a full hearing test
      *
-     * Plays the specified tone (as denoted by frequency and amplitude) for
-     * duration_ms milliseconds
-     *
-     * Play a tone loud enough that they should hear it Decrease by 10 dB until
-     * they no longer hear it Increase by 5dB until they can hear it Go back to
-     * the point they could not hear the tone at and increase again until they
-     * get two matching within 10%
+     * @author redekopp
      */
-    public void pureTone() {
+    @SuppressWarnings("unchecked")
+    public void hearingTest() {
+        // todo test/tweak this
 
-        model.clearResults();
-        iModel.notHeard();
+        // Algorithm:
+        //      1 Get estimates for volumes at which the listener will hear the tone 100% of the time for each frequency
+        //          - Use RampTest because it tends to overshoot anyway
+        //      2 Get estimates for volumes at which the listener will hear the tone 0% of the time for each frequency
+        //          - Slowly reduce volumes from RampTest levels until listener can't hear tone
+        //      3 Select a set of volumes between the two estimates to test for each frequency
+        //      4 Test all frequency-volume combinations selected in step 3 and store the results
+        //          - Referred to elsewhere as "main test"
 
-        // for updating gui elements in main thread
-        final Handler mainHandler = new Handler(Looper.getMainLooper());
+        iModel.setTestMode(true);
+        model.configureAudio();
 
+        // get upper estimates with rampUpTest()
+        this.rampUpTest();
 
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                model.configureAudio();
-                try {
-                    model.lineOut.play();
-                    ArrayList<Double> justAudibleVol = new ArrayList<>();
-                    for (float freq : Model.FREQUENCIES) {
-                        iModel.notHeardTwice();
-                        model.volume = 500;
-                        boolean decreasePhase = false;
-                        boolean increasePhase = false;
-                        double notHeardVol = 1;//initially assign to 1;
-                        justAudibleVol.clear();
-                        while (!iModel.heardTwice) {
-                            model.enforceMaxVoume();  // force max volume always
-                            if (! model.audioPlaying()) return;
-                            iModel.notHeard();
-                            for (int i = 0; i < model.duration_ms * (float) 44100 / 1000; i++) {
-                                //1000 ms in 1 second
-                                if (iModel.heard) {
-                                    break;
-                                }
-                                float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
-                                double angle = 2 * i / (period) * Math.PI;
-                                short a = (short) (Math.sin(angle) * model.volume);
-                                model.buf[0] = (byte) (a & 0xFF); //write lower 8bits (________WWWWWWWW) out of 16
-                                model.buf[1] = (byte) (a >> 8); //write upper 8bits (WWWWWWWW________) out of 16
-                                model.lineOut.write(model.buf, 0, 2);
-                            }
+        // use upper estimates as a starting off point for lowering volumes
+        model.currentVolumes = (ArrayList) model.topVolEstimates.clone();
 
-                            if (model.volume == 32767) {
-                                //this condition was added to avoid dealing with an infinite loop in the unlikely case that the user never heard the tone
-                                model.hearingTestResults.add(new FreqVolPair(freq, model.volume));
-                                try {
-                                    Thread.sleep((long) (Math.random() * 4000 + 1000)); //silence for 1-5 seconds
-                                } catch (InterruptedException e) { break; }
-                                break;
-                            } else if (!iModel.heard && !decreasePhase && !increasePhase) {
-                                //We began the test at a volume that should be noticeable for most people
-                                //If the tone was not detected, increase the volume in steps so that they can hear it
-                                model.volume *= 10; //should be +10dB
-
-                                //do not exceed maximum volume;
-                                //this condition should never happen as we start well max volume
-                                if (model.volume > 32767) {
-                                    model.volume = 32767;
-                                }
-                            } else if (iModel.heard && !decreasePhase && !increasePhase) {
-                                //The user heard the tone, now we decrease the volume
-                                // in an effort to reduce it enough so they can't hear it
-                                decreasePhase = true;
-                                model.volume /= 5;
-                            } else if (iModel.heard && decreasePhase) {
-                                //Even though we previously decreased the volume of the tone
-                                //they still heard it. Continue to decrease it until they can no longer hear it
-                                model.volume /= 5; //decrease until they no longer hear the tone
-                            } else if (!iModel.heard && decreasePhase) {
-                                //The volume of the tone was decreased to the point they could not hear it
-                                //Begin increasing the volume in a smaller step until they can eventually hear it (just heard point)
-                                notHeardVol = model.volume;
-                                decreasePhase = false;
-                                increasePhase = true;
-                                model.volume *= VOLUME_MULTIPLIER;
-
-                                //do not exceed maximum volume;
-                                if (model.volume > 32767) {
-                                    model.volume = 32767;
-                                }
-                            } else if (!iModel.heard && increasePhase) {
-                                //The volume of the tone was previously increased, but the user still did not hear it
-                                //Increase the volume by another small step
-                                model.volume *= VOLUME_MULTIPLIER;
-
-                                //do not exceed maximum volume;
-                                if (model.volume > 32767) {
-                                    model.volume = 32767;
-                                }
-
-                            } else if (iModel.heard && increasePhase) {
-                                //We previously found the point where the user could not hear the tone
-                                //We than increased the volume just enough so that they could hear it
-                                //Record this volume that they heard it at
-                                //Redo this entire process for this frequency until we get the same result (within 10%)
-                                //twice
-                                if (containsWithinError(justAudibleVol, model.volume, 0.1f)) {
-                                    iModel.toneHeardTwice();
-                                    model.hearingTestResults.add(new FreqVolPair(freq, model.volume));
-                                } else {
-                                    justAudibleVol.add(model.volume);
-                                }
-                                model.volume = 0.5 * Collections.min(justAudibleVol);
-                            }
-                            //Silence for 1-5 seconds
-                            try {
-                                Thread.sleep((long) (Math.random() * 4000 + 1000)); //silence for 1-5 seconds
-                            } catch (InterruptedException e) { e.printStackTrace(); }
-                            System.out.println("Freq: " + freq + ", Vol: " + model.volume + "Just audible vol: " + justAudibleVol);
-                        }
-                    }
-                    model.lineOut.stop();
-                } finally {
-                    model.audioTrackCleanup();
+        // find lower limits by lowering volume until user can't hear
+        while (model.continueTest()) {
+            this.model.reduceCurrentVolumes();
+            new Thread(new Runnable() {         // run test on new thread
+                @Override
+                public void run() {
+                    testCurrentVolumes();
                 }
+            }).run();
+        }
+        // set bottom estimates after results found for each frequency
+        this.model.bottomVolEstimates = (ArrayList) this.model.currentVolumes.clone();
 
-                //The user can no longer click the heard button since the test is over
-                //The user can now start a new hearing test
-                mainHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        iModel.setTestMode(false);
-                    }
-                });
+        // configure pairs to be tested
+        this.model.configureTestPairs();
+
+        // test each pair and store results in model
+        new Thread(new Runnable() {
+            @Override
+            public void run() {     // run on new thread
+                mainTest();
             }
-        });
-        thread.start();
-        model.setLastTestType(Model.TestType.PureTone);
+        }).run();
+
+        iModel.setTestMode(false);
+        model.audioTrackCleanup();
     }
 
     /**
-     * Perform a ramp up test
+     * Test frequencies at model.currentVolumes and update model accordingly
+     */
+    @SuppressWarnings("ConstantConditions")
+    private void testCurrentVolumes() {
+        Collections.shuffle(model.currentVolumes);  // test in random order each time
+        for (FreqVolPair fvp : model.currentVolumes) {
+            // only test frequencies whose bottom ends hasn't already been estimated
+            if (model.timesNotHeardPerFreq.get(fvp.getFreq()) > Model.TIMES_NOT_HEARD_BEFORE_STOP) continue;
+
+            // play the sine, update the map if not heard
+            this.playSine(fvp.getFreq(), fvp.getVol(), TONE_DURATION_MS);
+            if (! iModel.heard)
+                HearingTestSingleFreqResult.mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
+                        model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
+
+        }
+    }
+
+    /**
+     * Perform the "main" hearing test: test all frequencies in testPairs and save results in model
+     *
+     * Runs on the current thread: do not call this function from the UI thread
+     */
+    private void mainTest() {
+
+        // put copies of pairs from testPairs into a new list such that it contains one freqvolpair for each trial in
+        // this whole part of the test, then shuffle the new list
+        ArrayList<FreqVolPair> allTests = new ArrayList<>();
+        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(model.testPairs);
+        Collections.shuffle(allTests);
+
+        // run all the trials
+        for (FreqVolPair trial : allTests) {
+            playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
+            model.testResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+        }
+    }
+
+    public void confidenceTest() {
+        // todo
+
+        // configure model for test
+        iModel.setTestMode(true);
+        model.configureAudio();
+        model.configureConfidenceTestPairs();
+
+        final ArrayList<Integer> indices = new ArrayList<>();  // for randomizing test order
+        ConfidenceSingleTestResult[] results = new ConfidenceSingleTestResult[model.confidenceTestPairs.size()];
+        for (int i = 0; i < results.length; i++) {
+            FreqVolPair fvp = model.confidenceTestPairs.get(i);
+            ConfidenceSingleTestResult result = new ConfidenceSingleTestResult(model.getProbabilityFVP(fvp), fvp);
+            indices.add(i);
+        }
+
+        for (int k = 0; k < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; k++) {
+            Collections.shuffle(indices);
+            // todo test each frequency
+            // todo turn entire method into new thread for this test and regular hearing test?
+        }
+
+
+
+    }
+
+    /**
+     * Play a sine wave through the Model at the given frequency and volume for the given amount of time.
+     * Sets iModel.heard to false before playing, returns if iModel.heard becomes true.
+     *
+     * @param freq The frequency of the sine wave to be played
+     * @param vol The volume of the sine wave to be played
+     * @param duration_ms The duration of the sine wave in milliseconds
+     */
+    private void playSine(float freq, double vol, int duration_ms) {
+        iModel.notHeard();
+        model.enforceMaxVolume();
+        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+            if (iModel.heard) break;
+
+            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
+            double angle = 2 * i / (period) * Math.PI;
+            short a = (short) (Math.sin(angle) * vol);
+            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+            model.lineOut.write(model.buf, 0, 2);
+        }
+    }
+
+    /**
+     * Perform a ramp up test, and set the results as the top estimates in the model
      *
      * For each frequency, start quiet then get louder until user hears tone, then go to a fraction of that volume
      * and ramp up again, but slower.
+     *
+     * @author alexscott
      */
     public void rampUpTest() {
 
         iModel.notHeard();
         model.clearResults();
-
-        // for updating gui elements on main thread
-        final Handler mainHandler = new Handler(Looper.getMainLooper());
 
         Thread thread = new Thread(new Runnable() {
             @Override
@@ -208,7 +210,7 @@ public class HearingTestController {
                     rampUp(rateOfRamp, freq, initialHeardVol / 10.0);
 
                     FreqVolPair results = new FreqVolPair(freq, model.volume);//record the frequency volume pair (the current frequency, the just heard Volume)
-                    model.hearingTestResults.add(results);//add the frequency volume pair to the results array list
+                    model.topVolEstimates.add(results);//add the frequency volume pair to the results array list
 
                     try {
                         Thread.sleep((long) (Math.random() * 2000 + 1000));
@@ -216,16 +218,9 @@ public class HearingTestController {
                 }
                 model.audioTrackCleanup();
 
-                mainHandler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        iModel.setTestMode(false);
-                    }
-                });
             }
         });
         thread.start();
-        model.setLastTestType(Model.TestType.Ramp);
     }
 
     /**
@@ -241,7 +236,7 @@ public class HearingTestController {
      */
     public void rampUp(double rateOfRamp, float freq, double startingVol) {
 
-        model.enforceMaxVoume(); // force max volume always
+        model.enforceMaxVolume(); // force max volume always
 
         for (model.volume = startingVol; model.volume < 32767; model.volume *= rateOfRamp) {
             if (! model.audioPlaying()) return;
@@ -287,11 +282,11 @@ public class HearingTestController {
      * @author redekopp
      */
     public void autoTest() {
-        
+
         FreqVolPair[] periodogram = this.getPeriodogramFromLineIn(2048);
 
 
-        
+
 
 
     }
@@ -310,7 +305,7 @@ public class HearingTestController {
         // Object for performing FFTs: handle real inputs of size sampleSize
         NoiseOptimized noise = Noise.real().optimized().init(sampleSize, true);
 
-        // apply hann window to reduce noise
+        // apply Hann window to reduce noise
         float[] rawMicData = model.getAudioSample(sampleSize);
         float[] fftInput = applyHannWindow(rawMicData);
 
@@ -338,8 +333,7 @@ public class HearingTestController {
     }
 
     public void handlePureToneClick() {
-        this.iModel.setTestMode(true);
-        pureTone();
+        // todo deal with gui
     }
 
     public void handleRampUpClick() {
