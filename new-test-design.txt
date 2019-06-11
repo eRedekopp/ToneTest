@@ -1,0 +1,10 @@
+1. Perform ramp test
+2. Reduce until not heard
+3. Choose tested frequencies from slightly below not-heard
+   volume to ramp-test volumes
+4. Test each frequency some number of times
+5. Estimate sigmoid curve from results
+
+Results will be in the form of a new Object which has, for each frequency,
+a list of volumes and whether they were heard at that volume. These
+results will be used to estimate the sigmoid
