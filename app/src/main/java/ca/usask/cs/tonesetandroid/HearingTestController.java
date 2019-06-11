@@ -56,12 +56,13 @@ public class HearingTestController {
 
                 // find lower limits by lowering volume until user can't hear
                 while (model.continueTest()) {
-                    Log.d("asdf", model.currentVolumes.toString());
+                    Log.d("curVol", model.currentVolumes.toString());
                     model.reduceCurrentVolumes();
                     testCurrentVolumes();
                 }
                 // set bottom estimates after results found for each frequency
                 model.bottomVolEstimates = (ArrayList) model.currentVolumes.clone();
+                Log.d("botVolEst", model.bottomVolEstimates.toString());
 
                 // configure pairs to be tested
                 model.configureTestPairs();
