@@ -81,6 +81,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 // todo
             }
         });
+        confidenceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showErrorDialog("Confidence Test Unavailable");
+            }
+        });
         heardButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -88,8 +94,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
             }
         });
         saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
             public void onClick(View v) {
-                fileController.handleSaveCalibClick(context);
+//                fileController.handleSaveCalibClick(context);
+                showErrorDialog("File IO Unavailable");
             }
         });
         resetButton.setOnClickListener(new View.OnClickListener() {

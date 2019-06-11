@@ -332,17 +332,12 @@ public class HearingTestController {
         return freqBins;
     }
 
-    public void handlePureToneClick() {
-        // todo deal with gui
+    public void handleCalibClick() {
+        // todo
     }
 
-    public void handleRampUpClick() {
-        //Make it so the user can't begin another test
-        iModel.setTestMode(true);
-        iModel.notifySubscribers();
-
-        //Run the hearing test
-        rampUpTest();
+    public void handleConfClick() {
+        // todo
     }
 
     public void handleHeardClick() {
