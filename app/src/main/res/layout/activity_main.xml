@@ -8,28 +8,16 @@
     tools:context=".MainActivity">
 
     <Button
-        android:id="@+id/rampButton"
+        android:id="@+id/calibButton"
         android:layout_width="275dp"
         android:layout_height="75dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
-        android:text="Ramp Test"
+        android:text="Calibration Test"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/pureButton"
-        android:layout_width="275dp"
-        android:layout_height="75dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="25dp"
-        android:layout_marginEnd="8dp"
-        android:text="Pure Tone Test"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/rampButton" />
 
     <Button
         android:id="@+id/heardButton"
@@ -50,7 +38,7 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="8dp"
-        android:text="Save Calibration"
+        android:text="Save"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/heardButton" />
@@ -65,21 +53,7 @@
         android:text="Confidence Test"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/autoButton" />
-
-    <Button
-        android:id="@+id/autoButton"
-        android:layout_width="275dp"
-        android:layout_height="75dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="25dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:text="Auto Test"
-        app:layout_constraintBottom_toTopOf="@+id/confidenceButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pureButton" />
+        app:layout_constraintTop_toBottomOf="@+id/calibButton" />
 
     <Button
         android:id="@+id/resetButton"

@@ -112,6 +112,13 @@ public class Model {
                 testPairs.add(new FreqVolPair(freq, vol));
             }
         }
+
+        // todo delete this after making sure this works
+        if (testPairs.size() > NUMBER_OF_VOLS_PER_FREQ * testResults.getFreqs().length)
+            Log.d(  "ConfigureTestPairs",
+                    String.format("TestPairs contains %d pairs, expected %d",
+                    testPairs.size(), NUMBER_OF_VOLS_PER_FREQ * testResults.getFreqs().length)
+            );
     }
 
     public void configureConfidenceTestPairs() {
@@ -219,7 +226,7 @@ public class Model {
      * @param freq The frequency of the sine wave
      * @return PCM float values corresponding to a sine wave of the given frequency
      */
-    public float[] sineWave(int freq, int nSamples) {
+    public static float[] sineWave(int freq, int nSamples) {
         float[] output = new float[nSamples];
         float period = Model.INPUT_SAMPLE_RATE / (float) freq;
 
@@ -303,7 +310,7 @@ public class Model {
         if (calibList.isEmpty()) throw new IllegalArgumentException("Calibration list is empty");
         HashMap<Float, Double> resultMap = new HashMap<>();
         for (FreqVolPair p : calibList) resultMap.put(p.freq, p.vol);
-        return resultMap.get(ConfidenceController.getClosestKey(freq, resultMap));
+        return resultMap.get(getClosestKey(freq, resultMap));
     }
 
     /**
@@ -405,6 +412,19 @@ public class Model {
     public void printResultsToConsole() {
         if (testResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", testResults.toString());
+    }
+
+    /**
+     * Given a Float:Double hashmap, return the Float key closest to the given float f
+     *
+     * @param f The number that the answer should be closest to
+     * @param map The map containing Float:Double pairs
+     * @return The closest key to f in the map
+     */
+    public static Float getClosestKey(Float f, HashMap<Float, Double> map) {
+        Float closest = Float.POSITIVE_INFINITY;
+        for (Float cur : map.keySet()) if (Math.abs(cur - f) < Math.abs(closest - f)) closest = cur;
+        return closest;
     }
 
 }

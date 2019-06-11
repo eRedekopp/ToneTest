@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     HearingTestController controller;
     FileNameController fileController;
 
-    Button rampButton, pureButton, autoButton,heardButton, saveButton, confidenceButton, resetButton;
+    Button calibButton, heardButton, saveButton, confidenceButton, resetButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,19 +69,16 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.fileController.setModel(this.model);
 
         // set up view elements for main screen
-        rampButton =        findViewById(R.id.rampButton);
-        pureButton =        findViewById(R.id.pureButton);
+        calibButton =        findViewById(R.id.calibButton);
         heardButton =       findViewById(R.id.heardButton);
         saveButton =        findViewById(R.id.saveButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
-        autoButton =        findViewById(R.id.autoButton);
         resetButton =       findViewById(R.id.resetButton);
 
         // set up event listeners for main screen
-        pureButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                controller.handlePureToneClick();
+        calibButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View view) {
+                // todo
             }
         });
         heardButton.setOnClickListener(new View.OnClickListener() {
@@ -90,20 +87,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 controller.handleHeardClick();
             }
         });
-        rampButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                controller.handleRampUpClick();
-            }
-        });
         saveButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 fileController.handleSaveCalibClick(context);
-            }
-        });
-        autoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                goToAuto();
             }
         });
         resetButton.setOnClickListener(new View.OnClickListener() {
@@ -142,9 +128,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
      * Enable/disable the buttons given the new status of the Model and iModel
      */
     public void modelChanged() {
-        rampButton.setEnabled(!iModel.isInTestMode());
-        pureButton.setEnabled(!iModel.isInTestMode());
-        autoButton.setEnabled(!iModel.isInTestMode());
+        calibButton.setEnabled(!iModel.isInTestMode());
         heardButton.setEnabled(iModel.isInTestMode());
         confidenceButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
         saveButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
@@ -181,7 +165,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
      */
     private void goToAuto() {
 
-        // todo set hearing test results from periodogram
+        // todo implement autoTest later on
 
         FreqVolPair[] periodogram = controller.getPeriodogramFromLineIn(2048);
         GraphActivity.setData(periodogram);
@@ -228,5 +212,16 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+    }
+
+    /**
+     * Show a dialog with title "Error" and the given message
+     * @param message The message to be displayed
+     */
+    private void showErrorDialog(String message) {
+        AlertDialog.Builder warningBuilder = new AlertDialog.Builder(this);
+        warningBuilder.setTitle("Error");
+        warningBuilder.setMessage(message);
+        warningBuilder.show();
     }
 }
