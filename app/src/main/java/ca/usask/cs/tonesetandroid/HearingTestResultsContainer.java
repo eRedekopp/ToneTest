@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class HearingTestResultsContainer {
 
@@ -48,7 +49,9 @@ public class HearingTestResultsContainer {
      * @return An array of all the frequencies with data stored in the model
      */
     public Float[] getFreqs() {
-        return (Float[]) allResults.keySet().toArray();
+        Float[] outArr = new Float[allResults.size()];
+        allResults.keySet().toArray(outArr);
+        return outArr;
     }
 
 }

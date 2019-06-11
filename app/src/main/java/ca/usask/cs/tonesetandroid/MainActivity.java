@@ -78,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                // todo
+                controller.handleCalibClick();
             }
         });
         confidenceButton.setOnClickListener(new View.OnClickListener() {
@@ -195,16 +195,16 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
 
         this.model.setSubjectId(subjectID);
-        this.model.clearConfidenceTestResults();
+        this.model.clearConfidenceResults();
         this.model.clearResults();
-        if (!pathName.equals(""))
-            try {
-                FileNameController.initializeModelFromFileData(pathName, this.model);
-            } catch (FileNotFoundException e) {
-                System.err.println(e.getMessage());
-                e.printStackTrace();
-                System.exit(1);
-            }
+        if (!pathName.equals("")) showErrorDialog("File IO Unavailable"); // todo uncomment this after FNC fixed
+//            try {
+//                FileNameController.initializeModelFromFileData(pathName, this.model);
+//            } catch (FileNotFoundException e) {
+//                System.err.println(e.getMessage());
+//                e.printStackTrace();
+//                System.exit(1);
+//            }
         this.modelChanged();
     }
 

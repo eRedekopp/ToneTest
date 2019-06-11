@@ -25,7 +25,7 @@ public class Model {
 
     private AudioManager audioManager;
 
-    private boolean audioPlaying;  // todo delete?
+    private boolean audioPlaying;
 
     // vars/values for hearing test
     private static final float HEARING_TEST_REDUCE_RATE = 0.1f; // reduce by 10% each time
@@ -36,7 +36,7 @@ public class Model {
     ArrayList<FreqVolPair> bottomVolEstimates;  // The rough estimates for volumes which have P(heard) = 0
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
     HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
-    // (for finding bottom estimates)
+                                                    // (for finding bottom estimates)
     ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer testResults;  // final results of test
 
@@ -44,7 +44,8 @@ public class Model {
     AudioTrack lineOut;
     public static final int OUTPUT_SAMPLE_RATE  = 44100; // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
-    public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, 8000}; // From British Society of Audiology
+    // todo uncomment extra frequencies after testing comlpete
+    public static final float[] FREQUENCIES = {/*200, 500, */ 1000, /*2000, 4000, 8000*/}; // From British Society of Audiology
     public int duration_ms; // how long to play each tone in a test
     double volume;          // amplitude multiplier
     byte[] buf;
@@ -56,23 +57,26 @@ public class Model {
     static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 6;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
     ArrayList<FreqVolPair> confidenceCalibPairs; // freq-vol pairs used to calibrate the next confidence test
-    public static final float[][] CONF_FREQS   = {};
     ArrayList<ConfidenceSingleTestResult> confidenceTestResults;
 
     public Model() {
         buf = new byte[2];
         subscribers = new ArrayList<>();
-        confidenceTestPairs = new ArrayList<>();
-        confidenceTestResults = new ArrayList<>();
-        topVolEstimates = new ArrayList<>();
-        bottomVolEstimates = new ArrayList<>();
-        currentVolumes = new ArrayList<>();
-        confidenceTestResults = new ArrayList<>();
-        testPairs = new ArrayList<>();
+        clearConfidenceResults();
+        clearResults();
     }
 
     /**
-     * Clear any results saved in the model
+     * Clear any confidence results saved in the model
+     */
+    public void clearConfidenceResults() {
+        confidenceTestPairs = new ArrayList<>();
+        confidenceTestResults = new ArrayList<>();
+        confidenceCalibPairs = new ArrayList<>();
+    }
+
+    /**
+     * Clear any calibration results saved in the model
      */
     public void clearResults() {
         this.topVolEstimates = new ArrayList<>();
@@ -80,13 +84,16 @@ public class Model {
         this.currentVolumes = new ArrayList<>();
         this.confidenceTestResults = new ArrayList<>();
         this.testPairs = new ArrayList<>();
+        this.timesNotHeardPerFreq = new HashMap<>();
+        for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
+        this.testResults = new HearingTestResultsContainer();
     }
 
     /**
      * @return True if this model has hearing test results saved to it, else false
      */
     public boolean hasResults() {
-        return this.testResults.isEmpty();
+        return ! this.testResults.isEmpty();
     }
 
     /**
@@ -115,7 +122,7 @@ public class Model {
 
         // todo delete this after making sure this works
         if (testPairs.size() > NUMBER_OF_VOLS_PER_FREQ * testResults.getFreqs().length)
-            Log.d(  "ConfigureTestPairs",
+            Log.e(  "ConfigureTestPairs",
                     String.format("TestPairs contains %d pairs, expected %d",
                     testPairs.size(), NUMBER_OF_VOLS_PER_FREQ * testResults.getFreqs().length)
             );
@@ -242,6 +249,7 @@ public class Model {
      */
     public void reduceCurrentVolumes() {
         for (FreqVolPair fvp : currentVolumes) {
+            Log.d("reduce", "got here");
             // only reduce volumes of frequencies still being tested
             if (timesNotHeardPerFreq.get(fvp.getFreq()) > TIMES_NOT_HEARD_BEFORE_STOP) continue;
             currentVolumes.remove(fvp);
@@ -311,13 +319,6 @@ public class Model {
         HashMap<Float, Double> resultMap = new HashMap<>();
         for (FreqVolPair p : calibList) resultMap.put(p.freq, p.vol);
         return resultMap.get(getClosestKey(freq, resultMap));
-    }
-
-    /**
-     * Clear the contents of the arrayList containing the results of the confidence test
-     */
-    public void clearConfidenceTestResults(){
-        this.confidenceTestResults.clear();
     }
 
     /**

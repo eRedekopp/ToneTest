@@ -1,6 +1,5 @@
 package ca.usask.cs.tonesetandroid;
 
-import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -9,9 +8,7 @@ import com.paramsen.noise.Noise;
 import com.paramsen.noise.NoiseOptimized;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -44,41 +41,43 @@ public class HearingTestController {
         //      4 Test all frequency-volume combinations selected in step 3 and store the results
         //          - Referred to elsewhere as "main test"
 
-        iModel.setTestMode(true);
-        model.configureAudio();
+        new Thread(new Runnable() {
+            Handler mainHandler = new Handler(Looper.getMainLooper());
 
-        // get upper estimates with rampUpTest()
-        this.rampUpTest();
+            @Override
+            public void run() {
+                model.configureAudio();
 
-        // use upper estimates as a starting off point for lowering volumes
-        model.currentVolumes = (ArrayList) model.topVolEstimates.clone();
+                // get upper estimates with rampUpTest()
+                rampUpTest();
 
-        // find lower limits by lowering volume until user can't hear
-        while (model.continueTest()) {
-            this.model.reduceCurrentVolumes();
-            new Thread(new Runnable() {         // run test on new thread
-                @Override
-                public void run() {
+                // use upper estimates as a starting off point for lowering volumes
+                model.currentVolumes = (ArrayList) model.topVolEstimates.clone();
+
+                // find lower limits by lowering volume until user can't hear
+                while (model.continueTest()) {
+                    Log.d("asdf", model.currentVolumes.toString());
+                    model.reduceCurrentVolumes();
                     testCurrentVolumes();
                 }
-            }).run();
-        }
-        // set bottom estimates after results found for each frequency
-        this.model.bottomVolEstimates = (ArrayList) this.model.currentVolumes.clone();
+                // set bottom estimates after results found for each frequency
+                model.bottomVolEstimates = (ArrayList) model.currentVolumes.clone();
 
-        // configure pairs to be tested
-        this.model.configureTestPairs();
+                // configure pairs to be tested
+                model.configureTestPairs();
 
-        // test each pair and store results in model
-        new Thread(new Runnable() {
-            @Override
-            public void run() {     // run on new thread
+                // test each pair and store results in model
                 mainTest();
-            }
-        }).run();
 
-        iModel.setTestMode(false);
-        model.audioTrackCleanup();
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        iModel.setTestMode(false);
+                        model.audioTrackCleanup();
+                    }
+                });
+            }
+        }).start();
     }
 
     /**
@@ -115,6 +114,12 @@ public class HearingTestController {
 
         // run all the trials
         for (FreqVolPair trial : allTests) {
+            new Handler(Looper.getMainLooper()).post(new Runnable() {
+                @Override
+                public void run() {   // set iModel to notHeard on main thread
+                    iModel.notHeard();
+                }
+            });
             playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
             model.testResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
         }
@@ -139,7 +144,6 @@ public class HearingTestController {
         for (int k = 0; k < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; k++) {
             Collections.shuffle(indices);
             // todo test each frequency
-            // todo turn entire method into new thread for this test and regular hearing test?
         }
 
 
@@ -155,7 +159,6 @@ public class HearingTestController {
      * @param duration_ms The duration of the sine wave in milliseconds
      */
     private void playSine(float freq, double vol, int duration_ms) {
-        iModel.notHeard();
         model.enforceMaxVolume();
         for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
             if (iModel.heard) break;
@@ -182,45 +185,40 @@ public class HearingTestController {
         iModel.notHeard();
         model.clearResults();
 
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                model.configureAudio();
-                model.lineOut.play();
+        model.configureAudio();
+        model.lineOut.play();
 
-                double initialHeardVol = 32767;//default with the maximum possible volume (unless the user does not click a button/hit a key to indicate they heard the tone, this value will be overwritten)
+        double initialHeardVol = 32767;//default with the maximum possible volume (unless the user does not click a button/hit a key to indicate they heard the tone, this value will be overwritten)
 
-                //Loop through all of the frequencies for the hearing test
-                for (float freq : Model.FREQUENCIES) {
-                    double rateOfRamp = 1.05;
-                    if (model.audioPlaying())
-                        rampUp(rateOfRamp, freq, 0.1); //play a tone for 50ms, then ramp up by 1.05 times until the tone is heard starting at a volume of 0.1
-                    else return;
+        //Loop through all of the frequencies for the hearing test
+        for (float freq : Model.FREQUENCIES) {
+            double rateOfRamp = 1.05;
+            if (model.audioPlaying())
+                rampUp(rateOfRamp, freq, 0.1); //play a tone for 50ms, then ramp up by 1.05 times until the tone is heard starting at a volume of 0.1
+            else return;
 
-                    initialHeardVol = model.volume; //record the volume of the last played tone, this will either be the volume when the user clicked the button, or the maximum possible volume)
+            initialHeardVol = model.volume; //record the volume of the last played tone, this will either be the volume when the user clicked the button, or the maximum possible volume)
 
-                    try {
-                        Thread.sleep((long) (Math.random() * 2000 + 1000));//introduce a slight pause between the first and second ramp
-                    } catch (InterruptedException e) { break; }
+            try {
+                Thread.sleep((long) (Math.random() * 2000 + 1000));//introduce a slight pause between the first and second ramp
+            } catch (InterruptedException e) { break; }
 
-                    rateOfRamp = 1.01;
-                    //redo the ramp up test, this time starting at 1/10th the volume previously required to hear the tone
-                    //ramp up at a slower rate
-                    //initially only went up to 1.5*initialHeardVol, but decided to go up to the max instead just incase the user accidently clicked the heard button unitentionally
-                    rampUp(rateOfRamp, freq, initialHeardVol / 10.0);
+            rateOfRamp = 1.01;
+            //redo the ramp up test, this time starting at 1/10th the volume previously required to hear the tone
+            //ramp up at a slower rate
+            //initially only went up to 1.5*initialHeardVol, but decided to go up to the max instead just incase the user accidently clicked the heard button unitentionally
+            rampUp(rateOfRamp, freq, initialHeardVol / 10.0);
 
-                    FreqVolPair results = new FreqVolPair(freq, model.volume);//record the frequency volume pair (the current frequency, the just heard Volume)
-                    model.topVolEstimates.add(results);//add the frequency volume pair to the results array list
+            FreqVolPair results = new FreqVolPair(freq, model.volume);//record the frequency volume pair (the current frequency, the just heard Volume)
+            model.topVolEstimates.add(results);//add the frequency volume pair to the results array list
 
-                    try {
-                        Thread.sleep((long) (Math.random() * 2000 + 1000));
-                    } catch (InterruptedException e) { break; }
-                }
-                model.audioTrackCleanup();
+            try {
+                Thread.sleep((long) (Math.random() * 2000 + 1000));
+            } catch (InterruptedException e) { break; }
+        }
+        model.audioTrackCleanup();
 
-            }
-        });
-        thread.start();
+
     }
 
     /**
@@ -282,13 +280,8 @@ public class HearingTestController {
      * @author redekopp
      */
     public void autoTest() {
-
         FreqVolPair[] periodogram = this.getPeriodogramFromLineIn(2048);
-
-
-
-
-
+        // todo finish this later
     }
 
     /**
@@ -333,7 +326,8 @@ public class HearingTestController {
     }
 
     public void handleCalibClick() {
-        // todo
+        iModel.setTestMode(true);
+        this.hearingTest();
     }
 
     public void handleConfClick() {

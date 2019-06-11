@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
-// todo un-break this
+// todo un-break this (broken parts temporarily commented out)
 
 
 /**
@@ -44,49 +44,49 @@ public class FileNameController {
     }
 
     public void handleSaveCalibClick(Context context) {
-        if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
-
-        BufferedWriter out = null;
-        File fout = null;
-        try {
-            fout = getDestinationFileCalib();
-            if (! fout.createNewFile())
-                throw new RuntimeException("Unable to create output file");
-            out = new BufferedWriter(new FileWriter(fout));
-            out.write(String.format("TestType: %s", model.getLastTestType()));
-            out.newLine();
-            out.write("Frequency(Hz)" + "\t" + "Volume");
-            out.newLine();
-            for (FreqVolPair pair : model.getHearingTestResults()) {
-                out.write(pair.getFreq() + "\t" + pair.getVol());
-                out.newLine();
-            }
-        } catch (FileNotFoundException e) {
-            // File was not found
-            Log.e("FileNameController", "Output file not found");
-            e.printStackTrace();
-        } catch (IOException e) {
-            // Problem when writing to the file
-            Log.e("FileNameController", "Unable to write to output file");
-            e.printStackTrace();
-        } finally {
-            try {
-                if (out != null) out.close();
-            } catch (IOException e) {
-                Log.e("FileNameController", "Error closing test result file");
-                e.printStackTrace();
-            }
-        }
-        for (FreqVolPair pair : model.hearingTestResults) {
-            System.out.println(pair);
-        }
-
-        // make the scanner aware of the new file
-        MediaScannerConnection.scanFile(
-                context,
-                new String[]{fout.getAbsolutePath()},
-                new String[]{"text/csv"},
-                null);
+//        if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
+//
+//        BufferedWriter out = null;
+//        File fout = null;
+//        try {
+//            fout = getDestinationFileCalib();
+//            if (! fout.createNewFile())
+//                throw new RuntimeException("Unable to create output file");
+//            out = new BufferedWriter(new FileWriter(fout));
+//            out.write(String.format("TestType: %s", model.getLastTestType()));
+//            out.newLine();
+//            out.write("Frequency(Hz)" + "\t" + "Volume");
+//            out.newLine();
+//            for (FreqVolPair pair : model.getHearingTestResults()) {
+//                out.write(pair.getFreq() + "\t" + pair.getVol());
+//                out.newLine();
+//            }
+//        } catch (FileNotFoundException e) {
+//            // File was not found
+//            Log.e("FileNameController", "Output file not found");
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            // Problem when writing to the file
+//            Log.e("FileNameController", "Unable to write to output file");
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                if (out != null) out.close();
+//            } catch (IOException e) {
+//                Log.e("FileNameController", "Error closing test result file");
+//                e.printStackTrace();
+//            }
+//        }
+//        for (FreqVolPair pair : model.hearingTestResults) {
+//            System.out.println(pair);
+//        }
+//
+//        // make the scanner aware of the new file
+//        MediaScannerConnection.scanFile(
+//                context,
+//                new String[]{fout.getAbsolutePath()},
+//                new String[]{"text/csv"},
+//                null);
     }
 
     /**
@@ -109,9 +109,11 @@ public class FileNameController {
         String formattedDate = dFormat.format(date);
 
         // eg. subject2/CalibrationTests/sub2_RAMP_2019-05-31_02:35PM.csv
-        return new File(subjectCalibDir,
-                "sub" + subID + '_' + this.model.getLastTestType() + '_' + formattedDate + ".csv"
-        );
+//        return new File(subjectCalibDir,
+//                "sub" + subID + '_' + this.model.getLastTestType() + '_' + formattedDate + ".csv"
+//        );
+
+        return null;
     }
 
     private File getDestinationFileConf() {
@@ -181,131 +183,131 @@ public class FileNameController {
 
         BufferedWriter out = null;
 
-        try {
-            File fout = getDestinationFileConf();
-
-            if (! fout.createNewFile()) Log.e("HandleConfSaveClick", "Unable to write to confidence file");
-
-            // make the scanner aware of the new file
-            MediaScannerConnection.scanFile(
-                    context,
-                    new String[]{fout.getAbsolutePath()},
-                    new String[]{"text/csv"},
-                    null);
-
-            out = new BufferedWriter(new FileWriter(fout));
-
-            // write information about test
-            out.write("Calibration: " + model.confidenceTestResults.get(0).getCalibPairs().toString());
-            out.newLine();
-            out.write("Frequency(Hz)" + "\t" + "Vol_Ratio" +"\t" + "Expected" + "\t" + "Actual");
-            out.newLine();
-
-            // Keep track of performance at each volume ratio, frequency, and both ratio and frequency
-            int totalResults = 0, totalCorrect = 0;
-            // results = how many correct for each ratio, totals = how many total for each ratio
-            // "low" = tests with volume ratio < 1, "high" = tests with volume ratio >= 1
-            HashMap<Double, Integer> ratioResults = new HashMap<>(), ratioTotals = new HashMap<>(),
-                    freqResults = new HashMap<>(), freqTotals = new HashMap<>(),
-                    lowResults = new HashMap<>(), lowTotals = new HashMap<>(),
-                    highResults = new HashMap<>(), highTotals = new HashMap<>();
-
-            for (ConfidenceSingleTestResult result : model.confidenceTestResults) {
-                String line = String.format("%f\t%f\t%b\t\t%b\n", result.getFrequency(), result.getVolRatio(),
-                        result.getExpectedResult(), result.getActualResult());
-                out.write(line);
-
-                // update HashMaps for final tally
-                boolean wasCorrect = result.getExpectedResult() == result.getActualResult();
-                totalResults++;
-                if (!ratioResults.containsKey(result.getVolRatio())) { // set up ratio maps
-                    ratioResults.put(result.getVolRatio(), 0);
-                    ratioTotals.put(result.getVolRatio(), 1);
-                } else {
-                    incrMap(ratioTotals, result.getVolRatio());
-                }
-                if (wasCorrect) {
-                    totalCorrect++;
-                    if (ratioResults.containsKey(result.getVolRatio())) {
-                        incrMap(ratioResults, result.getVolRatio());
-                    }
-                }
-                if (!freqResults.containsKey(result.getFrequency())) { // set up frequency maps
-                    freqResults.put(result.getFrequency(), 0);
-                    freqTotals.put(result.getFrequency(), 1);
-                } else {
-                    incrMap(freqTotals, result.getFrequency());
-                }
-                if (wasCorrect) {
-                    incrMap(freqResults, result.getFrequency());
-                }
-                if (result.getVolRatio() < 1) { // set up low maps
-                    if (!lowResults.containsKey(result.getFrequency())) {
-                        lowResults.put(result.getFrequency(), 0);
-                        lowTotals.put(result.getFrequency(), 1);
-                    } else {
-                        incrMap(lowTotals, result.getFrequency());
-                    }
-                    if (wasCorrect) {
-                        incrMap(lowResults, result.getFrequency());
-                    }
-                } else {                       // set up high maps
-                    if (!highResults.containsKey(result.getFrequency())) {
-                        highResults.put(result.getFrequency(), 0);
-                        highTotals.put(result.getFrequency(), 1);
-                    } else {
-                        incrMap(highTotals, result.getFrequency());
-                    }
-                    if (wasCorrect) {
-                        incrMap(highResults, result.getFrequency());
-                    }
-                }
-            }
-
-            // Sort data for nicer output
-            ArrayList<Double> ratioList = new ArrayList<>(ratioTotals.keySet()),
-                    freqList  = new ArrayList<>(freqTotals.keySet());
-            Collections.sort(ratioList);
-            Collections.sort(freqList);
-
-            // write totals for each ratio
-            out.write("------------------ ratios -----------------\n");
-            for (Double ratio : ratioList) {
-                out.write(
-                        String.format("Volume ratio: %f, Total tests performed: %d, Total correct: %d, Accuracy: %f\n",
-                                ratio, ratioTotals.get(ratio), ratioResults.get(ratio),
-                                ((double)ratioResults.get(ratio))/ratioTotals.get(ratio)));
-            }
-            // write totals for each frequency
-            out.write("--------------- frequencies ---------------\n");
-            for (Double freq : freqList) {
-                out.write(String.format("Frequency: %f, Total tests performed: %d, Total correct: %d, Accuracy: %f\n",
-                        freq, freqTotals.get(freq), freqResults.get(freq),
-                        ((double)freqResults.get(freq))/freqTotals.get(freq)));
-                out.write(String.format("\tQuiet tests performed: %d, Total correct: %d, Accuracy: %f\n",
-                        lowTotals.get(freq), lowResults.get(freq), ((double)lowResults.get(freq))/lowTotals.get(freq)));
-                out.write(String.format("\tLoud tests performed: %d, Total correct: %d, Accuracy: %f\n",
-                        highTotals.get(freq), highResults.get(freq),
-                        ((double)highResults.get(freq))/highTotals.get(freq)));
-            }
-            out.write("------------------- total -------------------\n");
-            out.write(String.format("Total tests performed: %d, Total correct: %d, Accuracy: %f",
-                    totalResults, totalCorrect, ((double)totalCorrect)/totalResults));
-
-        } catch (FileNotFoundException e) {
-            // File was not found
-            e.printStackTrace();
-        } catch (IOException e) {
-            // Problem when writing to the file
-            e.printStackTrace();
-        } finally {
-            try {
-                if (out != null) out.close();
-            } catch (IOException e) {
-                System.out.println("Error closing confidence test result file");
-                e.printStackTrace();
-            }
-        }
+//        try {
+//            File fout = getDestinationFileConf();
+//
+//            if (! fout.createNewFile()) Log.e("HandleConfSaveClick", "Unable to write to confidence file");
+//
+//            // make the scanner aware of the new file
+//            MediaScannerConnection.scanFile(
+//                    context,
+//                    new String[]{fout.getAbsolutePath()},
+//                    new String[]{"text/csv"},
+//                    null);
+//
+//            out = new BufferedWriter(new FileWriter(fout));
+//
+//            // write information about test
+//            out.write("Calibration: " + model.confidenceTestResults.get(0).getCalibPairs().toString());
+//            out.newLine();
+//            out.write("Frequency(Hz)" + "\t" + "Vol_Ratio" +"\t" + "Expected" + "\t" + "Actual");
+//            out.newLine();
+//
+//            // Keep track of performance at each volume ratio, frequency, and both ratio and frequency
+//            int totalResults = 0, totalCorrect = 0;
+//            // results = how many correct for each ratio, totals = how many total for each ratio
+//            // "low" = tests with volume ratio < 1, "high" = tests with volume ratio >= 1
+//            HashMap<Double, Integer> ratioResults = new HashMap<>(), ratioTotals = new HashMap<>(),
+//                    freqResults = new HashMap<>(), freqTotals = new HashMap<>(),
+//                    lowResults = new HashMap<>(), lowTotals = new HashMap<>(),
+//                    highResults = new HashMap<>(), highTotals = new HashMap<>();
+//
+//            for (ConfidenceSingleTestResult result : model.confidenceTestResults) {
+//                String line = String.format("%f\t%f\t%b\t\t%b\n", result.getFrequency(), result.getVolRatio(),
+//                        result.getExpectedResult(), result.getActualResult());
+//                out.write(line);
+//
+//                // update HashMaps for final tally
+//                boolean wasCorrect = result.getExpectedResult() == result.getActualResult();
+//                totalResults++;
+//                if (!ratioResults.containsKey(result.getVolRatio())) { // set up ratio maps
+//                    ratioResults.put(result.getVolRatio(), 0);
+//                    ratioTotals.put(result.getVolRatio(), 1);
+//                } else {
+//                    incrMap(ratioTotals, result.getVolRatio());
+//                }
+//                if (wasCorrect) {
+//                    totalCorrect++;
+//                    if (ratioResults.containsKey(result.getVolRatio())) {
+//                        incrMap(ratioResults, result.getVolRatio());
+//                    }
+//                }
+//                if (!freqResults.containsKey(result.getFrequency())) { // set up frequency maps
+//                    freqResults.put(result.getFrequency(), 0);
+//                    freqTotals.put(result.getFrequency(), 1);
+//                } else {
+//                    incrMap(freqTotals, result.getFrequency());
+//                }
+//                if (wasCorrect) {
+//                    incrMap(freqResults, result.getFrequency());
+//                }
+//                if (result.getVolRatio() < 1) { // set up low maps
+//                    if (!lowResults.containsKey(result.getFrequency())) {
+//                        lowResults.put(result.getFrequency(), 0);
+//                        lowTotals.put(result.getFrequency(), 1);
+//                    } else {
+//                        incrMap(lowTotals, result.getFrequency());
+//                    }
+//                    if (wasCorrect) {
+//                        incrMap(lowResults, result.getFrequency());
+//                    }
+//                } else {                       // set up high maps
+//                    if (!highResults.containsKey(result.getFrequency())) {
+//                        highResults.put(result.getFrequency(), 0);
+//                        highTotals.put(result.getFrequency(), 1);
+//                    } else {
+//                        incrMap(highTotals, result.getFrequency());
+//                    }
+//                    if (wasCorrect) {
+//                        incrMap(highResults, result.getFrequency());
+//                    }
+//                }
+//            }
+//
+//            // Sort data for nicer output
+//            ArrayList<Double> ratioList = new ArrayList<>(ratioTotals.keySet()),
+//                    freqList  = new ArrayList<>(freqTotals.keySet());
+//            Collections.sort(ratioList);
+//            Collections.sort(freqList);
+//
+//            // write totals for each ratio
+//            out.write("------------------ ratios -----------------\n");
+//            for (Double ratio : ratioList) {
+//                out.write(
+//                        String.format("Volume ratio: %f, Total tests performed: %d, Total correct: %d, Accuracy: %f\n",
+//                                ratio, ratioTotals.get(ratio), ratioResults.get(ratio),
+//                                ((double)ratioResults.get(ratio))/ratioTotals.get(ratio)));
+//            }
+//            // write totals for each frequency
+//            out.write("--------------- frequencies ---------------\n");
+//            for (Double freq : freqList) {
+//                out.write(String.format("Frequency: %f, Total tests performed: %d, Total correct: %d, Accuracy: %f\n",
+//                        freq, freqTotals.get(freq), freqResults.get(freq),
+//                        ((double)freqResults.get(freq))/freqTotals.get(freq)));
+//                out.write(String.format("\tQuiet tests performed: %d, Total correct: %d, Accuracy: %f\n",
+//                        lowTotals.get(freq), lowResults.get(freq), ((double)lowResults.get(freq))/lowTotals.get(freq)));
+//                out.write(String.format("\tLoud tests performed: %d, Total correct: %d, Accuracy: %f\n",
+//                        highTotals.get(freq), highResults.get(freq),
+//                        ((double)highResults.get(freq))/highTotals.get(freq)));
+//            }
+//            out.write("------------------- total -------------------\n");
+//            out.write(String.format("Total tests performed: %d, Total correct: %d, Accuracy: %f",
+//                    totalResults, totalCorrect, ((double)totalCorrect)/totalResults));
+//
+//        } catch (FileNotFoundException e) {
+//            // File was not found
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            // Problem when writing to the file
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                if (out != null) out.close();
+//            } catch (IOException e) {
+//                System.out.println("Error closing confidence test result file");
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     /**
@@ -394,55 +396,55 @@ public class FileNameController {
         }
     }
 
-    /**
-     * Set model.hearingTestResults to the results of a previous test stored in the given file, and initialize
-     * information about the last test
-     *
-     * @param filePath The absolute pathname of the file to be read
-     * @param model The model to be initialized from the file
-     */
-    public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
-        File file = new File(filePath);
-        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
-        Scanner scanner;
-        ArrayList<FreqVolPair> newList = new ArrayList<>();
-        try {
-            scanner = new Scanner(file);
-        } catch (FileNotFoundException e) {
-            System.out.println("Error: file not found");
-            e.printStackTrace();
-            return;
-        }
-
-        // parse test information
-        scanner.useDelimiter("\\s");
-
-        scanner.next(); // skip label
-        String lastTestType = scanner.next();
-        switch(lastTestType) {
-            case "PureTone" : model.setLastTestType(Model.TestType.PureTone); break;
-            case "Ramp"     : model.setLastTestType(Model.TestType.Ramp);     break;
-            default: throw new RuntimeException("Unexpected test type: " + lastTestType);
-        }
-
-        scanner.nextLine(); scanner.nextLine(); // skip rest of line and header line
-        try {
-            while (scanner.hasNext()) {
-                double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
-                newList.add(new FreqVolPair((float) nextFreq, nextVol));
-                if (scanner.hasNextLine()) scanner.nextLine();
-            }
-            model.hearingTestResults = newList;
-        } catch (NoSuchElementException e) {
-            System.out.println("Error reading file: EOF reached before input finished");
-            e.printStackTrace();
-        } catch (RuntimeException e) {
-            System.out.println("Unknown error while reading file");
-            e.printStackTrace();
-        } finally { scanner.close(); }
-
-        model.printResultsToConsole();
-    }
+//    /**
+//     * Set model.hearingTestResults to the results of a previous test stored in the given file, and initialize
+//     * information about the last test
+//     *
+//     * @param filePath The absolute pathname of the file to be read
+//     * @param model The model to be initialized from the file
+//     */
+//    public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
+//        File file = new File(filePath);
+//        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
+//        Scanner scanner;
+//        ArrayList<FreqVolPair> newList = new ArrayList<>();
+//        try {
+//            scanner = new Scanner(file);
+//        } catch (FileNotFoundException e) {
+//            System.out.println("Error: file not found");
+//            e.printStackTrace();
+//            return;
+//        }
+//
+//        // parse test information
+//        scanner.useDelimiter("\\s");
+//
+//        scanner.next(); // skip label
+//        String lastTestType = scanner.next();
+//        switch(lastTestType) {
+//            case "PureTone" : model.setLastTestType(Model.TestType.PureTone); break;
+//            case "Ramp"     : model.setLastTestType(Model.TestType.Ramp);     break;
+//            default: throw new RuntimeException("Unexpected test type: " + lastTestType);
+//        }
+//
+//        scanner.nextLine(); scanner.nextLine(); // skip rest of line and header line
+//        try {
+//            while (scanner.hasNext()) {
+//                double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
+//                newList.add(new FreqVolPair((float) nextFreq, nextVol));
+//                if (scanner.hasNextLine()) scanner.nextLine();
+//            }
+//            model.hearingTestResults = newList;
+//        } catch (NoSuchElementException e) {
+//            System.out.println("Error reading file: EOF reached before input finished");
+//            e.printStackTrace();
+//        } catch (RuntimeException e) {
+//            System.out.println("Unknown error while reading file");
+//            e.printStackTrace();
+//        } finally { scanner.close(); }
+//
+//        model.printResultsToConsole();
+//    }
 
     /**
      * Increases the integer value associated with the given key by 1 in the given map
