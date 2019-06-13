@@ -110,7 +110,7 @@ public class Model {
      * Set currentVolumes to contain all frequencies and volumes to be tested during the main stage of the hearing test
      */
     public void configureTestPairs() {
-        for (float freq : this.testResults.getFreqs()) {
+        for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
             double topVolEst = getVolForFreq(topVolEstimates, freq);
             for (double vol = bottomVolEst; // todo does this add an extra one to the list since it's <= ?
@@ -249,9 +249,8 @@ public class Model {
      */
     public void reduceCurrentVolumes() {
         for (FreqVolPair fvp : currentVolumes) {
-            Log.d("reduce", "got here");
             // only reduce volumes of frequencies still being tested
-            if (timesNotHeardPerFreq.get(fvp.getFreq()) > TIMES_NOT_HEARD_BEFORE_STOP) continue;
+            if (timesNotHeardPerFreq.get(fvp.getFreq()) >= TIMES_NOT_HEARD_BEFORE_STOP) continue;
             currentVolumes.remove(fvp);
             currentVolumes.add(new FreqVolPair(fvp.getFreq(), fvp.getVol() * (1 - HEARING_TEST_REDUCE_RATE)));
         }
@@ -341,10 +340,6 @@ public class Model {
         return this.subjectId;
     }
 
-//    public ArrayList<FreqVolPair> getHearingTestResults() {
-//        return this.hearingTestResults;
-//    }
-
     public void setAudioManager(AudioManager audioManager) {
         this.audioManager = audioManager;
     }
@@ -355,6 +350,12 @@ public class Model {
 
     public void stopAudio() {
         this.audioPlaying = false;
+        this.lineOut.pause();
+    }
+
+    public void startAudio() {
+        this.audioPlaying = true;
+        this.lineOut.play();
     }
 
     public ArrayList<FreqVolPair> getCurrentVolumes() {

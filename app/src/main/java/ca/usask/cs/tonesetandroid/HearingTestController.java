@@ -1,5 +1,6 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.media.AudioTrack;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -18,10 +19,15 @@ import java.util.List;
  */
 public class HearingTestController {
 
+    /*
+    * Note: all test methods run on current thread except for the public hearingTest and confidenceTest methods, so do
+    * not call them from the UI thread
+    */
+
     Model model;
     HearingTestInteractionModel iModel;
 
-    private static final int TONE_DURATION_MS = 1500;
+    private static final int TONE_DURATION_MS = 3000;
 
     /**
      * Perform a full hearing test
@@ -31,6 +37,7 @@ public class HearingTestController {
     @SuppressWarnings("unchecked")
     public void hearingTest() {
         // todo test/tweak this
+        // todo results don't get saved properly
 
         // Algorithm:
         //      1 Get estimates for volumes at which the listener will hear the tone 100% of the time for each frequency
@@ -56,13 +63,12 @@ public class HearingTestController {
 
                 // find lower limits by lowering volume until user can't hear
                 while (model.continueTest()) {
-                    Log.d("curVol", model.currentVolumes.toString());
                     model.reduceCurrentVolumes();
                     testCurrentVolumes();
                 }
+
                 // set bottom estimates after results found for each frequency
                 model.bottomVolEstimates = (ArrayList) model.currentVolumes.clone();
-                Log.d("botVolEst", model.bottomVolEstimates.toString());
 
                 // configure pairs to be tested
                 model.configureTestPairs();
@@ -75,6 +81,7 @@ public class HearingTestController {
                     public void run() {
                         iModel.setTestMode(false);
                         model.audioTrackCleanup();
+                        model.printResultsToConsole();
                     }
                 });
             }
@@ -88,24 +95,30 @@ public class HearingTestController {
     private void testCurrentVolumes() {
         Collections.shuffle(model.currentVolumes);  // test in random order each time
         for (FreqVolPair fvp : model.currentVolumes) {
+            Log.i("testCurrentVolumes", "Testing " + fvp.toString());
+
             // only test frequencies whose bottom ends hasn't already been estimated
-            if (model.timesNotHeardPerFreq.get(fvp.getFreq()) > Model.TIMES_NOT_HEARD_BEFORE_STOP) continue;
+            if (model.timesNotHeardPerFreq.get(fvp.getFreq()) >= Model.TIMES_NOT_HEARD_BEFORE_STOP) continue;
 
             // play the sine, update the map if not heard
+            iModel.notHeard();
             this.playSine(fvp.getFreq(), fvp.getVol(), TONE_DURATION_MS);
             if (! iModel.heard)
                 HearingTestSingleFreqResult.mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
                         model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
+            try {
+                Thread.sleep((long) (Math.random() * 2000 + 1000));
+            } catch (InterruptedException e) { return; }
 
         }
     }
 
     /**
      * Perform the "main" hearing test: test all frequencies in testPairs and save results in model
-     *
-     * Runs on the current thread: do not call this function from the UI thread
      */
     private void mainTest() {
+
+        Log.d("maintest", "got here");
 
         // put copies of pairs from testPairs into a new list such that it contains one freqvolpair for each trial in
         // this whole part of the test, then shuffle the new list
@@ -113,8 +126,12 @@ public class HearingTestController {
         for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(model.testPairs);
         Collections.shuffle(allTests);
 
+        Log.d("mainTest", "allTests = " + allTests.toString());
+
         // run all the trials
         for (FreqVolPair trial : allTests) {
+            model.startAudio();
+            Log.d("mainTest", "Freqvolpair tested " + trial.freq + " " + trial.vol);
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {   // set iModel to notHeard on main thread
@@ -123,6 +140,11 @@ public class HearingTestController {
             });
             playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
             model.testResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+
+            model.stopAudio();  // sleep for for random length 1-3 seconds
+            try {
+                Thread.sleep((long) (Math.random() * 2000 + 1000));
+            } catch (InterruptedException e) { return; }
         }
     }
 
@@ -160,8 +182,10 @@ public class HearingTestController {
      * @param duration_ms The duration of the sine wave in milliseconds
      */
     private void playSine(float freq, double vol, int duration_ms) {
+        long count = 0;
         model.enforceMaxVolume();
-        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+        model.startAudio();
+        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++, count++) {
             if (iModel.heard) break;
 
             float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
@@ -171,6 +195,7 @@ public class HearingTestController {
             model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
             model.lineOut.write(model.buf, 0, 2);
         }
+        model.stopAudio();
     }
 
     /**
@@ -187,7 +212,6 @@ public class HearingTestController {
         model.clearResults();
 
         model.configureAudio();
-        model.lineOut.play();
 
         double initialHeardVol = 32767;//default with the maximum possible volume (unless the user does not click a button/hit a key to indicate they heard the tone, this value will be overwritten)
 
@@ -217,9 +241,6 @@ public class HearingTestController {
                 Thread.sleep((long) (Math.random() * 2000 + 1000));
             } catch (InterruptedException e) { break; }
         }
-        model.audioTrackCleanup();
-
-
     }
 
     /**
@@ -236,6 +257,7 @@ public class HearingTestController {
     public void rampUp(double rateOfRamp, float freq, double startingVol) {
 
         model.enforceMaxVolume(); // force max volume always
+        model.startAudio();
 
         for (model.volume = startingVol; model.volume < 32767; model.volume *= rateOfRamp) {
             if (! model.audioPlaying()) return;
@@ -254,6 +276,7 @@ public class HearingTestController {
                 model.lineOut.write(model.buf, 0, 2);
             }
         }
+        model.stopAudio();
     }
 
     /**
