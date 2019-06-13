@@ -1,6 +1,5 @@
 package ca.usask.cs.tonesetandroid;
 
-import android.media.AudioTrack;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -37,7 +36,6 @@ public class HearingTestController {
     @SuppressWarnings("unchecked")
     public void hearingTest() {
         // todo test/tweak this
-        // todo results don't get saved properly
 
         // Algorithm:
         //      1 Get estimates for volumes at which the listener will hear the tone 100% of the time for each frequency
@@ -126,7 +124,7 @@ public class HearingTestController {
         // run all the trials
         for (FreqVolPair trial : allTests) {
             model.startAudio();
-            Log.i("mainTest", "Testing " + trial.freq + " | " + trial.vol);
+            Log.i("mainTest", "Testing " + trial.toString());
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {   // set iModel to notHeard on main thread
@@ -134,7 +132,7 @@ public class HearingTestController {
                 }
             });
             playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
-            model.testResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+            model.hearingTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
 
             model.stopAudio();  // sleep for for random length 1-3 seconds
             try {

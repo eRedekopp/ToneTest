@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class HearingTestSingleFreqResult {
 
@@ -112,6 +113,20 @@ public class HearingTestSingleFreqResult {
             }
         }
         return closest;
+    }
+
+    @SuppressWarnings("unchecked")
+    public HashMap<Double, Integer> getTimesHeardPerVol() {
+        return (HashMap<Double, Integer>) this.timesHeardPerVol.clone();
+    }
+
+    @SuppressWarnings("unchecked")
+    public HashMap<Double, Integer> getTimesNotHeardPerVol() {
+        return (HashMap<Double, Integer>) this.timesNotHeardPerVol.clone();
+    }
+
+    public List<Double> getVolumes() {
+        return this.testedVolumes;
     }
 
     /**

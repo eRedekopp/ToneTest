@@ -45,6 +45,30 @@ public class HearingTestResultsContainer {
         }
     }
 
+    public HashMap<Double, Integer> getTimesHeardPerVolForFreq(float freq) {
+        try {
+            return this.allResults.get(freq).getTimesHeardPerVol();
+        } catch (NullPointerException e) {
+            return null;
+        }
+    }
+
+    public HashMap<Double, Integer> getTimesNotHeardPerVolForFreq(float freq) {
+        try {
+            return this.allResults.get(freq).getTimesNotHeardPerVol();
+        } catch (NullPointerException e) {
+            return null;
+        }
+    }
+
+    public List<Double> getTestedVolumesForFreq(float freq) {
+        try {
+            return this.allResults.get(freq).getVolumes();
+        } catch (NullPointerException e) {
+            return null;
+        }
+    }
+
     /**
      * @return An array of all the frequencies with data stored in the model
      */

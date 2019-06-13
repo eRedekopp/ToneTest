@@ -43,50 +43,72 @@ public class FileNameController {
         this.model = model;
     }
 
-    public void handleSaveCalibClick(Context context) {
-//        if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
-//
-//        BufferedWriter out = null;
-//        File fout = null;
-//        try {
-//            fout = getDestinationFileCalib();
-//            if (! fout.createNewFile())
-//                throw new RuntimeException("Unable to create output file");
-//            out = new BufferedWriter(new FileWriter(fout));
-//            out.write(String.format("TestType: %s", model.getLastTestType()));
-//            out.newLine();
-//            out.write("Frequency(Hz)" + "\t" + "Volume");
-//            out.newLine();
-//            for (FreqVolPair pair : model.getHearingTestResults()) {
-//                out.write(pair.getFreq() + "\t" + pair.getVol());
-//                out.newLine();
-//            }
-//        } catch (FileNotFoundException e) {
-//            // File was not found
-//            Log.e("FileNameController", "Output file not found");
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            // Problem when writing to the file
-//            Log.e("FileNameController", "Unable to write to output file");
-//            e.printStackTrace();
-//        } finally {
-//            try {
-//                if (out != null) out.close();
-//            } catch (IOException e) {
-//                Log.e("FileNameController", "Error closing test result file");
-//                e.printStackTrace();
-//            }
-//        }
-//        for (FreqVolPair pair : model.hearingTestResults) {
-//            System.out.println(pair);
-//        }
-//
-//        // make the scanner aware of the new file
-//        MediaScannerConnection.scanFile(
-//                context,
-//                new String[]{fout.getAbsolutePath()},
-//                new String[]{"text/csv"},
-//                null);
+    public void handleSaveCalibClick(Context context) throws IllegalStateException {
+        if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
+        
+        if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());
+
+        Log.d("saveCalib", "subject directory exists: " + directoryExistsForSubject(model.getSubjectId()));
+        Log.d("saveCalib", "parent directory exists: " + resultsDirExists());
+        Log.d("saveCalib", "target file exists: " + getDestinationFileCalib().exists());
+
+
+
+        BufferedWriter out = null;
+        File fout = null;
+        try {
+            fout = getDestinationFileCalib();
+            if (! fout.createNewFile())
+                throw new RuntimeException("Unable to create output file");
+            out = new BufferedWriter(new FileWriter(fout));
+            out.write("Frequency(Hz)\tVolume\tTimesHeard\tTimesNotHeard");
+            out.newLine();
+            HearingTestResultsContainer results = model.getHearingTestResults();
+            for (float freq : results.getFreqs()) {
+                HashMap<Double, Integer> timesHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
+                HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
+                List<Double> volumes = results.getTestedVolumesForFreq(freq);
+                for (Double vol : volumes) {
+                    out.write(Float.toString(freq));
+                    out.write('\t');
+                    out.write(String.format("%.4f", vol));
+                    out.write('\t');
+                    try {
+                        out.write(timesHeardPerVol.get(vol).toString());
+                    } catch (NullPointerException e) {
+                        out.write('0');
+                    }
+                    out.write('\t');
+                    try {
+                        out.write(timesNotHeardPerVol.get(vol).toString());
+                    } catch (NullPointerException e) {
+                        out.write('0');
+                    }
+                }
+            }
+        } catch (FileNotFoundException e) {
+            // File was not found
+            Log.e("FileNameController", "Output file not found");
+            e.printStackTrace();
+        } catch (IOException e) {
+            // Problem when writing to the file
+            Log.e("FileNameController", "Unable to write to output file");
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null) out.close();
+            } catch (IOException e) {
+                Log.e("FileNameController", "Error closing test result file");
+                e.printStackTrace();
+            }
+        }
+
+        // make the scanner aware of the new file
+        MediaScannerConnection.scanFile(
+                context,
+                new String[]{fout.getAbsolutePath()},
+                new String[]{"text/csv"},
+                null);
     }
 
     /**
@@ -99,7 +121,7 @@ public class FileNameController {
         int subID = this.model.getSubjectId();
 
         if (! directoryExistsForSubject(subID)) {
-            createDirForSubjectID(subID);
+            createDirForSubject(subID);
         }
         File subjectCalibDir = getSubjectCalibDir(subID);
 
@@ -109,11 +131,9 @@ public class FileNameController {
         String formattedDate = dFormat.format(date);
 
         // eg. subject2/CalibrationTests/sub2_RAMP_2019-05-31_02:35PM.csv
-//        return new File(subjectCalibDir,
-//                "sub" + subID + '_' + this.model.getLastTestType() + '_' + formattedDate + ".csv"
-//        );
-
-        return null;
+        return new File(subjectCalibDir,
+                "sub" + subID + '_' + formattedDate + ".csv"
+        );
     }
 
     private File getDestinationFileConf() {
@@ -379,7 +399,7 @@ public class FileNameController {
      *
      * @param id The ID of the new test subject
      */
-    public static void createDirForSubjectID(int id) {
+    public static void createDirForSubject(int id) {
         File newSubjectDir = getSubjectParentDir(id);
         if (newSubjectDir.exists())
             throw new IllegalArgumentException("Directory already exists for subject with ID " + id);
@@ -395,6 +415,10 @@ public class FileNameController {
                 throw new RuntimeException("Error: directory " + dir.getPath() + " not successfully created");
         }
     }
+    
+    public static boolean resultsDirExists() {
+        return RESULTS_DIR.exists();
+    } 
 
 //    /**
 //     * Set model.hearingTestResults to the results of a previous test stored in the given file, and initialize

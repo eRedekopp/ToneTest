@@ -96,8 +96,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                fileController.handleSaveCalibClick(context);
-                showErrorDialog("File IO Unavailable");
+                try {
+                    fileController.handleSaveCalibClick(context);
+                    model.setResultsSaved(true);
+                } catch (IllegalStateException e) {
+                    showErrorDialog("No results currently stored (this dialog should never happen)");
+                } catch (RuntimeException e) {
+                    showErrorDialog("Unable to create target file (this dialog should never happen)");
+                }
             }
         });
         resetButton.setOnClickListener(new View.OnClickListener() {
@@ -139,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         calibButton.setEnabled(!iModel.isInTestMode());
         heardButton.setEnabled(iModel.isInTestMode());
         confidenceButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
-        saveButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
+        saveButton.setEnabled(model.hasResults() && !iModel.isInTestMode() && !model.resultsSaved());
         resetButton.setEnabled(!iModel.isInTestMode());
     }
 
@@ -174,12 +180,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     private void goToAuto() {
 
         // todo implement autoTest later on
-
-        FreqVolPair[] periodogram = controller.getPeriodogramFromLineIn(2048);
-        GraphActivity.setData(periodogram);
-
-        Intent graphIntent = new Intent(this, GraphActivity.class);
-        startActivity(graphIntent);
+//
+//        FreqVolPair[] periodogram = controller.getPeriodogramFromLineIn(2048);
+//        GraphActivity.setData(periodogram);
+//
+//        Intent graphIntent = new Intent(this, GraphActivity.class);
+//        startActivity(graphIntent);
     }
 
     /**

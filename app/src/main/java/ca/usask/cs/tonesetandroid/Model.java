@@ -39,7 +39,7 @@ public class Model {
     HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
                                                     // (for finding bottom estimates)
     ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
-    HearingTestResultsContainer testResults;  // final results of test
+    HearingTestResultsContainer hearingTestResults;  // final results of test
 
     // Vars/values for audio
     AudioTrack lineOut;
@@ -51,8 +51,9 @@ public class Model {
     double volume;          // amplitude multiplier
     byte[] buf;
 
-    // Vars for participant config
+    // Vars for file io
     private int subjectId = -1;     // -1 indicates not set
+    private boolean resultsSaved = false;
 
     // vars for confidence test
     static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 6;
@@ -87,14 +88,15 @@ public class Model {
         this.testPairs = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
-        this.testResults = new HearingTestResultsContainer();
+        this.hearingTestResults = new HearingTestResultsContainer();
+        this.resultsSaved = false;
     }
 
     /**
      * @return True if this model has hearing test results saved to it, else false
      */
     public boolean hasResults() {
-        return ! this.testResults.isEmpty();
+        return ! this.hearingTestResults.isEmpty();
     }
 
     /**
@@ -114,19 +116,12 @@ public class Model {
         for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
             double topVolEst = getVolForFreq(topVolEstimates, freq);
-            for (double vol = bottomVolEst; // todo does this add an extra one to the list since it's <= ?
+            for (double vol = bottomVolEst;
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
                 testPairs.add(new FreqVolPair(freq, vol));
             }
         }
-
-        // todo delete this after making sure this works
-        if (testPairs.size() > NUMBER_OF_VOLS_PER_FREQ * FREQUENCIES.length)
-            Log.e(  "ConfigureTestPairs",
-                    String.format("TestPairs contains %d pairs, expected %d",
-                    testPairs.size(), NUMBER_OF_VOLS_PER_FREQ * FREQUENCIES.length)
-            );
     }
 
     public void configureConfidenceTestPairs() {
@@ -135,12 +130,12 @@ public class Model {
 
     public float getProbabilityFVP(float freq, double vol) {
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
-        return this.testResults.getProbOfHearingFVP(freq, vol);
+        return this.hearingTestResults.getProbOfHearingFVP(freq, vol);
     }
 
     public float getProbabilityFVP(FreqVolPair fvp) {
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
-        return this.testResults.getProbOfHearingFVP(fvp.getFreq(), fvp.getVol());
+        return this.hearingTestResults.getProbOfHearingFVP(fvp.getFreq(), fvp.getVol());
     }
 
     /**
@@ -293,12 +288,12 @@ public class Model {
         double vol = fvp.getVol();
 
         // find frequencies tested just above and below fvp.freq
-        float freqAbove = findNearestAbove(fvp.getFreq(), this.testResults.getFreqs());
-        float freqBelow = findNearestBelow(fvp.getFreq(), this.testResults.getFreqs());
+        float freqAbove = findNearestAbove(fvp.getFreq(), this.hearingTestResults.getFreqs());
+        float freqBelow = findNearestBelow(fvp.getFreq(), this.hearingTestResults.getFreqs());
 
         // find the probabilities of each of these frequencies
-        float probAbove = this.testResults.getProbOfHearingFVP(freqAbove, vol);
-        float probBelow = this.testResults.getProbOfHearingFVP(freqBelow, vol);
+        float probAbove = this.hearingTestResults.getProbOfHearingFVP(freqAbove, vol);
+        float probBelow = this.hearingTestResults.getProbOfHearingFVP(freqBelow, vol);
 
         // how far of the way between freqBelow and freqAbove is fvp.freq?
         float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
@@ -347,6 +342,15 @@ public class Model {
 
     public boolean audioPlaying() {
         return audioPlaying;
+    }
+
+    public void setResultsSaved(boolean b) {
+        this.resultsSaved = b;
+        this.notifySubscribers();
+    }
+
+    public boolean resultsSaved() {
+        return resultsSaved;
     }
 
     public void stopAudio() {
@@ -413,8 +417,13 @@ public class Model {
      * Print the contents of hearingTestResults to the console (for testing)
      */
     public void printResultsToConsole() {
-        if (testResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
-        else Log.i("printResultsToConsole", testResults.toString());
+        // todo not all results get printed (do they all get added to the Container?)
+        if (hearingTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
+        else Log.i("printResultsToConsole", hearingTestResults.toString());
+    }
+
+    public HearingTestResultsContainer getHearingTestResults() {
+        return this.hearingTestResults;
     }
 
     /**
@@ -428,6 +437,10 @@ public class Model {
         Float closest = Float.POSITIVE_INFINITY;
         for (Float cur : map.keySet()) if (Math.abs(cur - f) < Math.abs(closest - f)) closest = cur;
         return closest;
+    }
+
+    public void notifySubscribers() {
+        for (ModelListener m : this.subscribers) m.modelChanged();
     }
 
 }
