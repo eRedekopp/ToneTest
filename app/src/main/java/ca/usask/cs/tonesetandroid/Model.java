@@ -19,6 +19,7 @@ import java.util.List;
  *
  * @author redekopp, alexscott
  */
+@SuppressWarnings("JavadocReference")
 public class Model {
 
     private ArrayList<ModelListener> subscribers;
@@ -114,17 +115,17 @@ public class Model {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
             double topVolEst = getVolForFreq(topVolEstimates, freq);
             for (double vol = bottomVolEst; // todo does this add an extra one to the list since it's <= ?
-                 vol <= topVolEst;
+                 vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
                 testPairs.add(new FreqVolPair(freq, vol));
             }
         }
 
         // todo delete this after making sure this works
-        if (testPairs.size() > NUMBER_OF_VOLS_PER_FREQ * testResults.getFreqs().length)
+        if (testPairs.size() > NUMBER_OF_VOLS_PER_FREQ * FREQUENCIES.length)
             Log.e(  "ConfigureTestPairs",
                     String.format("TestPairs contains %d pairs, expected %d",
-                    testPairs.size(), NUMBER_OF_VOLS_PER_FREQ * testResults.getFreqs().length)
+                    testPairs.size(), NUMBER_OF_VOLS_PER_FREQ * FREQUENCIES.length)
             );
     }
 

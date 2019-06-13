@@ -117,21 +117,16 @@ public class HearingTestController {
      * Perform the "main" hearing test: test all frequencies in testPairs and save results in model
      */
     private void mainTest() {
-
-        Log.d("maintest", "got here");
-
         // put copies of pairs from testPairs into a new list such that it contains one freqvolpair for each trial in
         // this whole part of the test, then shuffle the new list
         ArrayList<FreqVolPair> allTests = new ArrayList<>();
         for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(model.testPairs);
         Collections.shuffle(allTests);
 
-        Log.d("mainTest", "allTests = " + allTests.toString());
-
         // run all the trials
         for (FreqVolPair trial : allTests) {
             model.startAudio();
-            Log.d("mainTest", "Freqvolpair tested " + trial.freq + " " + trial.vol);
+            Log.i("mainTest", "Testing " + trial.freq + " | " + trial.vol);
             new Handler(Looper.getMainLooper()).post(new Runnable() {
                 @Override
                 public void run() {   // set iModel to notHeard on main thread

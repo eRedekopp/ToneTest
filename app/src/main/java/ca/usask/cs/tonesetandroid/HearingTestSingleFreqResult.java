@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,14 +13,18 @@ public class HearingTestSingleFreqResult {
     private HashMap<Double, Integer> timesHeardPerVol;
 
     private HashMap<Double, Integer> timesNotHeardPerVol;
+    
+    private ArrayList<Double> testedVolumes;
 
     public HearingTestSingleFreqResult(float freq) {
         this.freq = freq;
         this.timesHeardPerVol = new HashMap<>();
         this.timesNotHeardPerVol = new HashMap<>();
+        this.testedVolumes = new ArrayList<>();
     }
 
     public void addResult(double vol, boolean heard) {
+        if (!testedVolumes.contains(vol)) testedVolumes.add(vol);
         if (heard)
             if (timesHeardPerVol.containsKey(vol))
                 mapReplace(timesNotHeardPerVol, vol, timesNotHeardPerVol.get(vol) + 1);
@@ -48,20 +54,29 @@ public class HearingTestSingleFreqResult {
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        ArrayList<Double> testedVolumesSorted = new ArrayList<>(this.timesHeardPerVol.keySet());
-        Collections.sort(testedVolumesSorted);
+        Collections.sort(testedVolumes);
 
         builder.append("Frequency: ");
         builder.append(this.freq);
         builder.append('\n');
-        for (Double d : testedVolumesSorted) {
-            int timesHeard = this.timesHeardPerVol.get(d);
-            int timesNotHeard = this.timesNotHeardPerVol.get(d);
+        for (Double d : testedVolumes) {
+            int timesHeard;
+            try {
+                timesHeard = this.timesHeardPerVol.get(d);
+            } catch (NullPointerException e) {
+                timesHeard = 0;
+            }
+            int timesNotHeard;
+            try {
+                timesNotHeard = this.timesNotHeardPerVol.get(d);
+            } catch (NullPointerException e) {
+                timesNotHeard = 0;
+            }
             float pHeard = (float) timesHeard / (float) (timesHeard + timesNotHeard);
             builder.append("Volume ");
-            builder.append(d);
+            builder.append(String.format("%.2f", d));
             builder.append(": P(heard) = ");
-            builder.append(String.format("%.2f\n", pHeard));
+            builder.append(String.format("%.4f\n", pHeard));
         }
         return builder.toString();
     }
