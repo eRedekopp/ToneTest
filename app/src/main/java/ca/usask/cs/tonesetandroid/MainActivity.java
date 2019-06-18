@@ -203,14 +203,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.model.setSubjectId(subjectID);
         this.model.clearConfidenceResults();
         this.model.clearResults();
-        if (!pathName.equals("")) showErrorDialog("File IO Unavailable"); // todo uncomment this after FNC fixed
-//            try {
-//                FileNameController.initializeModelFromFileData(pathName, this.model);
-//            } catch (FileNotFoundException e) {
-//                System.err.println(e.getMessage());
-//                e.printStackTrace();
-//                System.exit(1);
-//            }
+        if (!pathName.equals(""))
+            try {
+                FileNameController.initializeModelFromFileData(pathName, this.model);
+            } catch (FileNotFoundException e) {
+                System.err.println(e.getMessage());
+                e.printStackTrace();
+                System.exit(1);
+            }
         this.modelChanged();
     }
 

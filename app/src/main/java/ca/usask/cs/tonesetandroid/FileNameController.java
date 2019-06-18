@@ -48,11 +48,9 @@ public class FileNameController {
         
         if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());
 
-        Log.d("saveCalib", "subject directory exists: " + directoryExistsForSubject(model.getSubjectId()));
-        Log.d("saveCalib", "parent directory exists: " + resultsDirExists());
-        Log.d("saveCalib", "target file exists: " + getDestinationFileCalib().exists());
-
-
+//        Log.d("saveCalib", "subject directory exists: " + directoryExistsForSubject(model.getSubjectId()));
+//        Log.d("saveCalib", "parent directory exists: " + resultsDirExists());
+//        Log.d("saveCalib", "target file exists: " + getDestinationFileCalib().exists());
 
         BufferedWriter out = null;
         File fout = null;
@@ -61,7 +59,7 @@ public class FileNameController {
             if (! fout.createNewFile())
                 throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
-            out.write("Frequency(Hz)\tVolume\tTimesHeard\tTimesNotHeard");
+            out.write("Frequency(Hz)\t\tVolume\tTimesHeard\tTimesNotHeard");
             out.newLine();
             HearingTestResultsContainer results = model.getHearingTestResults();
             for (float freq : results.getFreqs()) {
@@ -84,6 +82,7 @@ public class FileNameController {
                     } catch (NullPointerException e) {
                         out.write('0');
                     }
+                    out.newLine();
                 }
             }
         } catch (FileNotFoundException e) {
@@ -420,55 +419,50 @@ public class FileNameController {
         return RESULTS_DIR.exists();
     } 
 
-//    /**
-//     * Set model.hearingTestResults to the results of a previous test stored in the given file, and initialize
-//     * information about the last test
-//     *
-//     * @param filePath The absolute pathname of the file to be read
-//     * @param model The model to be initialized from the file
-//     */
-//    public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
-//        File file = new File(filePath);
-//        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
-//        Scanner scanner;
-//        ArrayList<FreqVolPair> newList = new ArrayList<>();
-//        try {
-//            scanner = new Scanner(file);
-//        } catch (FileNotFoundException e) {
-//            System.out.println("Error: file not found");
-//            e.printStackTrace();
-//            return;
-//        }
-//
-//        // parse test information
-//        scanner.useDelimiter("\\s");
-//
-//        scanner.next(); // skip label
-//        String lastTestType = scanner.next();
-//        switch(lastTestType) {
-//            case "PureTone" : model.setLastTestType(Model.TestType.PureTone); break;
-//            case "Ramp"     : model.setLastTestType(Model.TestType.Ramp);     break;
-//            default: throw new RuntimeException("Unexpected test type: " + lastTestType);
-//        }
-//
-//        scanner.nextLine(); scanner.nextLine(); // skip rest of line and header line
-//        try {
-//            while (scanner.hasNext()) {
-//                double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
-//                newList.add(new FreqVolPair((float) nextFreq, nextVol));
-//                if (scanner.hasNextLine()) scanner.nextLine();
-//            }
-//            model.hearingTestResults = newList;
-//        } catch (NoSuchElementException e) {
-//            System.out.println("Error reading file: EOF reached before input finished");
-//            e.printStackTrace();
-//        } catch (RuntimeException e) {
-//            System.out.println("Unknown error while reading file");
-//            e.printStackTrace();
-//        } finally { scanner.close(); }
-//
-//        model.printResultsToConsole();
-//    }
+    /**
+     * Initialize the model with the information contained in the file with pathname filePath
+     *
+     * @param filePath The absolute pathname of the file to be read
+     * @param model The model to be initialized from the file
+     */
+    public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
+        File file = new File(filePath);
+        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
+        Scanner scanner;
+
+        try {
+            scanner = new Scanner(file);
+        } catch (FileNotFoundException e) {
+            Log.e("initializeModel", "Error: file not found");
+            e.printStackTrace();
+            return;
+        }
+
+        // parse test information
+        scanner.useDelimiter("\\s");
+
+        scanner.nextLine(); // skip header
+        HearingTestResultsContainer results = new HearingTestResultsContainer();
+
+        try {
+            while (scanner.hasNext()) {
+                double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
+                int nextHeard = scanner.nextInt(), nextNotHeard = scanner.nextInt();
+                for (int i = 0; i < nextHeard; i++) results.addResult((float) nextFreq, nextVol, true);
+                for (int i = 0; i < nextNotHeard; i++) results.addResult((float) nextFreq, nextVol, false);
+                if (scanner.hasNextLine()) scanner.nextLine();
+            }
+            model.hearingTestResults = results;
+        } catch (NoSuchElementException e) {
+            System.out.println("Error reading file: EOF reached before input finished");
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            System.out.println("Unknown error while reading file");
+            e.printStackTrace();
+        } finally { scanner.close(); }
+
+        model.printResultsToConsole();
+    }
 
     /**
      * Increases the integer value associated with the given key by 1 in the given map
