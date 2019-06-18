@@ -10,7 +10,6 @@ import java.util.ArrayList;
 public class HearingTestInteractionModel {
 
     boolean heard; //boolean value to indicate that the tone was heard
-    boolean heardTwice; //this is used for the pure tone only
 
     //Boolean values representing whether the buttons are enabled or not
     private boolean testMode;
@@ -48,23 +47,6 @@ public class HearingTestInteractionModel {
     public void setTestMode(boolean b) {
         this.testMode = b;
         this.notifySubscribers();
-    }
-
-    /**
-     * A mutator method to set the heardTwice parameter to true
-     */
-    public void toneHeardTwice() {
-        heardTwice = true;
-        notifySubscribers();
-    }
-
-
-    /**
-     * A mutator method to set the heardTwice parameter to false
-     */
-    public void notHeardTwice() {
-        heardTwice = false;
-        notifySubscribers();
     }
 
     /**

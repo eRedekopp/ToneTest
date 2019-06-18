@@ -141,6 +141,10 @@ public class InitActivity extends Activity {
         return this.dialogSelectedString;
     }
 
+    /**
+     * Handler for "new calibration" click : return to MainActivity with the given subject id
+     * @param id The subject id with which to initalize the model
+     */
     private void handleSubjectIdClick(final int id) {
         if (id != 0 && FileNameController.directoryExistsForSubject(id)) // show warning dialog if ID already used
             new AlertDialog.Builder(this)                                // unless it's subject ID 0 (dummy ID)

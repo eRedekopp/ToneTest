@@ -19,7 +19,7 @@ import java.io.FileNotFoundException;
 
 
 /**
- * Launch application, setup main menu
+ * Launcher for whole application and view for main menu
  *
  * @author redekopp
  */

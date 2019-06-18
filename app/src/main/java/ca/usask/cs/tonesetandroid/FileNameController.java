@@ -31,7 +31,7 @@ import java.util.Scanner;
  */
 public class FileNameController {
 
-    Model model;
+    private Model model;
 
     private static final File RESULTS_DIR = getResultsDir();
 
@@ -39,14 +39,16 @@ public class FileNameController {
         this.model = model;
     }
 
+    /**
+     * A method to write the results of the calibration test currently stored in the model to a file
+     *
+     * @param context The context of the calling thread (ie. MainActivity.this)
+     * @throws IllegalStateException If there are no calibration test results stored in model
+     */
     public void handleSaveCalibClick(Context context) throws IllegalStateException {
         if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
         
         if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());
-
-//        Log.d("saveCalib", "subject directory exists: " + directoryExistsForSubject(model.getSubjectId()));
-//        Log.d("saveCalib", "parent directory exists: " + resultsDirExists());
-//        Log.d("saveCalib", "target file exists: " + getDestinationFileCalib().exists());
 
         BufferedWriter out = null;
         File fout = null;
@@ -107,10 +109,10 @@ public class FileNameController {
     }
 
     /**
-     * Get the file where results are to be saved. All parent directories of the file are
-     * guaranteed to exist if this method did not throw errors
+     * Get the file where calibration results are to be saved. All parent directories of the file are
+     * guaranteed to exist if this method did not throw errors. Does not create the file
      *
-     * @return The file where the results are to be saved for the current model state
+     * @return The file where the calibration results are to be saved for the current model state
      */
     private File getDestinationFileCalib() {
         int subID = this.model.getSubjectId();
@@ -131,6 +133,12 @@ public class FileNameController {
         );
     }
 
+    /**
+     * Get the file where confidence results are to be saved. All parent directories of the file are guaranteed to
+     * exist if this method did not throw errors. Does not create the file
+     *
+     * @return The file where the confidence results are to be saved for the current model state
+     */
     private File getDestinationFileConf() {
         int subID = this.model.getSubjectId();
         File subjectConfDir = getSubjectConfDir(subID);
@@ -186,15 +194,14 @@ public class FileNameController {
             return new File(subjectCalibDir, fileName);
     }
 
+
     /**
-     * This method is for saving the results of the confidence hearing test
-     * A separate method is used for saving the results of the ramp up hearing test
+     * A method for writing the results of the confidence test currently stored in the model to a file
      *
-     * When the user clicks on the get save button, display the results of the
-     * confidence hearing test (list the frequencies of the tones and the amplitude they
-     * were heard at) Also create a csv file containing the data
+     * @param context The context of the calling thread (ie. MainActivity.this)
+     * @throws IllegalStateException If there are no confidence test results stored in the model
      */
-    public void handleConfSaveClick(Context context) {
+    public void handleConfSaveClick(Context context) throws IllegalStateException {
 
         if (! model.hasConfResults())
             throw new IllegalStateException("Confidence test results must be present before saving");
@@ -229,7 +236,7 @@ public class FileNameController {
                     out.write(String.format(
                             "%.2f\t\t%.4f\t%d\t\t%d\t\t%.3f\t\t%.3f\n",
                             freq, vol, timesHeardPerVol.get(vol), timesNotHeardPerVol.get(vol),
-                            results.getExpectedProbForFVP(freq, vol), actualProb
+                            model.getProbabilityFVP(freq, vol), results.getActualResultForFVP(freq, vol)
                     ));
                 }
             }
@@ -318,7 +325,7 @@ public class FileNameController {
         // make results directory if doesn't already exist
         if (!subDir.isDirectory())
             if (! subDir.mkdir())
-                System.out.println("Error creating HearingTestResults directory");
+                Log.e("getResultsDir", "Error creating HearingTestResults directory");
         return subDir;
     }
 
@@ -343,10 +350,6 @@ public class FileNameController {
                 throw new RuntimeException("Error: directory " + dir.getPath() + " not successfully created");
         }
     }
-    
-    public static boolean resultsDirExists() {
-        return RESULTS_DIR.exists();
-    } 
 
     /**
      * Initialize the model with the information contained in the file with pathname filePath
@@ -391,17 +394,5 @@ public class FileNameController {
         } finally { scanner.close(); }
 
         model.printResultsToConsole();
-    }
-
-    /**
-     * Increases the integer value associated with the given key by 1 in the given map
-     *
-     * @param map The map to be edited
-     * @param key The key in the map whose associated value is to be incremented
-     */
-    private static void incrMap(HashMap<Double, Integer> map, Double key) {
-        int old = map.get(key);
-        map.remove(key);
-        map.put(key, ++old);
     }
 }

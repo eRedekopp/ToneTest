@@ -55,8 +55,8 @@ public class Model {
 
     // Vars for file io
     private int subjectId = -1;     // -1 indicates not set
-    private boolean resultsSaved = false;
-    private boolean confResultsSaved = false;
+    private boolean resultsSaved = false;       // have hearing test results been saved since the model was initialized?
+    private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     // vars for confidence test
     static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 6;
@@ -76,7 +76,7 @@ public class Model {
         if (! this.hasResults())
             throw new IllegalStateException("Hearing test results must be configured before configuring conf test");
         confidenceTestPairs = new ArrayList<>();
-        confidenceTestResults = new ConfidenceTestResultsContainer(this.hearingTestResults);
+        confidenceTestResults = new ConfidenceTestResultsContainer();
     }
 
     /**
@@ -102,6 +102,9 @@ public class Model {
         return ! this.hearingTestResults.isEmpty();
     }
 
+    /**
+     * @return True if this model has confidence test results saved to it, else false
+     */
     public boolean hasConfResults() {
         try {
             return !this.confidenceTestResults.isEmpty();
@@ -135,6 +138,9 @@ public class Model {
         }
     }
 
+    /**
+     * Populate model.confidenceTestPairs with all freqvolpairs that will be tested in the next confidence test
+     */
     public void configureConfidenceTestPairs() {
         // todo make this better
         for (float freq : CONF_FREQS) {
@@ -148,7 +154,15 @@ public class Model {
         }
     }
 
-    public float getProbabilityFVP(float freq, double vol) {
+    /**
+     * Find the probability of hearing the given frequency-volume pair given the calibration results
+     *
+     * @param freq The frequency to be queried
+     * @param vol The volume to be queried
+     * @return The probability of the given freq-vol pair being heard given the calibration results
+     * @throws IllegalStateException If there are no calibration results stored in the model
+     */
+    public float getProbabilityFVP(float freq, double vol) throws IllegalStateException {
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
         return this.hearingTestResults.getProbOfHearingFVP(freq, vol);
     }
@@ -158,7 +172,7 @@ public class Model {
     }
 
     /**
-     * Configure the audio in preparation for a PureTone test - only call directly before a test
+     * Configure the audio in preparation for a hearing test - only call directly before a test
      */
     public void configureAudio() {
         this.setUpLineOut();
@@ -260,7 +274,7 @@ public class Model {
     }
 
     /**
-     * Reduce all elements of currentVolumes by
+     * Reduce all elements of currentVolumes by [element * HEARING_TEST_REDUCE_RATE]
      */
     public void reduceCurrentVolumes() {
         for (FreqVolPair fvp : currentVolumes) {
@@ -272,7 +286,7 @@ public class Model {
     }
 
     /**
-     * Perform first time setup of the audio track
+     * Perform first time setup of the audio track - does nothing if audio track already initialized
      */
     public void setUpLineOut() {
         // do not run if line already initialized

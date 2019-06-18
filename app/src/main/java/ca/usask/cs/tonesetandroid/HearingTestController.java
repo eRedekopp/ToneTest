@@ -11,6 +11,7 @@ import com.paramsen.noise.NoiseOptimized;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -22,12 +23,13 @@ public class HearingTestController {
 
     /*
     * Note: all test methods run on current thread except for the public hearingTest and confidenceTest methods, so do
-    * not call them from the UI thread
+    * not call any methods except for those on the UI thread
     */
 
     Model model;
     HearingTestInteractionModel iModel;
 
+    // The length of each test tone
     private static final int TONE_DURATION_MS = 3000;
 
     /**
@@ -104,7 +106,7 @@ public class HearingTestController {
             iModel.notHeard();
             this.playSine(fvp.getFreq(), fvp.getVol(), TONE_DURATION_MS);
             if (! iModel.heard)
-                HearingTestSingleFreqResult.mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
+                mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
                         model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
             try {
                 Thread.sleep((long) (Math.random() * 2000 + 1000));
@@ -143,6 +145,9 @@ public class HearingTestController {
         }
     }
 
+    /**
+     * Perform a full confidence test
+     */
     public void confidenceTest() {
         new Thread(new Runnable() {
             @Override
@@ -191,8 +196,8 @@ public class HearingTestController {
     }
 
     /**
-     * Play a sine wave through the Model at the given frequency and volume for the given amount of time.
-     * Sets iModel.heard to false before playing, returns if iModel.heard becomes true.
+     * Play a sine wave through the Model at the given frequency and volume for the given amount of time. Returns
+     * immediately if iModel.heard is true or becomes true from another thread.
      *
      * @param freq The frequency of the sine wave to be played
      * @param vol The volume of the sine wave to be played
@@ -412,5 +417,10 @@ public class HearingTestController {
         float sum = 0;
         for (float f : arr) sum += f;
         return sum / (float) arr.length;
+    }
+
+    public void mapReplace(HashMap<Float, Integer> map, Float key, Integer newValue) {
+        map.remove(key);
+        map.put(key, newValue);
     }
 }
