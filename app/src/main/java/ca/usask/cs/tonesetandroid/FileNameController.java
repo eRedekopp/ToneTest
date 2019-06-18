@@ -57,7 +57,7 @@ public class FileNameController {
             if (! fout.createNewFile())
                 throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
-            out.write("Frequency(Hz)\t\tVolume\tTimesHeard\tTimesNotHeard");
+            out.write("Frequency(Hz)\tVolume\tTimesHeard\tTimesNotHeard");
             out.newLine();
             HearingTestResultsContainer results = model.getHearingTestResults();
             for (float freq : results.getFreqs()) {
@@ -66,7 +66,7 @@ public class FileNameController {
                 List<Double> volumes = results.getTestedVolumesForFreq(freq);
                 for (Double vol : volumes) {
                     out.write(Float.toString(freq));
-                    out.write('\t');
+                    out.write("\t\t");
                     out.write(String.format("%.4f", vol));
                     out.write('\t');
                     try {

@@ -30,8 +30,9 @@ public class Model {
     private boolean audioPlaying;
 
     // vars/values for hearing test
-    private static final float HEARING_TEST_REDUCE_RATE = 0.1f; // reduce by 10% each time
+    private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;
+    // todo not enough volumes getting saved (see save files)
     static final int NUMBER_OF_VOLS_PER_FREQ = 5;  // number of volumes to test for each frequency
     static final int NUMBER_OF_TESTS_PER_VOL = 3;  // number of times to repeat each freq-vol combination in the test
     ArrayList<FreqVolPair> topVolEstimates;     // The rough estimates for volumes which have P(heard) = 1
@@ -47,8 +48,9 @@ public class Model {
     public static final int OUTPUT_SAMPLE_RATE  = 44100; // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     // todo uncomment extra frequencies after testing comlpete
-    public static final float[] FREQUENCIES = {/*200, 500, */ 1000, /*2000, 4000, 8000*/}; // From British Society of Audiology
-    public static final float[] CONF_FREQS  = {/*220,*/ 880, /*1760*/}; // 3 octaves of A
+    public static final float[] FREQUENCIES = {/*200, */ 500, 1000, 2000 /*, 4000, 8000*/}; // From British Society
+// of Audiology
+    public static final float[] CONF_FREQS  = {/*220,*/ 880, 1760}; // 3 octaves of A
     public int duration_ms; // how long to play each tone in a test
     double volume;          // amplitude multiplier
     byte[] buf;
@@ -276,13 +278,14 @@ public class Model {
     /**
      * Reduce all elements of currentVolumes by [element * HEARING_TEST_REDUCE_RATE]
      */
-    public void reduceCurrentVolumes() {
+    public synchronized void reduceCurrentVolumes() {
+        ArrayList<FreqVolPair> newVols = new ArrayList<>();
         for (FreqVolPair fvp : currentVolumes) {
             // only reduce volumes of frequencies still being tested
-            if (timesNotHeardPerFreq.get(fvp.getFreq()) >= TIMES_NOT_HEARD_BEFORE_STOP) continue;
-            currentVolumes.remove(fvp);
-            currentVolumes.add(new FreqVolPair(fvp.getFreq(), fvp.getVol() * (1 - HEARING_TEST_REDUCE_RATE)));
+            if (timesNotHeardPerFreq.get(fvp.getFreq()) >= TIMES_NOT_HEARD_BEFORE_STOP) newVols.add(fvp);
+            newVols.add(new FreqVolPair(fvp.getFreq(), fvp.getVol() * (1 - HEARING_TEST_REDUCE_RATE)));
         }
+        this.currentVolumes = newVols;
     }
 
     /**
@@ -310,10 +313,12 @@ public class Model {
      * Forces the volume of the output stream to max
      */
     public void enforceMaxVolume() {
-        audioManager.setStreamVolume( // pin volume to max
-                AudioManager.STREAM_MUSIC,
-                audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
-                AudioManager.FLAG_PLAY_SOUND);
+        int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) != maxVol)
+            audioManager.setStreamVolume( // pin volume to max if not already done
+                    AudioManager.STREAM_MUSIC,
+                    audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
+                    AudioManager.FLAG_PLAY_SOUND);
     }
 
     /**
@@ -396,7 +401,6 @@ public class Model {
      * Print the contents of hearingTestResults to the console (for testing)
      */
     public void printResultsToConsole() {
-        // todo not all results get printed (do they all get added to the Container?)
         if (hearingTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", hearingTestResults.toString());
     }
