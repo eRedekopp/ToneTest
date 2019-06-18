@@ -8,6 +8,7 @@ import com.paramsen.noise.Noise;
 import com.paramsen.noise.NoiseOptimized;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -144,26 +145,64 @@ public class HearingTestController {
     public void confidenceTest() {
         // todo
 
-        // configure model for test
-        iModel.setTestMode(true);
-        model.configureAudio();
-        model.configureConfidenceTestPairs();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // configure model for test
+                iModel.setTestMode(true);
+                model.configureAudio();
+                model.configureConfidenceTestPairs();
 
-        final ArrayList<Integer> indices = new ArrayList<>();  // for randomizing test order
-        ConfidenceSingleTestResult[] results = new ConfidenceSingleTestResult[model.confidenceTestPairs.size()];
-        for (int i = 0; i < results.length; i++) {
-            FreqVolPair fvp = model.confidenceTestPairs.get(i);
-            ConfidenceSingleTestResult result = new ConfidenceSingleTestResult(model.getProbabilityFVP(fvp), fvp);
-            indices.add(i);
-        }
+                // make list of results with no trials for each fvp to be tested
+                // also create a list of indices of model.confidenceTestPairs to randomize order of trials later
+                final ArrayList<Integer> indices = new ArrayList<>();
+                final ConfidenceSingleTestResult[] results =
+                        new ConfidenceSingleTestResult[model.confidenceTestPairs.size()];
+                for (int i = 0; i < results.length; i++) {
+                    FreqVolPair fvp = model.confidenceTestPairs.get(i);
+                    ConfidenceSingleTestResult result =
+                            new ConfidenceSingleTestResult(model.getProbabilityFVP(fvp), fvp);
+                    results[i] = result;
+                    indices.add(i);
+                }
 
-        for (int k = 0; k < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; k++) {
-            Collections.shuffle(indices);
-            // todo test each frequency
-        }
+                // perform trials
+                for (int k = 0; k < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; k++) {
+                    Collections.shuffle(indices);
+                    for (int i = 0; i < indices.size(); i++) {
+                        // get freq and vol
+                        int idx = indices.get(i);
+                        float freq = results[idx].freq;
+                        double vol = results[idx].vol;
 
+                        // play audio
+                        model.startAudio();
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {   // set iModel to notHeard on main thread
+                                iModel.notHeard();
+                            }
+                        });
+                        Log.i("confTest", "Testing freq : " + freq + " | vol : " + vol);
+                        playSine(freq, vol, TONE_DURATION_MS);
+                        model.stopAudio();
+                        results[idx].addTrial(iModel.heard);
+                        try {  // sleep from 1 to 3 seconds
+                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+                        } catch (InterruptedException e) { return; }
+                    }
+                }
 
-
+                // add results to model
+                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                    @Override
+                    public void run() { // run on main thread
+                        iModel.setTestMode(false);
+                        model.confidenceTestResults = new ArrayList<>(Arrays.asList(results));
+                    }
+                });
+            }
+        }).start();
     }
 
     /**
@@ -348,7 +387,8 @@ public class HearingTestController {
     }
 
     public void handleConfClick() {
-        // todo
+        iModel.setTestMode(true);
+        this.confidenceTest();
     }
 
     public void handleHeardClick() {

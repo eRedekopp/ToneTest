@@ -10,6 +10,7 @@ import android.os.Build;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -47,6 +48,7 @@ public class Model {
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     // todo uncomment extra frequencies after testing comlpete
     public static final float[] FREQUENCIES = {/*200, 500, */ 1000, /*2000, 4000, 8000*/}; // From British Society of Audiology
+    public static final float[] CONF_FREQS  = {/*220,*/ 880, /*1760*/}; // 3 octaves of A
     public int duration_ms; // how long to play each tone in a test
     double volume;          // amplitude multiplier
     byte[] buf;
@@ -58,7 +60,6 @@ public class Model {
     // vars for confidence test
     static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 6;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
-    ArrayList<FreqVolPair> confidenceCalibPairs; // freq-vol pairs used to calibrate the next confidence test
     ArrayList<ConfidenceSingleTestResult> confidenceTestResults;
 
     public Model() {
@@ -74,7 +75,6 @@ public class Model {
     public void clearConfidenceResults() {
         confidenceTestPairs = new ArrayList<>();
         confidenceTestResults = new ArrayList<>();
-        confidenceCalibPairs = new ArrayList<>();
     }
 
     /**
@@ -125,7 +125,16 @@ public class Model {
     }
 
     public void configureConfidenceTestPairs() {
-        // todo
+        // todo make this better
+        for (float freq : CONF_FREQS) {
+            float closestTestedFreq = this.hearingTestResults.getNearestTestedFreq(freq);
+            List<Double> vols = this.hearingTestResults.getTestedVolumesForFreq(closestTestedFreq);
+            double minVol = Collections.min(vols), maxVol = Collections.max(vols);
+            minVol += minVol * 0.2; // use 20% above and below min and max
+            maxVol -= maxVol * 0.2;
+            confidenceTestPairs.add(new FreqVolPair(freq, minVol));
+            confidenceTestPairs.add(new FreqVolPair(freq, maxVol));
+        }
     }
 
     public float getProbabilityFVP(float freq, double vol) {
@@ -134,8 +143,7 @@ public class Model {
     }
 
     public float getProbabilityFVP(FreqVolPair fvp) {
-        if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
-        return this.hearingTestResults.getProbOfHearingFVP(fvp.getFreq(), fvp.getVol());
+        return this.getProbabilityFVP(fvp.getFreq(), fvp.getVol());
     }
 
     /**

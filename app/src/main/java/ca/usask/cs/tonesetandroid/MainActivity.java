@@ -84,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         confidenceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showErrorDialog("Confidence Test Unavailable");
+                controller.handleConfClick();
             }
         });
         heardButton.setOnClickListener(new View.OnClickListener() {
