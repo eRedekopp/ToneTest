@@ -44,12 +44,20 @@ public class HearingTestResultsContainer {
      *          Only works on frequencies who have results stored in this container - returns < 0 otherwise
      */
     public float getProbOfHearingFVP(float freq, double vol) {
-        // todo make this work with non-tested frequencies
-        try {
-            return allResults.get(freq).getProbOfHearing(vol);
-        } catch (NullPointerException e) {
-            return -1;
-        }
+
+        // find frequencies tested just above and below freq
+        float freqAbove = findNearestAbove(freq, this.getFreqs());
+        float freqBelow = findNearestBelow(freq, this.getFreqs());
+
+        // find the probabilities of each of these frequencies
+        float probAbove = this.allResults.get(freqAbove).getProbOfHearing(vol);
+        float probBelow = this.allResults.get(freqAbove).getProbOfHearing(vol);
+
+        // how far of the way between freqBelow and freqAbove is fvp.freq?
+        float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
+
+        // estimate this probability linearly between the results above and below
+        return probBelow + pctBetween * (probAbove - probBelow);
     }
 
     public float getProbOfHearingFVP(FreqVolPair fvp) {
@@ -130,6 +138,36 @@ public class HearingTestResultsContainer {
         StringBuilder builder = new StringBuilder();
         for (HearingTestSingleFreqResult result : allResults.values()) builder.append(result.toString());
         return builder.toString();
+    }
+
+    /**
+     * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being greater than f
+     */
+    public static float findNearestAbove(float f, Float[] lst) {
+        float closest = -1f;
+        float distance = Float.MAX_VALUE;
+        for (float freq : lst) {
+            if (0 < freq - f && freq - f < distance) {
+                closest = freq;
+                distance = freq - f;
+            }
+        }
+        return closest;
+    }
+
+    /**
+     * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being less than f
+     */
+    public static float findNearestBelow(float f, Float[] lst) {
+        float closest = -1f;
+        float distance = Float.MAX_VALUE;
+        for (float freq : lst) {
+            if (0 < f - freq && f - freq < distance) {
+                closest = freq;
+                distance = f - freq;
+            }
+        }
+        return closest;
     }
 
     /**

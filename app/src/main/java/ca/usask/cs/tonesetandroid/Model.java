@@ -316,39 +316,6 @@ public class Model {
                 AudioManager.FLAG_PLAY_SOUND);
     }
 
-    public float getProbOfHearing(FreqVolPair fvp) {
-        float freq = fvp.getFreq();
-        double vol = fvp.getVol();
-
-        // find frequencies tested just above and below fvp.freq
-        float freqAbove = findNearestAbove(fvp.getFreq(), this.hearingTestResults.getFreqs());
-        float freqBelow = findNearestBelow(fvp.getFreq(), this.hearingTestResults.getFreqs());
-
-        // find the probabilities of each of these frequencies
-        float probAbove = this.hearingTestResults.getProbOfHearingFVP(freqAbove, vol);
-        float probBelow = this.hearingTestResults.getProbOfHearingFVP(freqBelow, vol);
-
-        // how far of the way between freqBelow and freqAbove is fvp.freq?
-        float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
-
-        // estimate this probability linearly between the results above and below
-        return probBelow + pctBetween * (probAbove - probBelow);
-    }
-
-    /**
-     * Gets the estimated "just audible" volume for the given frequency, given the results in the calibList
-     *
-     * @param freq The frequency whose just audible volume is to be estimated
-     * @param calibList A list of calibration frequencies and volumes
-     * @return The estimated just audible volume of freq
-     */
-    public double getEstimatedMinVolume(float freq, List<FreqVolPair> calibList) {
-        if (calibList.isEmpty()) throw new IllegalArgumentException("Calibration list is empty");
-        HashMap<Float, Double> resultMap = new HashMap<>();
-        for (FreqVolPair p : calibList) resultMap.put(p.freq, p.vol);
-        return resultMap.get(getClosestKey(freq, resultMap));
-    }
-
     /**
      * Accessor method to return the confidenceTest ArrayList
      * @return the confidence test array list
@@ -411,36 +378,6 @@ public class Model {
 
     public void setCurrentVolumes(ArrayList<FreqVolPair> currentVolumes) {
         this.currentVolumes = currentVolumes;
-    }
-
-    /**
-     * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being greater than f
-     */
-    public static float findNearestAbove(float f, Float[] lst) {
-        float closest = -1f;
-        float distance = Float.MAX_VALUE;
-        for (float freq : lst) {
-            if (0 < freq - f && freq - f < distance) {
-                closest = freq;
-                distance = freq - f;
-            }
-        }
-        return closest;
-    }
-
-    /**
-     * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being less than f
-     */
-    public static float findNearestBelow(float f, Float[] lst) {
-        float closest = -1f;
-        float distance = Float.MAX_VALUE;
-        for (float freq : lst) {
-            if (0 < f - freq && f - freq < distance) {
-                closest = freq;
-                distance = f - freq;
-            }
-        }
-        return closest;
     }
 
     /**
