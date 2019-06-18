@@ -32,13 +32,13 @@
         app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
 
     <Button
-        android:id="@+id/saveButton"
+        android:id="@+id/saveCalibButton"
         android:layout_width="275dp"
         android:layout_height="75dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="8dp"
-        android:text="Save"
+        android:text="Save Calibration"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/heardButton" />
@@ -65,6 +65,18 @@
         android:text="Reset"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/saveButton" />
+        app:layout_constraintTop_toBottomOf="@+id/saveConfButton" />
+
+    <Button
+        android:id="@+id/saveConfButton"
+        android:layout_width="275dp"
+        android:layout_height="75dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="25dp"
+        android:layout_marginEnd="8dp"
+        android:text="Save Confidence"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/saveCalibButton" />
 
 </android.support.constraint.ConstraintLayout>

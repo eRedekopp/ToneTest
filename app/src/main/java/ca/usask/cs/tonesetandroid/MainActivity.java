@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
     HearingTestController controller;
     FileNameController fileController;
 
-    Button calibButton, heardButton, saveButton, confidenceButton, resetButton;
+    Button calibButton, heardButton, saveCalibButton, saveConfButton, confidenceButton, resetButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,9 +69,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.fileController.setModel(this.model);
 
         // set up view elements for main screen
-        calibButton =        findViewById(R.id.calibButton);
+        calibButton =       findViewById(R.id.calibButton);
         heardButton =       findViewById(R.id.heardButton);
-        saveButton =        findViewById(R.id.saveButton);
+        saveCalibButton =   findViewById(R.id.saveCalibButton);
+        saveConfButton =    findViewById(R.id.saveConfButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
         resetButton =       findViewById(R.id.resetButton);
 
@@ -93,12 +94,25 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 controller.handleHeardClick();
             }
         });
-        saveButton.setOnClickListener(new View.OnClickListener() {
+        saveCalibButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
                     fileController.handleSaveCalibClick(context);
                     model.setResultsSaved(true);
+                } catch (IllegalStateException e) {
+                    showErrorDialog("No results currently stored (this dialog should never happen)");
+                } catch (RuntimeException e) {
+                    showErrorDialog("Unable to create target file (this dialog should never happen)");
+                }
+            }
+        });
+        saveConfButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    fileController.handleConfSaveClick(context);
+                    model.setConfResultsSaved(true);
                 } catch (IllegalStateException e) {
                     showErrorDialog("No results currently stored (this dialog should never happen)");
                 } catch (RuntimeException e) {
@@ -145,7 +159,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         calibButton.setEnabled(!iModel.isInTestMode());
         heardButton.setEnabled(iModel.isInTestMode());
         confidenceButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
-        saveButton.setEnabled(model.hasResults() && !iModel.isInTestMode() && !model.resultsSaved());
+        saveCalibButton.setEnabled(model.hasResults() && !iModel.isInTestMode() && !model.resultsSaved());
+        saveConfButton.setEnabled(model.hasConfResults() && !iModel.isInTestMode() && !model.confResultsSaved());
         resetButton.setEnabled(!iModel.isInTestMode());
     }
 
@@ -201,7 +216,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
 
         this.model.setSubjectId(subjectID);
-        this.model.clearConfidenceResults();
         this.model.clearResults();
         if (!pathName.equals(""))
             try {

@@ -56,25 +56,27 @@ public class Model {
     // Vars for file io
     private int subjectId = -1;     // -1 indicates not set
     private boolean resultsSaved = false;
+    private boolean confResultsSaved = false;
 
     // vars for confidence test
     static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 6;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
-    ArrayList<ConfidenceSingleTestResult> confidenceTestResults;
+    ConfidenceTestResultsContainer confidenceTestResults;
 
     public Model() {
         buf = new byte[2];
         subscribers = new ArrayList<>();
-        clearConfidenceResults();
         clearResults();
     }
 
     /**
      * Clear any confidence results saved in the model
      */
-    public void clearConfidenceResults() {
+    public void resetConfidenceResults() {
+        if (! this.hasResults())
+            throw new IllegalStateException("Hearing test results must be configured before configuring conf test");
         confidenceTestPairs = new ArrayList<>();
-        confidenceTestResults = new ArrayList<>();
+        confidenceTestResults = new ConfidenceTestResultsContainer(this.hearingTestResults);
     }
 
     /**
@@ -84,12 +86,13 @@ public class Model {
         this.topVolEstimates = new ArrayList<>();
         this.bottomVolEstimates = new ArrayList<>();
         this.currentVolumes = new ArrayList<>();
-        this.confidenceTestResults = new ArrayList<>();
+        this.confidenceTestResults = null;
         this.testPairs = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
         this.hearingTestResults = new HearingTestResultsContainer();
         this.resultsSaved = false;
+        this.confResultsSaved = false;
     }
 
     /**
@@ -97,6 +100,14 @@ public class Model {
      */
     public boolean hasResults() {
         return ! this.hearingTestResults.isEmpty();
+    }
+
+    public boolean hasConfResults() {
+        try {
+            return !this.confidenceTestResults.isEmpty();
+        } catch (NullPointerException e) {
+            return false;
+        }
     }
 
     /**
@@ -359,6 +370,15 @@ public class Model {
 
     public boolean resultsSaved() {
         return resultsSaved;
+    }
+
+    public void setConfResultsSaved(boolean b) {
+        this.confResultsSaved = b;
+        this.notifySubscribers();
+    }
+
+    public boolean confResultsSaved() {
+        return confResultsSaved;
     }
 
     public void stopAudio() {

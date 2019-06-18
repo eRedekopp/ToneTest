@@ -1,8 +1,5 @@
 package ca.usask.cs.tonesetandroid;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
 
 /**
  * A class to store the result of a single freq-vol pair test from a confidence test
@@ -10,6 +7,8 @@ import java.util.List;
  * @author redekopp
  */
 public class ConfidenceSingleTestResult {
+
+    // todo make this internal to ConfidenceTestResultsContainer
 
     public final float expected;
     public final float freq;
@@ -35,4 +34,11 @@ public class ConfidenceSingleTestResult {
         return (float) this.nHeard / (float) (this.nNotHeard + this.nHeard);
     }
 
+    public int getTimesHeard() {
+        return this.nHeard;
+    }
+
+    public int getTimesNotHeard() {
+        return  this.nNotHeard;
+    }
 }

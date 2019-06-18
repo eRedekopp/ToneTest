@@ -39,11 +39,16 @@ public class HearingTestResultsContainer {
      *          Only works on frequencies who have results stored in this container - returns < 0 otherwise
      */
     public float getProbOfHearingFVP(float freq, double vol) {
+        // todo make this work with non-tested frequencies
         try {
             return allResults.get(freq).getProbOfHearing(vol);
         } catch (NullPointerException e) {
             return -1;
         }
+    }
+
+    public float getProbOfHearingFVP(FreqVolPair fvp) {
+        return getProbOfHearingFVP(fvp.getFreq(), fvp.getVol());
     }
 
     /**

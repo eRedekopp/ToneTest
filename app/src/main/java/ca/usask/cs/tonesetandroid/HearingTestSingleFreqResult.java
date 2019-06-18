@@ -1,13 +1,13 @@
 package ca.usask.cs.tonesetandroid;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
 public class HearingTestSingleFreqResult {
+
+    // todo make this internal to HearingTestResultsContainer
 
     private float freq;
 
