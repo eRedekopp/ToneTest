@@ -3,13 +3,11 @@ package ca.usask.cs.tonesetandroid;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
-import android.widget.ExpandableListView;
 
 import com.paramsen.noise.Noise;
 import com.paramsen.noise.NoiseOptimized;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +57,7 @@ public class HearingTestController {
 
                 // get upper estimates with rampUpTest()
                 rampUpTest();
+                Log.d("HearingTest", "Upper bounds = " + model.topVolEstimates);
 
                 // use upper estimates as a starting off point for lowering volumes
                 model.currentVolumes = (ArrayList) model.topVolEstimates.clone();
@@ -71,6 +70,7 @@ public class HearingTestController {
 
                 // set bottom estimates after results found for each frequency
                 model.bottomVolEstimates = (ArrayList) model.currentVolumes.clone();
+                Log.d("HearingTest", "Lower bounds = " + model.bottomVolEstimates);
 
                 // configure pairs to be tested
                 model.configureTestPairs();

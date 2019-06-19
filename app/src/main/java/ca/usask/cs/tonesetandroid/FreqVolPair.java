@@ -1,7 +1,5 @@
 package ca.usask.cs.tonesetandroid;
 
-import java.io.Serializable;
-
 /**
  * A data structure for storing a frequency, volume pair
  *
@@ -35,10 +33,12 @@ public class FreqVolPair implements Cloneable {
         return vol;
     }
 
+    @Override
     public String toString() {
         return String.format("Frequency: %f | Volume: %f", freq, vol);
     }
 
+    @Override
     public FreqVolPair clone() {
         return new FreqVolPair(this.freq, this.vol);
     }

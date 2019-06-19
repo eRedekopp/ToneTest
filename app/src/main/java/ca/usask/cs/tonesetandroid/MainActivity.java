@@ -116,7 +116,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
                 } catch (IllegalStateException e) {
                     showErrorDialog("No results currently stored (this dialog should never happen)");
                 } catch (RuntimeException e) {
-                    showErrorDialog("Unable to create target file (this dialog should never happen)");
+                    e.printStackTrace();
+                    showErrorDialog("Unable to create target file");
                 }
             }
         });

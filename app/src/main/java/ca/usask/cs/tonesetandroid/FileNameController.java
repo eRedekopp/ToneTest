@@ -54,10 +54,9 @@ public class FileNameController {
         File fout = null;
         try {
             fout = getDestinationFileCalib();
-            if (! fout.createNewFile())
-                throw new RuntimeException("Unable to create output file");
+            if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
-            out.write("Frequency(Hz)\tVolume\tTimesHeard\tTimesNotHeard");
+            out.write("Freq(Hz),Volume,nHeard,nNotHeard");
             out.newLine();
             HearingTestResultsContainer results = model.getHearingTestResults();
             for (float freq : results.getFreqs()) {
@@ -65,22 +64,18 @@ public class FileNameController {
                 HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
                 List<Double> volumes = results.getTestedVolumesForFreq(freq);
                 for (Double vol : volumes) {
-                    out.write(Float.toString(freq));
-                    out.write("\t\t");
-                    out.write(String.format("%.4f", vol));
-                    out.write('\t');
+                    int nHeard, nNotHeard;
                     try {
-                        out.write(timesHeardPerVol.get(vol).toString());
+                        nHeard = timesHeardPerVol.get(vol);
                     } catch (NullPointerException e) {
-                        out.write('0');
+                        nHeard = 0;
                     }
-                    out.write('\t');
                     try {
-                        out.write(timesNotHeardPerVol.get(vol).toString());
+                        nNotHeard = timesNotHeardPerVol.get(vol);
                     } catch (NullPointerException e) {
-                        out.write('0');
+                        nNotHeard = 0;
                     }
-                    out.newLine();
+                    out.write(String.format("%.1f,%.2f,%d,%d,\n", freq, vol, nHeard, nNotHeard));
                 }
             }
         } catch (FileNotFoundException e) {
@@ -213,6 +208,7 @@ public class FileNameController {
 
             if (! fout.createNewFile()) {
                 Log.e("HandleConfSaveClick", "Unable to create confidence file");
+                Log.d("HandleConfSaveClick", "fout.exists() = " + fout.exists());
                 return;
             }
 
@@ -222,7 +218,7 @@ public class FileNameController {
             // write information about test
             out.write("Calibration Freqs: " + Arrays.toString(model.hearingTestResults.getFreqs()));
             out.newLine();
-            out.write("Frequency(Hz)\tVolume\tTimesHeard\tTimesNotHeard\tExpectedProb\tActualProb");
+            out.write("Frequency(Hz),Volume,TimesHeard,TimesNotHeard,ExpectedProb,ActualProb");
             out.newLine();
             // write test results for each freq-vol pair tested
             for (float freq : results.getTestedFrequencies()) {
@@ -231,10 +227,8 @@ public class FileNameController {
                 HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
 
                 for (double vol : vols) {
-                    double actualProb = (double) timesHeardPerVol.get(vol) /
-                                        (double) (timesHeardPerVol.get(vol) + timesNotHeardPerVol.get(vol));
                     out.write(String.format(
-                            "%.2f\t\t%.4f\t%d\t\t%d\t\t%.3f\t\t%.3f\n",
+                            "%.2f,%.4f,%d,%d,%.3f,%.3f,\n",
                             freq, vol, timesHeardPerVol.get(vol), timesNotHeardPerVol.get(vol),
                             model.getProbabilityFVP(freq, vol), results.getActualResultForFVP(freq, vol)
                     ));
@@ -259,7 +253,7 @@ public class FileNameController {
             try {
                 if (out != null) out.close();
             } catch (IOException e) {
-                System.out.println("Error closing confidence test result file");
+                Log.e("saveConfResults", "Error closing confidence test result file");
                 e.printStackTrace();
             }
         }
@@ -371,25 +365,27 @@ public class FileNameController {
         }
 
         // parse test information
-        scanner.useDelimiter("\\s");
+        scanner.useDelimiter(",");
 
         scanner.nextLine(); // skip header
         HearingTestResultsContainer results = new HearingTestResultsContainer();
 
         try {
+            int j = 0;
             while (scanner.hasNext()) {
                 double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
-                int nextHeard = scanner.nextInt(), nextNotHeard = scanner.nextInt();
+                int nextHeard = scanner.nextInt();
+                int nextNotHeard = scanner.nextInt();
                 for (int i = 0; i < nextHeard; i++) results.addResult((float) nextFreq, nextVol, true);
                 for (int i = 0; i < nextNotHeard; i++) results.addResult((float) nextFreq, nextVol, false);
                 if (scanner.hasNextLine()) scanner.nextLine();
             }
             model.hearingTestResults = results;
         } catch (NoSuchElementException e) {
-            System.out.println("Error reading file: EOF reached before input finished");
+            Log.e("InitializeModel", "Error reading file: EOF reached before input finished");
             e.printStackTrace();
         } catch (RuntimeException e) {
-            System.out.println("Unknown error while reading file");
+            Log.e("InitializeModel", "Unknown error while reading file");
             e.printStackTrace();
         } finally { scanner.close(); }
 

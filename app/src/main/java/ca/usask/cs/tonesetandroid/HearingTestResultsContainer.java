@@ -1,6 +1,8 @@
 package ca.usask.cs.tonesetandroid;
 
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -200,7 +202,7 @@ public class HearingTestResultsContainer {
             if (!testedVolumes.contains(vol)) testedVolumes.add(vol);
             if (heard)
                 if (timesHeardPerVol.containsKey(vol))
-                    mapReplace(timesNotHeardPerVol, vol, timesNotHeardPerVol.get(vol) + 1);
+                    mapReplace(timesHeardPerVol, vol, timesHeardPerVol.get(vol) + 1);
                 else timesHeardPerVol.put(vol, 1);
             else
             if (timesNotHeardPerVol.containsKey(vol))
@@ -216,18 +218,53 @@ public class HearingTestResultsContainer {
          */
         @SuppressWarnings("ConstantConditions")
         public float getProbOfHearing(double vol) {
-            double volBelow = findNearestBelow(vol, (Double[]) timesHeardPerVol.keySet().toArray());
-            double volAbove = findNearestAbove(vol, (Double[]) timesHeardPerVol.keySet().toArray());
+            // sanity checks
+            if (testedVolumes.isEmpty()) throw new IllegalStateException("testedVolumes unexpectedly empty");
+
+            // find volumes just above and below, or if they are smaller than the smallest or larger than the
+            // largest, then return the probability of the nearest volume
+            double volBelow, volAbove;
+            try {
+                volBelow = findNearestBelow(vol, testedVolumes);
+            } catch (IllegalArgumentException e) {
+                return this.getActualProb(findNearestAbove(vol, testedVolumes));
+            }
+            try {
+                volAbove = findNearestAbove(vol, testedVolumes);
+            } catch (IllegalArgumentException e) {
+                return this.getActualProb(findNearestBelow(vol, testedVolumes));
+            }
+
             // what percentage of the way between volBelow and volAbove is vol?
             float pctBetween = (float) (vol - volBelow) / (float) (volAbove - volBelow);
-            float probOfVolBelow =
-                    (float) timesHeardPerVol.get(volBelow) /
-                            (float) (timesHeardPerVol.get(volBelow) + timesNotHeardPerVol.get(volBelow));
-            float probOfVolAbove =
-                    (float) timesHeardPerVol.get(volAbove) /
-                            (float) (timesHeardPerVol.get(volAbove) + timesNotHeardPerVol.get(volAbove));
+
             // return value on the line between the probabilities of the volumes just above and below the given volume
+            float probOfVolBelow = this.getActualProb(volBelow);
+            float probOfVolAbove = this.getActualProb(volAbove);
             return probOfVolBelow + pctBetween * (probOfVolAbove - probOfVolBelow);
+        }
+
+        /**
+         * Gets the actual probability found of hearing the given volume
+         *
+         * @param vol The volume whose probability is to be found
+         * @return The probability of hearing the volume
+         * @throws IllegalArgumentException If the given volume was not tested
+         */
+        public float getActualProb(double vol) throws IllegalArgumentException {
+            if (! testedVolumes.contains(vol)) throw new IllegalArgumentException("Volume not present in results");
+            int timesHeard, timesNotHeard;
+            try {
+                timesHeard = timesHeardPerVol.get(vol);
+            } catch (NullPointerException e) {
+                timesHeard = 0;
+            }
+            try {
+                timesNotHeard = timesNotHeardPerVol.get(vol);
+            } catch (NullPointerException e) {
+                timesNotHeard = 0;
+            }
+            return (float) timesHeard / (float) (timesHeard + timesNotHeard);
         }
 
         @Override
@@ -273,21 +310,6 @@ public class HearingTestResultsContainer {
             map.put(key, newValue);
         }
 
-        /**
-         * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being greater than f
-         */
-        public double findNearestAbove(double v, Double[] lst) {
-            double closest = -1.0;
-            double distance = Double.MAX_VALUE;
-            for (double vol : lst) {
-                if (0 < vol - v && vol - v < distance) {
-                    closest = vol;
-                    distance = vol - v;
-                }
-            }
-            return closest;
-        }
-
         @SuppressWarnings("unchecked")
         public HashMap<Double, Integer> getTimesHeardPerVol() {
             return (HashMap<Double, Integer>) this.timesHeardPerVol.clone();
@@ -303,18 +325,39 @@ public class HearingTestResultsContainer {
         }
 
         /**
-         * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being less than f
+         * Given a collection of doubles, find the double nearest to d which is also less than d
+         * Only intended for use with collections of positive numbers
+         * @throws IllegalArgumentException if d is smaller than the smallest element of the collection
          */
-        public double findNearestBelow(double v, Double[] lst) {
+        public double findNearestBelow(double d, Collection<Double> dbls) {
             double closest = -1.0;
             double distance = Double.MAX_VALUE;
-            for (double freq : lst) {
-                if (0 < v - freq && v - freq < distance) {
-                    closest = freq;
-                    distance = v - freq;
+            for (double dbl : dbls) {
+                if (0 < d - dbl && d - dbl < distance) {
+                    closest = dbl;
+                    distance = d - dbl;
                 }
             }
-            return closest;
+            if (closest == -1) throw new IllegalArgumentException("No elements less than d found");
+            else return closest;
+        }
+
+        /**
+         * Given a collection of doubles, find the double nearest to d which is also greater than d
+         * Only intended for use with collections of positive numbers
+         * @throws IllegalArgumentException if d is larger than the largest element of the collection
+         */
+        public double findNearestAbove(double d, Collection<Double> dbls) throws IllegalArgumentException {
+            double closest = -1.0;
+            double distance = Double.MAX_VALUE;
+            for (double dbl : dbls) {
+                if (0 < dbl - d && dbl - d < distance) {
+                    closest = dbl;
+                    distance = dbl - d;
+                }
+            }
+            if (closest == -1) throw new IllegalArgumentException("No elements greater than d found");
+            else return closest;
         }
     }
 }

@@ -32,9 +32,8 @@ public class Model {
     // vars/values for hearing test
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;
-    // todo not enough volumes getting saved (see save files)
     static final int NUMBER_OF_VOLS_PER_FREQ = 5;  // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 3;  // number of times to repeat each freq-vol combination in the test
+    static final int NUMBER_OF_TESTS_PER_VOL = 4;  // number of times to repeat each freq-vol combination in the test
     ArrayList<FreqVolPair> topVolEstimates;     // The rough estimates for volumes which have P(heard) = 1
     ArrayList<FreqVolPair> bottomVolEstimates;  // The rough estimates for volumes which have P(heard) = 0
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
@@ -47,10 +46,8 @@ public class Model {
     AudioTrack lineOut;
     public static final int OUTPUT_SAMPLE_RATE  = 44100; // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
-    // todo uncomment extra frequencies after testing comlpete
-    public static final float[] FREQUENCIES = {/*200, */ 500, 1000, 2000 /*, 4000, 8000*/}; // From British Society
-// of Audiology
-    public static final float[] CONF_FREQS  = {/*220,*/ 880, 1760}; // 3 octaves of A
+    public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, 8000}; // From British Society of Audiology
+    public static final float[] CONF_FREQS  = {220, 880, 1760}; // 3 octaves of A
     public int duration_ms; // how long to play each tone in a test
     double volume;          // amplitude multiplier
     byte[] buf;
@@ -61,7 +58,8 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     // vars for confidence test
-    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 6;
+    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 5; // todo select these
+    static final int CONF_NUMBER_OF_VOLS_PER_FREQ  = 3;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
 
@@ -149,10 +147,12 @@ public class Model {
             float closestTestedFreq = this.hearingTestResults.getNearestTestedFreq(freq);
             List<Double> vols = this.hearingTestResults.getTestedVolumesForFreq(closestTestedFreq);
             double minVol = Collections.min(vols), maxVol = Collections.max(vols);
-            minVol += minVol * 0.2; // use 20% above and below min and max
-            maxVol -= maxVol * 0.2;
-            confidenceTestPairs.add(new FreqVolPair(freq, minVol));
-            confidenceTestPairs.add(new FreqVolPair(freq, maxVol));
+//            minVol += minVol * 0.2; // use 20% above and below min and max
+//            maxVol -= maxVol * 0.2;
+//            confidenceTestPairs.add(new FreqVolPair(freq, minVol));
+//            confidenceTestPairs.add(new FreqVolPair(freq, maxVol));
+            for (double vol = minVol * 1.2; vol < maxVol; vol += (maxVol - minVol*1.2) / CONF_NUMBER_OF_VOLS_PER_FREQ)
+                confidenceTestPairs.add(new FreqVolPair(freq, vol));
         }
     }
 
@@ -278,12 +278,12 @@ public class Model {
     /**
      * Reduce all elements of currentVolumes by [element * HEARING_TEST_REDUCE_RATE]
      */
-    public synchronized void reduceCurrentVolumes() {
+    public void reduceCurrentVolumes() {
         ArrayList<FreqVolPair> newVols = new ArrayList<>();
         for (FreqVolPair fvp : currentVolumes) {
             // only reduce volumes of frequencies still being tested
             if (timesNotHeardPerFreq.get(fvp.getFreq()) >= TIMES_NOT_HEARD_BEFORE_STOP) newVols.add(fvp);
-            newVols.add(new FreqVolPair(fvp.getFreq(), fvp.getVol() * (1 - HEARING_TEST_REDUCE_RATE)));
+            else newVols.add(new FreqVolPair(fvp.getFreq(), fvp.getVol() * (1 - HEARING_TEST_REDUCE_RATE)));
         }
         this.currentVolumes = newVols;
     }
@@ -370,6 +370,7 @@ public class Model {
     public void stopAudio() {
         this.audioPlaying = false;
         this.lineOut.pause();
+        this.lineOut.flush();
     }
 
     public void startAudio() {
