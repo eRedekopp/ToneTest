@@ -1,9 +1,12 @@
 package ca.usask.cs.tonesetandroid;
 
+import org.apache.commons.math3.distribution.BinomialDistribution;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+
 
 public class ConfidenceTestResultsContainer {
 
@@ -149,6 +152,72 @@ public class ConfidenceTestResultsContainer {
     private ConfidenceSingleTestResult getResultForFVP(FreqVolPair fvp) {
         return getResultForFVP(fvp.getFreq(), fvp.getVol());
     }
+    
+    public StatsAnalysisResultsContainer performAnalysis(float freq, double vol, float estimate)
+                                                         throws IllegalArgumentException{
+        ConfidenceSingleTestResult result = this.getResultForFVP(freq, vol);
+        if (result == null) throw new IllegalArgumentException("Frequency-volume pair not present in results");
+        return new StatsAnalysisResultsContainer(result, estimate);
+    }
+
+
+    /**
+     * A class for performing and storing the results of a statistical analysis on an estimate of the actual value
+     */
+    public class StatsAnalysisResultsContainer {
+
+        public final float freq;
+
+        public final double vol;
+
+        public final float confProbEstimate;
+
+        public final float probEstimate;
+
+        public final boolean estimatesSigDifferent;
+
+        public final float alpha;
+
+//        public final float beta;
+
+        public final float pValue;
+
+        /**
+         * Create a new results container and perform all statistical analysis on the given data
+         *
+         * @param confResult The results of the confidence test at the desired frequency and volume
+         * @param probEstimate The probability estimate found by the model (ie. based on the hearing test
+         *                          results) for the frequency and volume tested in confResult
+         */
+        private StatsAnalysisResultsContainer(ConfidenceSingleTestResult confResult, float probEstimate) {
+            // set constants
+            this.freq = confResult.freq;
+            this.vol = confResult.vol;
+            this.confProbEstimate = confResult.getActual();
+            this.probEstimate = probEstimate;
+            this.alpha = 0.05f;
+
+            // check for statistical significance
+
+            // Null Hypothesis : confProb == probEstimate
+            // Alt. Hypothesis : confProb != probEstimate
+            // Get p value from binomial distribution
+            BinomialDistribution binDist =
+                    new BinomialDistribution(confResult.getTotalTrials(), confResult.getActual());
+            int expectedValue = Math.round(probEstimate * confResult.getTotalTrials());
+
+            double cumProb = binDist.cumulativeProbability(expectedValue);
+            this.estimatesSigDifferent = cumProb < alpha / 2 || (1 - cumProb) < alpha / 2;
+
+            // set p-value
+            this.pValue = (float) Math.min(cumProb, 1-cumProb);
+            
+            // todo calculate beta?
+
+            
+        }
+    }
+
 
     /**
      * A class to store the result of a single freq-vol pair test from a confidence test
@@ -157,8 +226,8 @@ public class ConfidenceTestResultsContainer {
      */
     private class ConfidenceSingleTestResult {
 
-        public final float freq;
-        public final double vol;
+        final float freq;
+        final double vol;
 
         private int nHeard;
         private int nNotHeard;
@@ -198,6 +267,13 @@ public class ConfidenceTestResultsContainer {
          */
         public int getTimesNotHeard() {
             return  this.nNotHeard;
+        }
+
+        /**
+         * @return The total number of trials at this frequency and volume
+         */
+        public int getTotalTrials() {
+            return this.nHeard + this.nNotHeard;
         }
     }
 

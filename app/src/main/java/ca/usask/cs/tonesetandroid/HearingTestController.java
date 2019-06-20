@@ -282,9 +282,7 @@ public class HearingTestController {
             Log.i("rampUpTest", "Testing frequency " + freq);
 
             double rateOfRamp = 1.05;
-//            if (model.audioPlaying())
-                rampUp(rateOfRamp, freq, 0.1); //play a tone for 50ms, then ramp up by 1.05 times until the tone is heard starting at a volume of 0.1
-//            else return;
+            rampUp(rateOfRamp, freq, 0.1); //play a tone for 50ms, then ramp up by 1.05 times until the tone is heard starting at a volume of 0.1
 
             initialHeardVol = model.volume; //record the volume of the last played tone, this will either be the volume when the user clicked the button, or the maximum possible volume)
 
