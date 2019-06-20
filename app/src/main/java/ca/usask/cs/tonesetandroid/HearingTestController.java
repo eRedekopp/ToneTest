@@ -181,6 +181,8 @@ public class HearingTestController {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                Handler mainHandler = new Handler(Looper.getMainLooper());
+
                 // configure model for test
                 iModel.setTestMode(true);
                 model.configureAudio();
@@ -192,6 +194,16 @@ public class HearingTestController {
                     allTrials.addAll(model.confidenceTestPairs);
                 }
                 Collections.shuffle(allTrials);
+
+                // show info dialog
+                model.setTestPaused(true);
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        view.showInformationDialog(mainInfo);
+                    }
+                });
+                while (model.testPaused()) continue;
 
                 // perform trials
                 for (FreqVolPair trial : allTrials) {
