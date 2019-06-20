@@ -28,7 +28,7 @@ public class HearingTestController {
     HearingTestInteractionModel iModel;
 
     // The length of each test tone
-    private static final int TONE_DURATION_MS = 3000;
+    private static final int TONE_DURATION_MS = 1500;
 
     /**
      * Perform a full hearing test
@@ -155,7 +155,6 @@ public class HearingTestController {
                 // configure model for test
                 iModel.setTestMode(true);
                 model.configureAudio();
-                model.resetConfidenceResults();
                 model.configureConfidenceTestPairs();
 
                 // prepare list of all trials
@@ -231,7 +230,7 @@ public class HearingTestController {
     public void rampUpTest() {
 
         iModel.notHeard();
-        model.clearResults();
+        model.reset();
 
         model.configureAudio();
 

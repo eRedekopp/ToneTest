@@ -1,0 +1,10 @@
+How do we control for false alarms?
+  - Ask carl? Need incentive to force one way or another?
+Constructing 95% CI for confidence trial
+  - Stats textbook p395
+  - https://www.desmos.com/calculator/urltj90ojf
+    - size of confidence interval as function of test proportion
+  - n = 20 trials per FVP gives 95% CI with width 8% to 20%
+  - https://www.desmos.com/calculator/bjzixmtknu
+    - Need a huge number of trials to get any sort of accuracy
+  - stats textbook p452 type II error probabilities

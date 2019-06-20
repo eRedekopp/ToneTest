@@ -10,6 +10,8 @@ import android.os.Build;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -58,35 +60,27 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     // vars for confidence test
-    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 5; // todo select these
-    static final int CONF_NUMBER_OF_VOLS_PER_FREQ  = 3;
+    static final int CONF_NUMBER_OF_FVPS = 5;
+    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 20;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
 
     public Model() {
         buf = new byte[2];
         subscribers = new ArrayList<>();
-        clearResults();
+        reset();
     }
 
     /**
-     * Clear any confidence results saved in the model
+     * Resets this model to its just-initialized state
      */
-    public void resetConfidenceResults() {
-        if (! this.hasResults())
-            throw new IllegalStateException("Hearing test results must be configured before configuring conf test");
-        confidenceTestPairs = new ArrayList<>();
-        confidenceTestResults = new ConfidenceTestResultsContainer();
-    }
-
-    /**
-     * Clear any calibration results saved in the model
-     */
-    public void clearResults() {
+    public void reset() {
+        this.subjectId = -1;
         this.topVolEstimates = new ArrayList<>();
         this.bottomVolEstimates = new ArrayList<>();
         this.currentVolumes = new ArrayList<>();
-        this.confidenceTestResults = null;
+        this.confidenceTestResults = new ConfidenceTestResultsContainer();
+        this.confidenceTestPairs = new ArrayList<>();
         this.testPairs = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
@@ -142,17 +136,33 @@ public class Model {
      * Populate model.confidenceTestPairs with all freqvolpairs that will be tested in the next confidence test
      */
     public void configureConfidenceTestPairs() {
-        // todo make this better
-        for (float freq : CONF_FREQS) {
+
+        // divide the tested frequency space into `CONF_NUMBER_OF_FVPs` sections, randomly select a frequency in each
+        ArrayList<Float> confFreqs = new ArrayList<>();
+        float minFreq = min(FREQUENCIES);
+        float maxFreq = max(FREQUENCIES);
+        float binWidth = (maxFreq - minFreq) / CONF_NUMBER_OF_FVPS;
+        for (float bandLowerFreqBound = minFreq; bandLowerFreqBound < maxFreq; bandLowerFreqBound += binWidth) {
+            float bandUpperFreqBound = bandLowerFreqBound + binWidth;
+            confFreqs.add((float)Math.random() * (bandUpperFreqBound - bandLowerFreqBound) + bandLowerFreqBound);
+        }
+
+        // randomize the order of test frequencies
+        Collections.shuffle(confFreqs);
+
+        // todo this is too convoluted
+        // for each frequency, add a new fvp to confidenceTestPairs with the frequency and a volume some percentage
+        // of the way between the lowest and highest tested volumes of the nearest tested frequency
+        float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
+        float jumpSize = 1.0f / CONF_NUMBER_OF_FVPS;
+        for (Float freq : confFreqs) {
             float closestTestedFreq = this.hearingTestResults.getNearestTestedFreq(freq);
             List<Double> vols = this.hearingTestResults.getTestedVolumesForFreq(closestTestedFreq);
-            double minVol = Collections.min(vols), maxVol = Collections.max(vols);
-//            minVol += minVol * 0.2; // use 20% above and below min and max
-//            maxVol -= maxVol * 0.2;
-//            confidenceTestPairs.add(new FreqVolPair(freq, minVol));
-//            confidenceTestPairs.add(new FreqVolPair(freq, maxVol));
-            for (double vol = minVol * 1.2; vol < maxVol; vol += (maxVol - minVol*1.2) / CONF_NUMBER_OF_VOLS_PER_FREQ)
-                confidenceTestPairs.add(new FreqVolPair(freq, vol));
+            double lowestTestedVol = Collections.min(vols);
+            double highestTestedVol = Collections.max(vols);
+            double testVol = lowestTestedVol + pct * (highestTestedVol - lowestTestedVol);
+            this.confidenceTestPairs.add(new FreqVolPair(freq, testVol));
+            pct += jumpSize;
         }
     }
 
@@ -425,6 +435,18 @@ public class Model {
 
     public void notifySubscribers() {
         for (ModelListener m : this.subscribers) m.modelChanged();
+    }
+
+    public static float min(float[] arr) {
+        float min = Float.MAX_VALUE;
+        for (float f : arr) if (f < min) min = f;
+        return min;
+    }
+
+    public static float max(float[] arr) {
+        float max = Float.MIN_VALUE;
+        for (float f : arr) if (f > max) max = f;
+        return max;
     }
 
 }

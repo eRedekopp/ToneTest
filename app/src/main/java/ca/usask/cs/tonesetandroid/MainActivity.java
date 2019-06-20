@@ -217,7 +217,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
 
         this.model.setSubjectId(subjectID);
-        this.model.clearResults();
+        this.model.reset();
         if (!pathName.equals(""))
             try {
                 FileNameController.initializeModelFromFileData(pathName, this.model);
