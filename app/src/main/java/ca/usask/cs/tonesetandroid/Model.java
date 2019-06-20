@@ -29,11 +29,11 @@ public class Model {
 
     private AudioManager audioManager;
 
-    private boolean audioPlaying;
-
     // vars/values for hearing test
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
-    static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;
+    static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
+                                                        // reduction phase of the hearing test before the volume is
+                                                        // considered "inaudible"
     static final int NUMBER_OF_VOLS_PER_FREQ = 5;  // number of volumes to test for each frequency
     static final int NUMBER_OF_TESTS_PER_VOL = 4;  // number of times to repeat each freq-vol combination in the test
     ArrayList<FreqVolPair> topVolEstimates;     // The rough estimates for volumes which have P(heard) = 1
@@ -43,6 +43,7 @@ public class Model {
                                                     // (for finding bottom estimates)
     ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer hearingTestResults;  // final results of test
+    private boolean testPaused = false;
 
     // Vars/values for audio
     AudioTrack lineOut;
@@ -53,6 +54,7 @@ public class Model {
     public int duration_ms; // how long to play each tone in a test
     double volume;          // amplitude multiplier
     byte[] buf;
+    private boolean audioPlaying;
 
     // Vars for file io
     private int subjectId = -1;     // -1 indicates not set
@@ -386,6 +388,14 @@ public class Model {
     public void startAudio() {
         this.audioPlaying = true;
         this.lineOut.play();
+    }
+
+    public void setTestPaused(boolean b) {
+        this.testPaused = b;
+    }
+
+    public boolean testPaused() {
+        return this.testPaused;
     }
 
     public ArrayList<FreqVolPair> getCurrentVolumes() {

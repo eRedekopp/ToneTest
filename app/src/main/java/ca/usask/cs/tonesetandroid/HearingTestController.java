@@ -26,9 +26,18 @@ public class HearingTestController {
 
     Model model;
     HearingTestInteractionModel iModel;
+    HearingTestView view;
 
     // The length of each test tone
     private static final int TONE_DURATION_MS = 1500;
+
+    private static final String rampInfo =
+            "In this test, tones will play quietly and slowly get louder. Please press the \"Heard " +
+            "Tone\" button as soon as the tone becomes audible";
+
+    private static final String mainInfo =
+            "In this test, tones of various frequencies and volumes will be played at random times. Please press the " +
+            "\"Heard Tone\" button each time that you hear a tone";
 
     /**
      * Perform a full hearing test
@@ -55,12 +64,32 @@ public class HearingTestController {
             public void run() {
                 model.configureAudio();
 
+                // show information for ramp segment of test
+                model.setTestPaused(true);
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        view.showInformationDialog(rampInfo);
+                    }
+                });
+                while (model.testPaused()) continue;
+
                 // get upper estimates with rampUpTest()
                 rampUpTest();
                 Log.d("HearingTest", "Upper bounds = " + model.topVolEstimates);
 
                 // use upper estimates as a starting off point for lowering volumes
                 model.currentVolumes = (ArrayList) model.topVolEstimates.clone();
+
+                // show information for main segment of test
+                model.setTestPaused(true);
+                mainHandler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        view.showInformationDialog(mainInfo);
+                    }
+                });
+                while (model.testPaused()) continue;
 
                 // find lower limits by lowering volume until user can't hear
                 while (model.continueTest()) {
@@ -392,6 +421,10 @@ public class HearingTestController {
 
     public void setiModel(HearingTestInteractionModel iModel) {
         this.iModel = iModel;
+    }
+
+    public void setView(HearingTestView view) {
+        this.view = view;
     }
 
     /**

@@ -23,11 +23,11 @@ import java.io.FileNotFoundException;
  *
  * @author redekopp
  */
-public class MainActivity extends AppCompatActivity implements ModelListener {
+public class MainActivity extends AppCompatActivity implements ModelListener, HearingTestView {
 
     public static final int REQUEST_PERMISSIONS = 1;
 
-    private Context context = this; // for passing to FileNameController classes from inner methods
+    private Context context = this; // for passing to other classes from inner methods
 
     Model model;
     HearingTestInteractionModel iModel;
@@ -66,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
         this.iModel.addSubscriber(this);
         this.controller.setModel(newModel);
         this.controller.setiModel(newIModel);
+        this.controller.setView(this);
         this.fileController.setModel(this.model);
 
         // set up view elements for main screen
@@ -247,10 +248,32 @@ public class MainActivity extends AppCompatActivity implements ModelListener {
      * Show a dialog with title "Error" and the given message
      * @param message The message to be displayed
      */
-    private void showErrorDialog(String message) {
+    public void showErrorDialog(String message) {
         AlertDialog.Builder warningBuilder = new AlertDialog.Builder(this);
         warningBuilder.setTitle("Error");
         warningBuilder.setMessage(message);
         warningBuilder.show();
+    }
+
+    /**
+     * Show a dialog with the title "Information" and the given message
+     *
+     * This method sets model.testPaused to true just to be sure, but for concurrency reasons it will likely have to
+     * be set to true in the caller thread as well
+     *
+     * @param message The message to be displayed
+     */
+    public void showInformationDialog(String message) {
+        model.setTestPaused(true);
+        AlertDialog.Builder infoBuilder = new AlertDialog.Builder(this);
+        infoBuilder.setTitle("Information");
+        infoBuilder.setMessage(message);
+        infoBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(DialogInterface dialogInterface) {
+                model.setTestPaused(false);
+            }
+        });
+        infoBuilder.show();
     }
 }
