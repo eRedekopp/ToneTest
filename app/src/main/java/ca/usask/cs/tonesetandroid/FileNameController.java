@@ -198,8 +198,8 @@ public class FileNameController {
      */
     public void handleConfSaveClick(Context context) throws IllegalStateException {
 
-        if (! model.hasConfResults())
-            throw new IllegalStateException("Confidence test results must be present before saving");
+        if (! model.hasAnalysisResults())
+            throw new IllegalStateException("Confidence test analysis results must be present before saving");
 
         BufferedWriter out = null;
 
@@ -213,27 +213,23 @@ public class FileNameController {
             }
 
             out = new BufferedWriter(new FileWriter(fout));
-            ConfidenceTestResultsContainer results = model.confidenceTestResults;
 
-            // write information about test
+            // write header/info
             out.write("Calibration Freqs: " + Arrays.toString(model.hearingTestResults.getFreqs()));
             out.newLine();
-            out.write("Frequency(Hz),Volume,TimesHeard,TimesNotHeard,ExpectedProb,ActualProb");
+            out.write("Frequency(Hz),Volume,confProb,modelProb,sigDifferent");
             out.newLine();
-            // write test results for each freq-vol pair tested
-            for (float freq : results.getTestedFrequencies()) {
-                double[] vols = results.getTestedVolsForFreq(freq);
-                HashMap<Double, Integer> timesHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
-                HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
 
-                for (double vol : vols) {
-                    out.write(String.format(
-                            "%.2f,%.4f,%d,%d,%.3f,%.3f,\n",
-                            freq, vol, timesHeardPerVol.get(vol), timesNotHeardPerVol.get(vol),
-                            model.getProbabilityFVP(freq, vol), results.getActualResultForFVP(freq, vol)
-                    ));
-                }
+            // write results for each freq-vol pair tested
+            // model.analysisResults should contain all freq-vol pairs tested if everything works correctly
+            for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
+                out.write(String.format(
+                        "%.2f,%.2f,%.2f,%.2f,%b,\n",
+                        result.freq, result.vol, result.confProbEstimate,
+                        result.probEstimate, result.estimatesSigDifferent
+                ));
             }
+
             // make the scanner aware of the new file
             MediaScannerConnection.scanFile(
                     context,
@@ -388,7 +384,5 @@ public class FileNameController {
             Log.e("InitializeModel", "Unknown error while reading file");
             e.printStackTrace();
         } finally { scanner.close(); }
-
-        model.printResultsToConsole();
     }
 }

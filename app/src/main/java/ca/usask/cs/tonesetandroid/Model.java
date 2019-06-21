@@ -9,6 +9,7 @@ import android.media.MediaRecorder;
 import android.os.Build;
 import android.util.Log;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,13 +45,12 @@ public class Model {
     ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer hearingTestResults;  // final results of test
     private boolean testPaused = false;
+    public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, 8000}; // From British Society of Audiology
 
     // Vars/values for audio
     AudioTrack lineOut;
     public static final int OUTPUT_SAMPLE_RATE  = 44100; // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
-    public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, 8000}; // From British Society of Audiology
-    public static final float[] CONF_FREQS  = {220, 880, 1760}; // 3 octaves of A
     public int duration_ms; // how long to play each tone in a test
     double volume;          // amplitude multiplier
     byte[] buf;
@@ -66,6 +66,8 @@ public class Model {
     static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 20;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
+    ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
+    public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 3 octaves of A
 
     public Model() {
         buf = new byte[2];
@@ -83,6 +85,7 @@ public class Model {
         this.currentVolumes = new ArrayList<>();
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
         this.confidenceTestPairs = new ArrayList<>();
+        this.analysisResults = new ArrayList<>();
         this.testPairs = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
@@ -103,7 +106,15 @@ public class Model {
      */
     public boolean hasConfResults() {
         try {
-            return !this.confidenceTestResults.isEmpty();
+            return ! this.confidenceTestResults.isEmpty();
+        } catch (NullPointerException e) {
+            return false;
+        }
+    }
+
+    public boolean hasAnalysisResults() {
+        try {
+            return ! this.analysisResults.isEmpty();
         } catch (NullPointerException e) {
             return false;
         }
@@ -139,20 +150,13 @@ public class Model {
      */
     public void configureConfidenceTestPairs() {
 
-        // divide the tested frequency space into `CONF_NUMBER_OF_FVPs` sections, randomly select a frequency in each
         ArrayList<Float> confFreqs = new ArrayList<>();
-        float minFreq = min(FREQUENCIES);
-        float maxFreq = max(FREQUENCIES);
-        float binWidth = (maxFreq - minFreq) / CONF_NUMBER_OF_FVPS;
-        for (float bandLowerFreqBound = minFreq; bandLowerFreqBound < maxFreq; bandLowerFreqBound += binWidth) {
-            float bandUpperFreqBound = bandLowerFreqBound + binWidth;
-            confFreqs.add((float)Math.random() * (bandUpperFreqBound - bandLowerFreqBound) + bandLowerFreqBound);
-        }
+        for (float freq : CONF_FREQS) confFreqs.add(freq);
 
         // randomize the order of test frequencies
         Collections.shuffle(confFreqs);
 
-        // todo this is too convoluted
+        // todo volume choices are too extreme
         // for each frequency, add a new fvp to confidenceTestPairs with the frequency and a volume some percentage
         // of the way between the lowest and highest tested volumes of the nearest tested frequency
         float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
@@ -166,6 +170,12 @@ public class Model {
             this.confidenceTestPairs.add(new FreqVolPair(freq, testVol));
             pct += jumpSize;
         }
+    }
+
+    public void analyzeConfidenceResults() throws IllegalStateException {
+        if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
+        for (FreqVolPair fvp : this.confidenceTestResults.getTestedFVPs())
+            this.analysisResults.add(this.confidenceTestResults.performAnalysis(fvp, this.getProbabilityFVP(fvp)));
     }
 
     /**
@@ -422,6 +432,7 @@ public class Model {
      * Print the contents of hearingTestResults to the console (for testing)
      */
     public void printResultsToConsole() {
+        Log.i("printResultsToConsole", "Subject ID: " + this.subjectId);
         if (hearingTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", hearingTestResults.toString());
     }

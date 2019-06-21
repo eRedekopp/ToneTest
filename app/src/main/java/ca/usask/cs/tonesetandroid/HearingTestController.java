@@ -229,6 +229,7 @@ public class HearingTestController {
                     public void run() { // run on main thread
                         model.audioTrackCleanup();
                         iModel.setTestMode(false);
+                        model.analyzeConfidenceResults();
                     }
                 });
             }

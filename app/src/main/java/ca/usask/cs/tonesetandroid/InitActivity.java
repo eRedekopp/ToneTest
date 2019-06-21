@@ -106,7 +106,7 @@ public class InitActivity extends Activity {
                 try {
                     inFile = FileNameController.getCalibFileFromName(subjectID, getDialogSelectedString());
                 } catch (FileNotFoundException e) {
-                    showErrorDialog("Unknown error: selected file not found in directory");
+                    showErrorDialog("Error: selected file not found in directory");
                     e.printStackTrace();
                     return;
                 }

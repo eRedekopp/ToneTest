@@ -114,6 +114,19 @@ public class ConfidenceTestResultsContainer {
     }
 
     /**
+     * @return A list containing all the frequency-volume pairs present in these confidence results
+     */
+    public List<FreqVolPair> getTestedFVPs() {
+        ArrayList<FreqVolPair> returnList = new ArrayList<>();
+        for (List<ConfidenceSingleTestResult> lst : this.allResults.values()) {
+            for (ConfidenceSingleTestResult cstr : lst) {
+                returnList.add(new FreqVolPair(cstr.freq, cstr.vol));
+            }
+        }
+        return returnList;
+    }
+
+    /**
      * Return the actual fraction of times that the tone was heard for the given frequency at the given volume in
      * these confidence test results
      *
@@ -152,14 +165,27 @@ public class ConfidenceTestResultsContainer {
     private ConfidenceSingleTestResult getResultForFVP(FreqVolPair fvp) {
         return getResultForFVP(fvp.getFreq(), fvp.getVol());
     }
-    
+
+    /**
+     * Given a frequency, a volume, and an estimate for the probability that the listener will hear the tone, perform
+     * analysis on the accuracy of the estimate given these confidence test results
+     *
+     * @param freq The frequency of the tone whose probability is being estimated
+     * @param vol The volume of the tone whose probability is being estimated
+     * @param estimate The estimate for the likelihood that the listener will hear a tone at the given freq and vol
+     * @return A StatsAnalysisResultsContainer containing the results of the analysis
+     * @throws IllegalArgumentException If the given frequency and volume were not tested in the confidence test
+     */
     public StatsAnalysisResultsContainer performAnalysis(float freq, double vol, float estimate)
-                                                         throws IllegalArgumentException{
+                                                         throws IllegalArgumentException {
         ConfidenceSingleTestResult result = this.getResultForFVP(freq, vol);
         if (result == null) throw new IllegalArgumentException("Frequency-volume pair not present in results");
         return new StatsAnalysisResultsContainer(result, estimate);
     }
 
+    public StatsAnalysisResultsContainer performAnalysis(FreqVolPair fvp, float estimate) {
+        return performAnalysis(fvp.getFreq(), fvp.getVol(), estimate);
+    }
 
     /**
      * A class for performing and storing the results of a statistical analysis on an estimate of the actual value
@@ -190,6 +216,8 @@ public class ConfidenceTestResultsContainer {
          *                          results) for the frequency and volume tested in confResult
          */
         private StatsAnalysisResultsContainer(ConfidenceSingleTestResult confResult, float probEstimate) {
+            // todo : check that this actually works. Redo with normal approximation?
+
             // set constants
             this.freq = confResult.freq;
             this.vol = confResult.vol;
@@ -211,10 +239,6 @@ public class ConfidenceTestResultsContainer {
 
             // set p-value
             this.pValue = (float) Math.min(cumProb, 1-cumProb);
-            
-            // todo calculate beta?
-
-            
         }
     }
 

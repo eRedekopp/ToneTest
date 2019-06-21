@@ -115,6 +115,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     fileController.handleConfSaveClick(context);
                     model.setConfResultsSaved(true);
                 } catch (IllegalStateException e) {
+                    e.printStackTrace();
                     showErrorDialog("No results currently stored (this dialog should never happen)");
                 } catch (RuntimeException e) {
                     e.printStackTrace();
@@ -217,8 +218,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
 
-        this.model.setSubjectId(subjectID);
+        Log.d("asdf", "subjectID " + subjectID);
+
         this.model.reset();
+        this.model.setSubjectId(subjectID);
         if (!pathName.equals(""))
             try {
                 FileNameController.initializeModelFromFileData(pathName, this.model);
@@ -227,6 +230,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 e.printStackTrace();
                 System.exit(1);
             }
+        model.printResultsToConsole();
         this.modelChanged();
     }
 
