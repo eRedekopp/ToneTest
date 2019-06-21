@@ -158,15 +158,13 @@ public class Model {
 
         // todo volume choices are too extreme
         // for each frequency, add a new fvp to confidenceTestPairs with the frequency and a volume some percentage
-        // of the way between the lowest and highest tested volumes of the nearest tested frequency
+        // of the way between completely inaudible and perfectly audible
         float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
         float jumpSize = 1.0f / CONF_NUMBER_OF_FVPS;
         for (Float freq : confFreqs) {
-            float closestTestedFreq = this.hearingTestResults.getNearestTestedFreq(freq);
-            List<Double> vols = this.hearingTestResults.getTestedVolumesForFreq(closestTestedFreq);
-            double lowestTestedVol = Collections.min(vols);
-            double highestTestedVol = Collections.max(vols);
-            double testVol = lowestTestedVol + pct * (highestTestedVol - lowestTestedVol);
+            double volFloor = this.hearingTestResults.getVolFloorEstimateForFreq(freq);
+            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForFreq(freq);
+            double testVol = volFloor + pct * (volCeiling - volFloor);
             this.confidenceTestPairs.add(new FreqVolPair(freq, testVol));
             pct += jumpSize;
         }

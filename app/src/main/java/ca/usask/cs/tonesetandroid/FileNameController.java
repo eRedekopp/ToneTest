@@ -59,7 +59,7 @@ public class FileNameController {
             out.write("Freq(Hz),Volume,nHeard,nNotHeard");
             out.newLine();
             HearingTestResultsContainer results = model.getHearingTestResults();
-            for (float freq : results.getFreqs()) {
+            for (float freq : results.getTestedFreqs()) {
                 HashMap<Double, Integer> timesHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
                 HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
                 List<Double> volumes = results.getTestedVolumesForFreq(freq);
@@ -215,9 +215,9 @@ public class FileNameController {
             out = new BufferedWriter(new FileWriter(fout));
 
             // write header/info
-            out.write("Calibration Freqs: " + Arrays.toString(model.hearingTestResults.getFreqs()));
+            out.write("Calibration Freqs: " + Arrays.toString(model.hearingTestResults.getTestedFreqs()));
             out.newLine();
-            out.write("Frequency(Hz),Volume,confProb,modelProb,sigDifferent");
+            out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,sigDifferent");
             out.newLine();
 
             // write results for each freq-vol pair tested
@@ -225,8 +225,8 @@ public class FileNameController {
             for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
                 out.write(String.format(
                         "%.2f,%.2f,%.2f,%.2f,%b,\n",
-                        result.freq, result.vol, result.confProbEstimate,
-                        result.probEstimate, result.estimatesSigDifferent
+                        result.freq, result.vol, result.confProbEstimate, result.probEstimate,
+                        result.alpha, result.beta, result.estimatesSigDifferent
                 ));
             }
 

@@ -204,7 +204,7 @@ public class ConfidenceTestResultsContainer {
 
         public final float alpha;
 
-//        public final float beta;
+        public final float beta;
 
         public final float pValue;
 
@@ -231,7 +231,7 @@ public class ConfidenceTestResultsContainer {
             // Alt. Hypothesis : confProb != probEstimate
             // Get p value from binomial distribution
             BinomialDistribution binDist =
-                    new BinomialDistribution(confResult.getTotalTrials(), confResult.getActual());
+                    new BinomialDistribution(confResult.getTotalTrials(), probEstimate);
             int expectedValue = Math.round(probEstimate * confResult.getTotalTrials());
 
             double cumProb = binDist.cumulativeProbability(expectedValue);
@@ -239,6 +239,17 @@ public class ConfidenceTestResultsContainer {
 
             // set p-value
             this.pValue = (float) Math.min(cumProb, 1-cumProb);
+
+            // calculate beta assuming confProbEstimate is correct
+            binDist = new BinomialDistribution(confResult.getTotalTrials(), confProbEstimate);
+            int critBelow = -1, critAbove = -1, i = 0;              // find critical region
+            if (binDist.probability(0) > alpha / 2) critBelow = -2;
+            while (critAbove == -1) {
+                if (critBelow == -1 && binDist.probability(i) > alpha / 2) critBelow = i;
+                else if (critBelow != -1 && 1 - binDist.probability(i) < alpha / 2) critAbove = i;
+            }
+            // beta = P(x outside crit region | confProbEstimate is true)
+            this.beta = (float) (binDist.probability(critBelow) + (1 - binDist.probability(critAbove)));
         }
     }
 

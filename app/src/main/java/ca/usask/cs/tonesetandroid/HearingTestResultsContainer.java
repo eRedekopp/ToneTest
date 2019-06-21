@@ -48,8 +48,8 @@ public class HearingTestResultsContainer {
     public float getProbOfHearingFVP(float freq, double vol) {
 
         // find frequencies tested just above and below freq
-        float freqAbove = findNearestAbove(freq, this.getFreqs());
-        float freqBelow = findNearestBelow(freq, this.getFreqs());
+        float freqAbove = findNearestAbove(freq, this.getTestedFreqs());
+        float freqBelow = findNearestBelow(freq, this.getTestedFreqs());
 
         // find the probabilities of each of these frequencies
         float probAbove = this.allResults.get(freqAbove).getProbOfHearing(vol);
@@ -109,12 +109,61 @@ public class HearingTestResultsContainer {
     }
 
     /**
-     * @return An array of all the frequencies with data stored in the model
+     * @return An array of all the frequencies present in these results
      */
-    public Float[] getFreqs() {
+    public Float[] getTestedFreqs() {
         Float[] outArr = new Float[allResults.size()];
         allResults.keySet().toArray(outArr);
         return outArr;
+    }
+
+    public boolean freqTested(float freq) {
+        for (Float f : allResults.keySet()) if (f == freq) return true;
+        return false;
+    }
+
+    /**
+     * Returns an estimate of the highest volume which has a 0% chance of being heard for the given frequency
+     *
+     * @param freq The frequency whose volume floor is to be estimated
+     * @return An estimate of the volume floor for the given frequency
+     */
+    public double getVolFloorEstimateForFreq(float freq) {
+        if (this.freqTested(freq)) return this.allResults.get(freq).getVolFloor();
+
+        float nearestBelow = findNearestBelow(freq, this.getTestedFreqs());
+        float nearestAbove = findNearestAbove(freq, this.getTestedFreqs());
+
+        if (nearestAbove == -1 || nearestBelow == -1)
+            return this.allResults.get(this.getNearestTestedFreq(freq)).getVolFloor();
+
+        float pctBetween = (freq - nearestBelow) / (nearestAbove - nearestBelow);
+        double floorBelow = this.allResults.get(nearestBelow).getVolFloor();
+        double floorAbove = this.allResults.get(nearestAbove).getVolFloor();
+
+        return floorBelow + (floorAbove - floorBelow) * pctBetween;
+    }
+
+    /**
+     * Returns an estimate of the lowest volume which has a 100% percent chance of being heard for the given frequency
+     *
+     * @param freq The frequency whose volume ceiling is to be estimated
+     * @return An estimate of the volume ceiling for the given frequency
+     */
+    public double getVolCeilingEstimateForFreq(float freq) {
+        if (this.freqTested(freq)) return this.allResults.get(freq).getVolCeiling();
+
+        float nearestBelow = findNearestBelow(freq, this.getTestedFreqs());
+        float nearestAbove = findNearestAbove(freq, this.getTestedFreqs());
+
+        if (nearestAbove == -1 || nearestBelow == -1)
+            return this.allResults.get(this.getNearestTestedFreq(freq)).getVolCeiling();
+
+        float pctBetween = (freq - nearestBelow) / (nearestAbove - nearestBelow);
+        double floorBelow = this.allResults.get(nearestBelow).getVolCeiling();
+        double floorAbove = this.allResults.get(nearestAbove).getVolCeiling();
+
+        return floorBelow + (floorAbove - floorBelow) * pctBetween;
     }
 
     /**
@@ -143,10 +192,10 @@ public class HearingTestResultsContainer {
     }
 
     /**
-     * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being greater than f
+     * Given a list of floats, return the number closest to f while being greater than f, or -1 if none found
      */
     public static float findNearestAbove(float f, Float[] lst) {
-        float closest = -1f;
+        float closest = -1;
         float distance = Float.MAX_VALUE;
         for (float freq : lst) {
             if (0 < freq - f && freq - f < distance) {
@@ -158,7 +207,7 @@ public class HearingTestResultsContainer {
     }
 
     /**
-     * Given a list of freqvolpairs, return the frequency of the freqvolpair closest to f while being less than f
+     * Given a list of floats, return the number closest to f while being less than f, or -1 if none found
      */
     public static float findNearestBelow(float f, Float[] lst) {
         float closest = -1f;
@@ -171,6 +220,8 @@ public class HearingTestResultsContainer {
         }
         return closest;
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * A class for storing the hearing test results for a single frequency at multiple volumes
@@ -185,7 +236,7 @@ public class HearingTestResultsContainer {
 
         private ArrayList<Double> testedVolumes;
 
-        public HearingTestSingleFreqResult(float freq) {
+        private HearingTestSingleFreqResult(float freq) {
             this.freq = freq;
             this.timesHeardPerVol = new HashMap<>();
             this.timesNotHeardPerVol = new HashMap<>();
@@ -265,6 +316,27 @@ public class HearingTestResultsContainer {
                 timesNotHeard = 0;
             }
             return (float) timesHeard / (float) (timesHeard + timesNotHeard);
+        }
+
+        /**
+         * @return The largest volume which was never heard, or the lowest tested volume if all were heard
+         */
+        public double getVolFloor() {
+            ArrayList<Double> unheardVols = new ArrayList<>();
+            for (double vol : testedVolumes) if (! timesHeardPerVol.containsKey(vol)) unheardVols.add(vol);
+            if (unheardVols.isEmpty()) return Collections.min(testedVolumes);
+            else return Collections.max(unheardVols);
+        }
+
+        /**
+         * @return The smallest volume which was heard in every trial, or the highest tested volume if none were
+         * heard every time
+         */
+        public double getVolCeiling() {
+            ArrayList<Double> alwaysHeardVols = new ArrayList<>();
+            for (double vol : testedVolumes) if (! timesNotHeardPerVol.containsKey(vol)) alwaysHeardVols.add(vol);
+            if (alwaysHeardVols.isEmpty()) return Collections.max(testedVolumes);
+            else return Collections.min(alwaysHeardVols);
         }
 
         @Override

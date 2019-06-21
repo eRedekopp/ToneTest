@@ -218,8 +218,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
 
-        Log.d("asdf", "subjectID " + subjectID);
-
         this.model.reset();
         this.model.setSubjectId(subjectID);
         if (!pathName.equals(""))
