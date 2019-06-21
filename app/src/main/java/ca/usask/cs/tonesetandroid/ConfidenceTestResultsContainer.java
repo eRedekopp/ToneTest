@@ -206,8 +206,6 @@ public class ConfidenceTestResultsContainer {
 
         public final float beta;
 
-        public final float pValue;
-
         /**
          * Create a new results container and perform all statistical analysis on the given data
          *
@@ -232,23 +230,24 @@ public class ConfidenceTestResultsContainer {
             // Get p value from binomial distribution
             BinomialDistribution binDist =
                     new BinomialDistribution(confResult.getTotalTrials(), probEstimate);
-            int expectedValue = Math.round(probEstimate * confResult.getTotalTrials());
 
-            double cumProb = binDist.cumulativeProbability(expectedValue);
-            this.estimatesSigDifferent = cumProb < alpha / 2 || (1 - cumProb) < alpha / 2;
-
-            // set p-value
-            this.pValue = (float) Math.min(cumProb, 1-cumProb);
-
-            // calculate beta assuming confProbEstimate is correct
-            binDist = new BinomialDistribution(confResult.getTotalTrials(), confProbEstimate);
-            int critBelow = -1, critAbove = -1, i = 0;              // find critical region
-            if (binDist.probability(0) > alpha / 2) critBelow = -2;
+            // find critical region
+            int     critBelow = -1, // min({x | P(X < x) > alpha/2})
+                    critAbove = -1, // max({x | P(X > x) > alpha/2})
+                    i = 0;
             while (critAbove == -1) {
                 if (critBelow == -1 && binDist.probability(i) > alpha / 2) critBelow = i;
-                else if (critBelow != -1 && 1 - binDist.probability(i) < alpha / 2) critAbove = i;
+                else if (critBelow != -1 && 1 - binDist.probability(i) < alpha / 2) critAbove = i - 1;
+                i++;
             }
+
+            // Check if probEstimate within rejection region
+            int x = Math.round(probEstimate * confResult.getTotalTrials());
+            this.estimatesSigDifferent = x < critBelow || x > critAbove;
+
+            // calculate beta assuming confProbEstimate is correct
             // beta = P(x outside crit region | confProbEstimate is true)
+            binDist = new BinomialDistribution(confResult.getTotalTrials(), confProbEstimate);
             this.beta = (float) (binDist.probability(critBelow) + (1 - binDist.probability(critAbove)));
         }
     }
