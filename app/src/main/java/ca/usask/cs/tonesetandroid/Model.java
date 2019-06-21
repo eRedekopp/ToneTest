@@ -35,8 +35,14 @@ public class Model {
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
                                                         // considered "inaudible"
-    static final int NUMBER_OF_VOLS_PER_FREQ = 5;  // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 4;  // number of times to repeat each freq-vol combination in the test
+    static final int NUMBER_OF_VOLS_PER_FREQ = 6;  // number of volumes to test for each frequency
+    static final int NUMBER_OF_TESTS_PER_VOL = 8;  // number of times to repeat each freq-vol combination in the test
+    static final int TEST_PHASE_RAMP = 0;       // for identifying which phase of the test we are currently in
+    static final int TEST_PHASE_REDUCE = 1;
+    static final int TEST_PHASE_MAIN = 2;
+    static final int TEST_PHASE_CONF = 3;
+    static final int TEST_PHASE_NULL = -1;
+    private int testPhase = TEST_PHASE_NULL;
     ArrayList<FreqVolPair> topVolEstimates;     // The rough estimates for volumes which have P(heard) = 1
     ArrayList<FreqVolPair> bottomVolEstimates;  // The rough estimates for volumes which have P(heard) = 0
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
@@ -45,7 +51,9 @@ public class Model {
     ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer hearingTestResults;  // final results of test
     private boolean testPaused = false;
-    public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, 8000}; // From British Society of Audiology
+    boolean testThreadActive = false;
+    public static final float[] FREQUENCIES = {/*200, 500, 1000,*/ 2000, 4000, /*8000*/};   // From British Society of
+                                                                                        // Audiology
 
     // Vars/values for audio
     AudioTrack lineOut;
@@ -62,12 +70,12 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     // vars for confidence test
-    static final int CONF_NUMBER_OF_FVPS = 5;
-    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 20;
+//    static final int CONF_NUMBER_OF_FVPS = 5;
+    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 30;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
-    public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 3 octaves of A
+    public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 4 octaves of A
 
     public Model() {
         buf = new byte[2];
@@ -79,7 +87,6 @@ public class Model {
      * Resets this model to its just-initialized state
      */
     public void reset() {
-        this.subjectId = -1;
         this.topVolEstimates = new ArrayList<>();
         this.bottomVolEstimates = new ArrayList<>();
         this.currentVolumes = new ArrayList<>();
@@ -143,6 +150,10 @@ public class Model {
                 testPairs.add(new FreqVolPair(freq, vol));
             }
         }
+        // fill CurrentVolumes with one freqvolpair for each individual tone that will be played in the test
+        this.currentVolumes = new ArrayList<>();
+        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) this.currentVolumes.addAll(this.testPairs);
+        Collections.shuffle(this.currentVolumes);
     }
 
     /**
@@ -160,7 +171,7 @@ public class Model {
         // for each frequency, add a new fvp to confidenceTestPairs with the frequency and a volume some percentage
         // of the way between completely inaudible and perfectly audible
         float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
-        float jumpSize = 1.0f / CONF_NUMBER_OF_FVPS;
+        float jumpSize = 1.0f / CONF_FREQS.length;
         for (Float freq : confFreqs) {
             double volFloor = this.hearingTestResults.getVolFloorEstimateForFreq(freq);
             double volCeiling = this.hearingTestResults.getVolCeilingEstimateForFreq(freq);
@@ -168,6 +179,14 @@ public class Model {
             this.confidenceTestPairs.add(new FreqVolPair(freq, testVol));
             pct += jumpSize;
         }
+
+        // prepare list of all trials
+        ArrayList<FreqVolPair> allTrials = new ArrayList<>();
+        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; i++) {
+            allTrials.addAll(this.confidenceTestPairs);
+        }
+        Collections.shuffle(allTrials);
+        this.confidenceTestPairs = allTrials;
     }
 
     public void analyzeConfidenceResults() throws IllegalStateException {
@@ -398,12 +417,26 @@ public class Model {
         this.lineOut.play();
     }
 
+    public int getTestPhase() {
+        return this.testPhase;
+    }
+
+    public void setTestPhase(int phase) {
+        this.testPhase = phase;
+        this.notifySubscribers();
+    }
+
     public void setTestPaused(boolean b) {
         this.testPaused = b;
+        this.notifySubscribers();
     }
 
     public boolean testPaused() {
         return this.testPaused;
+    }
+
+    public boolean testing() {
+        return this.testPhase != TEST_PHASE_NULL;
     }
 
     public ArrayList<FreqVolPair> getCurrentVolumes() {

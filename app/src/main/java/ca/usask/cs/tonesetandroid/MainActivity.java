@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -34,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     HearingTestController controller;
     FileNameController fileController;
 
-    Button calibButton, heardButton, saveCalibButton, saveConfButton, confidenceButton, resetButton;
+    Button calibButton, heardButton, saveCalibButton, saveConfButton, confidenceButton, resetButton, pauseButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +78,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         saveConfButton =    findViewById(R.id.saveConfButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
         resetButton =       findViewById(R.id.resetButton);
+        pauseButton =       findViewById(R.id.pauseButton);
 
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
@@ -146,6 +149,17 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 warningBuilder.show();
             }
         });
+        pauseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (model.testPaused()) {
+                    model.setTestPaused(false);
+                } else {
+                    model.setTestPaused(true);
+                }
+
+            }
+        });
 
         // configure audio
         model.setAudioManager((AudioManager) this.getSystemService(Context.AUDIO_SERVICE));
@@ -159,12 +173,20 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      * Enable/disable the buttons given the new status of the Model and iModel
      */
     public void modelChanged() {
-        calibButton.setEnabled(!iModel.isInTestMode());
-        heardButton.setEnabled(iModel.isInTestMode());
-        confidenceButton.setEnabled(model.hasResults() && !iModel.isInTestMode());
-        saveCalibButton.setEnabled(model.hasResults() && !iModel.isInTestMode() && !model.resultsSaved());
-        saveConfButton.setEnabled(model.hasConfResults() && !iModel.isInTestMode() && !model.confResultsSaved());
-        resetButton.setEnabled(!iModel.isInTestMode());
+        new Handler(Looper.getMainLooper()).post(new Runnable() {  // always run on UI thread
+            @Override
+            public void run() {
+                calibButton.setEnabled(!model.testing());
+                heardButton.setEnabled(model.testing() && ! model.testPaused() );
+                confidenceButton.setEnabled(model.hasResults() && !model.testing());
+                saveCalibButton.setEnabled(model.hasResults() && !model.testing() && !model.resultsSaved());
+                saveConfButton.setEnabled(model.hasConfResults() && !model.testing() && !model.confResultsSaved());
+                resetButton.setEnabled(!model.testing());
+                pauseButton.setEnabled(model.testing());
+
+                controller.checkForHearingTestResume(); // resume hearing test if necessary
+            }
+        });
     }
 
     public void setModel(Model model) {
