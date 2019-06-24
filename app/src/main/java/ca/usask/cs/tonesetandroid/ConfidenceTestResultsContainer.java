@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.util.Log;
+
 import org.apache.commons.math3.distribution.BinomialDistribution;
 
 import java.util.ArrayList;
@@ -206,6 +208,10 @@ public class ConfidenceTestResultsContainer {
 
         public final float beta;
 
+        public final int critLow;   // = min({x | P(X < x) > alpha/2})
+
+        public final int critHigh;  // = max({x | P(X > x) > alpha/2})
+
         /**
          * Create a new results container and perform all statistical analysis on the given data
          *
@@ -230,26 +236,29 @@ public class ConfidenceTestResultsContainer {
                     new BinomialDistribution(confResult.getTotalTrials(), probEstimate);
 
             // find critical region
-            int     critBelow = -1, // == min({x | P(X < x) > alpha/2})
-                    critAbove = -1, // == max({x | P(X > x) > alpha/2})
+            int     critBelow = -1,
+                    critAbove = -1,
                     i = 0;
             while (critAbove == -1) {
                 if (critBelow == -1 && binDist.cumulativeProbability(i) > alpha / 2) critBelow = i;
                 else if (critBelow != -1 && 1 - binDist.cumulativeProbability(i) < alpha / 2) critAbove = i - 1;
                 i++;
             }
+            this.critLow = critBelow;
+            this.critHigh = critAbove;
 
             // Check if probEstimate within rejection region
             int x = Math.round(probEstimate * confResult.getTotalTrials());
             this.estimatesSigDifferent = x < critBelow || x > critAbove;
 
             // calculate beta assuming confProbEstimate is correct
-            // beta = P(x outside crit region | confProbEstimate is true)
+            // beta = P(x outside rejection region | confProbEstimate is true)
             binDist = new BinomialDistribution(confResult.getTotalTrials(), confProbEstimate);
-            this.beta = (float) (binDist.probability(critBelow) + (1 - binDist.probability(critAbove)));
+            this.beta = (float) (binDist.cumulativeProbability(critAbove) - binDist.cumulativeProbability(critBelow));
+
+            Log.d("statsResults", "crit region = [" + critBelow + ", " + critAbove + "], x = " + x);
         }
     }
-
 
     /**
      * A class to store the result of a single freq-vol pair test from a confidence test

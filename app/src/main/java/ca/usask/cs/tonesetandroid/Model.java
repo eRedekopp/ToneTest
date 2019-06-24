@@ -204,6 +204,7 @@ public class Model {
      */
     public void analyzeConfidenceResults(float[] subset) throws IllegalStateException, IllegalArgumentException {
         if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
+        this.analysisResults = new ArrayList<>();
         for (FreqVolPair fvp : this.confidenceTestResults.getTestedFVPs())
             this.analysisResults.add(
                     this.confidenceTestResults.performAnalysis(fvp, this.getProbabilityFVP(fvp, subset)));

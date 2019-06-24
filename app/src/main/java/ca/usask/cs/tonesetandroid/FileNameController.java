@@ -219,15 +219,15 @@ public class FileNameController {
                 // write header/info for current subset
                 out.write("Calibration Freqs: " + Arrays.toString(subset));
                 out.newLine();
-                out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,sigDifferent\n");
+                out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent\n");
 
                 // write results for each freq-vol pair in subset
                 // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
                 for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
                     out.write(String.format(
-                            "%.2f,%.2f,%.2f,%.2f,%b,\n",
+                            "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
                             result.freq, result.vol, result.confProbEstimate, result.probEstimate,
-                            result.alpha, result.beta, result.estimatesSigDifferent
+                            result.alpha, result.beta, result.critLow, result.critHigh, result.estimatesSigDifferent
                     ));
                 }
                 out.newLine();
