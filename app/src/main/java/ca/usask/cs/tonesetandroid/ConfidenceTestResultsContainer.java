@@ -1,7 +1,5 @@
 package ca.usask.cs.tonesetandroid;
 
-import android.util.Log;
-
 import org.apache.commons.math3.distribution.BinomialDistribution;
 
 import java.util.ArrayList;
@@ -98,7 +96,7 @@ public class ConfidenceTestResultsContainer {
     }
 
     /**
-     * Returns an array conatining all the volumes tested at the given frequency
+     * Returns an array containing all the volumes tested at the given frequency
      *
      * @param freq The frequency whose tested volumes are to be found
      * @return All volumes at which the given frequency was tested
@@ -226,7 +224,6 @@ public class ConfidenceTestResultsContainer {
             this.alpha = 0.10f;
 
             // check for statistical significance
-
             // Null Hypothesis : confProb == probEstimate
             // Alt. Hypothesis : confProb != probEstimate
             BinomialDistribution binDist =

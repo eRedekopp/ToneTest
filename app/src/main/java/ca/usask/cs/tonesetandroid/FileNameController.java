@@ -214,7 +214,7 @@ public class FileNameController {
             for (float[] subset : Model.CONF_SUBSETS) {
 
                 // set model.analysisResults for current subset
-                this.model.analyzeConfidenceRestults(subset);
+                this.model.analyzeConfidenceResults(subset);
 
                 // write header/info for current subset
                 out.write("Calibration Freqs: " + Arrays.toString(subset));

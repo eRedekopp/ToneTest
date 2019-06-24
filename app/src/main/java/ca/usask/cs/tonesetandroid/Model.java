@@ -37,7 +37,7 @@ public class Model {
                                                         // considered "inaudible"
     static final int NUMBER_OF_VOLS_PER_FREQ = 6;  // number of volumes to test for each frequency
     static final int NUMBER_OF_TESTS_PER_VOL = 8;  // number of times to repeat each freq-vol combination in the test
-    static final int TEST_PHASE_RAMP = 0;       // for identifying which phase of the test we are currently in
+    static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
     static final int TEST_PHASE_REDUCE = 1;
     static final int TEST_PHASE_MAIN = 2;
     static final int TEST_PHASE_CONF = 3;
@@ -50,8 +50,8 @@ public class Model {
                                                     // (for finding bottom estimates)
     ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer hearingTestResults;  // final results of test
-    private boolean testPaused = false;
-    boolean testThreadActive = false;
+    private boolean testPaused = false; // has the user paused the test?
+    boolean testThreadActive = false; // is a thread currently performing a hearing test?
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
                                                                                         // Audiology
 
@@ -70,8 +70,7 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     // vars for confidence test
-//    static final int CONF_NUMBER_OF_FVPS = 5;
-    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 1;
+    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 20;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
@@ -175,7 +174,6 @@ public class Model {
         // randomize the order of test frequencies
         Collections.shuffle(confFreqs);
 
-        // todo volume choices are too extreme
         // for each frequency, add a new fvp to confidenceTestPairs with the frequency and a volume some percentage
         // of the way between completely inaudible and perfectly audible
         float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
@@ -197,13 +195,14 @@ public class Model {
         this.confidenceTestPairs = allTrials;
     }
 
-    public void analyzeConfidenceResults() throws IllegalStateException {
-        if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
-        for (FreqVolPair fvp : this.confidenceTestResults.getTestedFVPs())
-            this.analysisResults.add(this.confidenceTestResults.performAnalysis(fvp, this.getProbabilityFVP(fvp)));
-    }
-
-    public void analyzeConfidenceRestults(float[] subset) throws IllegalStateException, IllegalArgumentException {
+    /**
+     * Populate this.analysisResults using estimates generated based on the given subset of the tested volumes
+     *
+     * @param subset The subset of the tested frequencies to be used to generate estimates
+     * @throws IllegalStateException If no confidence results are stored in the model
+     * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
+     */
+    public void analyzeConfidenceResults(float[] subset) throws IllegalStateException, IllegalArgumentException {
         if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
         for (FreqVolPair fvp : this.confidenceTestResults.getTestedFVPs())
             this.analysisResults.add(

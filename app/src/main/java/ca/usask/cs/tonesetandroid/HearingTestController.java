@@ -12,8 +12,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-// todo clean up this messy file
-
 /**
  * A class for performing PureTone and RampUp tests, and handling clicks on the main menu
  *
@@ -40,7 +38,10 @@ public class HearingTestController {
     private static final String mainInfo =
             "In this test, tones of various frequencies and volumes will be played at random times. Please press the " +
             "\"Heard Tone\" button each time that you hear a tone";
-    
+
+    /**
+     * Checks if a test phase is supposed to be started or resumed, then starts a test on a new thread if it is
+     */
     public void checkForHearingTestResume() {
         int testPhase = model.getTestPhase();
         if (testPhase == Model.TEST_PHASE_NULL || model.testPaused() || model.testThreadActive) return;
@@ -51,14 +52,39 @@ public class HearingTestController {
     }
 
     /**
+     * Play a sine wave through the Model at the given frequency and volume for the given amount of time. Returns
+     * immediately if iModel.heard is true or becomes true from another thread.
+     *
+     * @param freq The frequency of the sine wave to be played
+     * @param vol The volume of the sine wave to be played
+     * @param duration_ms The duration of the sine wave in milliseconds
+     */
+    private void playSine(float freq, double vol, int duration_ms) {
+        long count = 0;
+        model.enforceMaxVolume();
+        model.startAudio();
+        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++, count++) {
+            if (iModel.heard) break;
+
+            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
+            double angle = 2 * i / (period) * Math.PI;
+            short a = (short) (Math.sin(angle) * vol);
+            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+            model.lineOut.write(model.buf, 0, 2);
+        }
+        model.stopAudio();
+    }
+
+    /////////////////////////////////////// Methods for hearing test //////////////////////////////////////////////////
+
+    /**
      * Begin a hearing test
      *
      * @author redekopp
      */
     @SuppressWarnings("unchecked")
     public void hearingTest() {
-        // todo test/tweak this
-
         // Algorithm:
         //      1 Get estimates for volumes at which the listener will hear the tone 100% of the time for each frequency
         //          - Use RampTest because it tends to overshoot anyway
@@ -96,74 +122,6 @@ public class HearingTestController {
         }).start();
     }
 
-    /**
-     * Test frequencies at model.currentVolumes for reduction phase and update model accordingly
-     */
-    @SuppressWarnings("ConstantConditions")
-    private void testCurrentVolumes() {
-        Collections.shuffle(model.currentVolumes);  // test in random order each time
-        for (FreqVolPair fvp : model.currentVolumes) {
-
-            if (model.testPaused()) return; // check if test paused before each tone
-
-            Log.i("reducePhase", "Testing " + fvp.toString());
-
-            // only test frequencies whose bottom ends hasn't already been estimated
-            if (model.timesNotHeardPerFreq.get(fvp.getFreq()) >= Model.TIMES_NOT_HEARD_BEFORE_STOP) continue;
-
-            // play the sine, update the map if not heard
-            iModel.notHeard();
-            this.playSine(fvp.getFreq(), fvp.getVol(), TONE_DURATION_MS);
-            if (! iModel.heard)
-                mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
-                        model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
-            try {
-                Thread.sleep((long) (Math.random() * 2000 + 1000));
-            } catch (InterruptedException e) { return; }
-        }
-    }
-
-    /**
-     * Perform the "main" hearing test: test all frequencies in testPairs and save results in model
-     */
-    private void mainTest() {
-        model.testThreadActive = true;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (!model.currentVolumes.isEmpty()) {
-                        if (model.testPaused()) return;
-
-                        FreqVolPair trial = model.currentVolumes.get(0);
-                        model.currentVolumes.remove(0);
-                        model.startAudio();
-                        Log.i("mainTest", "Testing " + trial.toString());
-                        iModel.notHeard();
-                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
-                        model.hearingTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
-
-                        model.stopAudio();  // sleep for for random length 1-3 seconds
-                        try {
-                            Thread.sleep((long) (Math.random() * 2000 + 1000));
-                        } catch (InterruptedException e) {
-                            return;
-                        }
-                    }
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            model.setTestPhase(Model.TEST_PHASE_NULL);
-                            model.audioTrackCleanup();
-                            model.printResultsToConsole();
-                        }
-                    });
-
-                } finally { model.testThreadActive = false; }
-            }
-        }).start();
-    }
-
     @SuppressWarnings("unchecked")
     private void reducePhase() {
         model.testThreadActive = true;
@@ -193,101 +151,30 @@ public class HearingTestController {
     }
 
     /**
-     * Perform a full confidence test
+     * Test frequencies at model.currentVolumes for reduction phase and update model accordingly
      */
-    public void confidenceTest() {
-        model.testThreadActive = true;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Handler mainHandler = new Handler(Looper.getMainLooper());
+    @SuppressWarnings("ConstantConditions")
+    private void testCurrentVolumes() {
+        Collections.shuffle(model.currentVolumes);  // test in random order each time
+        for (FreqVolPair fvp : model.currentVolumes) {
 
-                    // configure model for test
-                    iModel.setTestMode(true);
-                    model.configureAudio();
-                    model.configureConfidenceTestPairs();
+            if (model.testPaused()) return; // check if test paused before each tone
 
+            Log.i("reducePhase", "Testing " + fvp.toString());
 
-                    // show info dialog
-                    model.setTestPaused(true);
-                    mainHandler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            model.setTestPhase(Model.TEST_PHASE_CONF);
-                            view.showInformationDialog(mainInfo);
-                        }
-                    });
-                } finally { model.testThreadActive = false; }
-            }
-        }).start();
-    }
+            // only test frequencies whose bottom ends hasn't already been estimated
+            if (model.timesNotHeardPerFreq.get(fvp.getFreq()) >= Model.TIMES_NOT_HEARD_BEFORE_STOP) continue;
 
-    private void mainConfTest() {
-        model.testThreadActive = true;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // perform trials
-                    while (! model.confidenceTestPairs.isEmpty()) {
-                        if (model.testPaused()) return;
-                        FreqVolPair trial = model.confidenceTestPairs.get(0);
-                        model.confidenceTestPairs.remove(0);
-                        model.startAudio();
-                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {   // set iModel to notHeard on main thread
-                                iModel.notHeard();
-                            }
-                        });
-                        Log.i("confTest", "Testing freq : " + trial.getFreq() + " | vol : " + trial.getVol());
-                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
-                        model.stopAudio();
-                        model.confidenceTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
-                        try {  // sleep from 1 to 3 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 1000));
-                        } catch (InterruptedException e) { return; }
-                    }
-
-                    // finish / cleanup
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() { // run on main thread
-                            model.audioTrackCleanup();
-                            model.setTestPhase(Model.TEST_PHASE_NULL);
-                        }
-                    });
-                } finally {
-                    model.testThreadActive = false;
-                }
-            }
-        }).start();
-    }
-
-    /**
-     * Play a sine wave through the Model at the given frequency and volume for the given amount of time. Returns
-     * immediately if iModel.heard is true or becomes true from another thread.
-     *
-     * @param freq The frequency of the sine wave to be played
-     * @param vol The volume of the sine wave to be played
-     * @param duration_ms The duration of the sine wave in milliseconds
-     */
-    private void playSine(float freq, double vol, int duration_ms) {
-        long count = 0;
-        model.enforceMaxVolume();
-        model.startAudio();
-        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++, count++) {
-            if (iModel.heard) break;
-
-            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
-            double angle = 2 * i / (period) * Math.PI;
-            short a = (short) (Math.sin(angle) * vol);
-            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
-            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
-            model.lineOut.write(model.buf, 0, 2);
+            // play the sine, update the map if not heard
+            iModel.notHeard();
+            this.playSine(fvp.getFreq(), fvp.getVol(), TONE_DURATION_MS);
+            if (! iModel.heard)
+                mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
+                        model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
+            try {
+                Thread.sleep((long) (Math.random() * 2000 + 1000));
+            } catch (InterruptedException e) { return; }
         }
-        model.stopAudio();
     }
 
     /**
@@ -405,6 +292,124 @@ public class HearingTestController {
     }
 
     /**
+     * Perform the "main" hearing test: test all frequencies in testPairs and save results in model
+     */
+    private void mainTest() {
+        model.testThreadActive = true;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (!model.currentVolumes.isEmpty()) {
+                        if (model.testPaused()) return;
+
+                        FreqVolPair trial = model.currentVolumes.get(0);
+                        model.currentVolumes.remove(0);
+                        model.startAudio();
+                        Log.i("mainTest", "Testing " + trial.toString());
+                        iModel.notHeard();
+                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
+                        model.hearingTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+
+                        model.stopAudio();  // sleep for for random length 1-3 seconds
+                        try {
+                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+                        } catch (InterruptedException e) {
+                            return;
+                        }
+                    }
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() {
+                            model.setTestPhase(Model.TEST_PHASE_NULL);
+                            model.audioTrackCleanup();
+                            model.printResultsToConsole();
+                        }
+                    });
+
+                } finally { model.testThreadActive = false; }
+            }
+        }).start();
+    }
+
+    /////////////////////////////////// methods for confidence test ///////////////////////////////////////////////////
+
+    /**
+     * Perform a full confidence test
+     */
+    public void confidenceTest() {
+        model.testThreadActive = true;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Handler mainHandler = new Handler(Looper.getMainLooper());
+
+                    // configure model for test
+                    iModel.setTestMode(true);
+                    model.configureAudio();
+                    model.configureConfidenceTestPairs();
+
+
+                    // show info dialog
+                    model.setTestPaused(true);
+                    mainHandler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            model.setTestPhase(Model.TEST_PHASE_CONF);
+                            view.showInformationDialog(mainInfo);
+                        }
+                    });
+                } finally { model.testThreadActive = false; }
+            }
+        }).start();
+    }
+
+    private void mainConfTest() {
+        model.testThreadActive = true;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // perform trials
+                    while (! model.confidenceTestPairs.isEmpty()) {
+                        if (model.testPaused()) return;
+                        FreqVolPair trial = model.confidenceTestPairs.get(0);
+                        model.confidenceTestPairs.remove(0);
+                        model.startAudio();
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {   // set iModel to notHeard on main thread
+                                iModel.notHeard();
+                            }
+                        });
+                        Log.i("confTest", "Testing freq : " + trial.getFreq() + " | vol : " + trial.getVol());
+                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
+                        model.stopAudio();
+                        model.confidenceTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+                        try {  // sleep from 1 to 3 seconds
+                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+                        } catch (InterruptedException e) { return; }
+                    }
+
+                    // finish / cleanup
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() { // run on main thread
+                            model.audioTrackCleanup();
+                            model.setTestPhase(Model.TEST_PHASE_NULL);
+                        }
+                    });
+                } finally {
+                    model.testThreadActive = false;
+                }
+            }
+        }).start();
+    }
+
+    ///////////////////////////////////// methods for auto test ///////////////////////////////////////////////////////
+
+    /**
      * Applies a Hann Window to the data set to improve the overall accuracy
      * This function is slightly less general than a typical Hann window function
      * Typically, you also want to know the starting index of the data to be windowed
@@ -473,6 +478,8 @@ public class HearingTestController {
         }
         return freqBins;
     }
+
+    //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////////
 
     public void handleCalibClick() {
         iModel.setTestMode(true);
