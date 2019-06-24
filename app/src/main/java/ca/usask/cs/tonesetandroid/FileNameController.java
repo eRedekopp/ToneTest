@@ -194,12 +194,8 @@ public class FileNameController {
      * A method for writing the results of the confidence test currently stored in the model to a file
      *
      * @param context The context of the calling thread (ie. MainActivity.this)
-     * @throws IllegalStateException If there are no confidence test results stored in the model
      */
     public void handleConfSaveClick(Context context) throws IllegalStateException {
-
-//        if (! model.hasAnalysisResults())
-//            throw new IllegalStateException("Confidence test analysis results must be present before saving");
 
         BufferedWriter out = null;
 
@@ -216,16 +212,17 @@ public class FileNameController {
 
             // test using different subsets of calibration data
             for (float[] subset : Model.CONF_SUBSETS) {
-                // analyze results for current subset
+
+                // set model.analysisResults for current subset
                 this.model.analyzeConfidenceRestults(subset);
 
-                // write header/info
-                out.write("Calibration Freqs: " + Arrays.toString(model.hearingTestResults.getTestedFreqs()));
+                // write header/info for current subset
+                out.write("Calibration Freqs: " + Arrays.toString(subset));
                 out.newLine();
                 out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,sigDifferent\n");
 
                 // write results for each freq-vol pair in subset
-                // model.analysisResults should contain all freq-vol pairs tested if everything works correctly
+                // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
                 for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
                     out.write(String.format(
                             "%.2f,%.2f,%.2f,%.2f,%b,\n",

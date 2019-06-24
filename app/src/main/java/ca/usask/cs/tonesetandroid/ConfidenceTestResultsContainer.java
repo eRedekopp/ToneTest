@@ -233,13 +233,12 @@ public class ConfidenceTestResultsContainer {
                     new BinomialDistribution(confResult.getTotalTrials(), probEstimate);
 
             // find critical region
-            int     critBelow = -1, // min({x | P(X < x) > alpha/2})
-                    critAbove = -1, // max({x | P(X > x) > alpha/2})
+            int     critBelow = -1, // == min({x | P(X < x) > alpha/2})
+                    critAbove = -1, // == max({x | P(X > x) > alpha/2})
                     i = 0;
-            while (critAbove == -1) {  // todo infinite loop
-                Log.d("asdf", "critBelow = " + critBelow + ", critAbove = " + ", prob = " + binDist.probability(i)+ critAbove + ", i = " + i);
-                if (critBelow == -1 && binDist.probability(i) > alpha / 2) critBelow = i;
-                else if (critBelow != -1 && 1 - binDist.probability(i) < alpha / 2) critAbove = i - 1;
+            while (critAbove == -1) {
+                if (critBelow == -1 && binDist.cumulativeProbability(i) > alpha / 2) critBelow = i;
+                else if (critBelow != -1 && 1 - binDist.cumulativeProbability(i) < alpha / 2) critAbove = i - 1;
                 i++;
             }
 

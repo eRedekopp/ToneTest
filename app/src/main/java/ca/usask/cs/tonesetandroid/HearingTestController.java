@@ -256,7 +256,6 @@ public class HearingTestController {
                         public void run() { // run on main thread
                             model.audioTrackCleanup();
                             model.setTestPhase(Model.TEST_PHASE_NULL);
-//                            model.analyzeConfidenceResults();
                         }
                     });
                 } finally {
