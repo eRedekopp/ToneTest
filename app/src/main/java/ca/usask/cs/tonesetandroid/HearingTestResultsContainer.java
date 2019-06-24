@@ -43,7 +43,6 @@ public class HearingTestResultsContainer {
 
     /**
      * @return  the probability of hearing a tone of the given frequency at the given volume
-     *          Only works on frequencies who have results stored in this container - returns < 0 otherwise
      */
     public float getProbOfHearingFVP(float freq, double vol) {
 
@@ -51,9 +50,49 @@ public class HearingTestResultsContainer {
         float freqAbove = findNearestAbove(freq, this.getTestedFreqs());
         float freqBelow = findNearestBelow(freq, this.getTestedFreqs());
 
+        // if freq is higher than the highest or lower than the lowest, just return the probability of the nearest
+        if (freqAbove == -1) return this.allResults.get(freqBelow).getProbOfHearing(vol);
+        if (freqBelow == -1) return this.allResults.get(freqAbove).getProbOfHearing(vol);
+
         // find the probabilities of each of these frequencies
         float probAbove = this.allResults.get(freqAbove).getProbOfHearing(vol);
         float probBelow = this.allResults.get(freqAbove).getProbOfHearing(vol);
+
+        // how far of the way between freqBelow and freqAbove is fvp.freq?
+        float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
+
+        // estimate this probability linearly between the results above and below
+        return probBelow + pctBetween * (probAbove - probBelow);
+    }
+
+    /**
+     * Given a subset of the tested frequencies, return the probability of hearing a tone of the given frequency and
+     * volume modeled only based on the subset frequencies
+     *
+     * @param freq The frequency of the tone whose probability is to be determined
+     * @param vol The volume of the tone whose probability is to be determined
+     * @param subset A subset of the calibration frequencies to be used to generate the model
+     * @return The estimated probability of hearing the tone, based on the given subset
+     * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
+     */
+    public float getProbOfHearingFVP(float freq, double vol, float[] subset) throws IllegalArgumentException{
+        Float[] subsetAsObj = new Float[subset.length];
+        for (int i = 0; i < subset.length; i++)
+            if (! this.allResults.containsKey(subset[i]))
+                throw new IllegalArgumentException("Subset argument must be a subset of tested frequencies");
+            else subsetAsObj[i] = subset[i];
+
+        // find subset frequencies just above and below tested frequencies
+        float freqAbove = findNearestAbove(freq, subsetAsObj);
+        float freqBelow = findNearestBelow(freq, subsetAsObj);
+
+        // if freq is higher than the highest or lower than the lowest, return the probability of the nearest
+        if (freqAbove == -1) return this.allResults.get(freqBelow).getProbOfHearing(vol);
+        if (freqBelow == -1) return this.allResults.get(freqAbove).getProbOfHearing(vol);
+
+        // find probabilities of each of these frequencies
+        float probAbove = this.allResults.get(freqAbove).getProbOfHearing(vol);
+        float probBelow = this.allResults.get(freqBelow).getProbOfHearing(vol);
 
         // how far of the way between freqBelow and freqAbove is fvp.freq?
         float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);

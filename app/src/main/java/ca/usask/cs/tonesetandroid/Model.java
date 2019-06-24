@@ -52,7 +52,7 @@ public class Model {
     HearingTestResultsContainer hearingTestResults;  // final results of test
     private boolean testPaused = false;
     boolean testThreadActive = false;
-    public static final float[] FREQUENCIES = {/*200, 500, 1000,*/ 2000, 4000, /*8000*/};   // From British Society of
+    public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
                                                                                         // Audiology
 
     // Vars/values for audio
@@ -76,6 +76,14 @@ public class Model {
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
     public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 4 octaves of A
+    public static final float[][] CONF_SUBSETS = {  // subsets of hearing test frequencies to test against conf results
+            FREQUENCIES,
+            {200, 1000, 4000},
+            {500, 1000, 2000},
+            {500, 2000},
+            {1000, 4000},
+            {200, 1000}
+    };
 
     public Model() {
         buf = new byte[2];
@@ -195,6 +203,13 @@ public class Model {
             this.analysisResults.add(this.confidenceTestResults.performAnalysis(fvp, this.getProbabilityFVP(fvp)));
     }
 
+    public void analyzeConfidenceRestults(float[] subset) throws IllegalStateException, IllegalArgumentException {
+        if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
+        for (FreqVolPair fvp : this.confidenceTestResults.getTestedFVPs())
+            this.analysisResults.add(
+                    this.confidenceTestResults.performAnalysis(fvp, this.getProbabilityFVP(fvp, subset)));
+    }
+
     /**
      * Find the probability of hearing the given frequency-volume pair given the calibration results
      *
@@ -208,8 +223,12 @@ public class Model {
         return this.hearingTestResults.getProbOfHearingFVP(freq, vol);
     }
 
-    public float getProbabilityFVP(FreqVolPair fvp) {
+    public float getProbabilityFVP(FreqVolPair fvp) throws IllegalStateException {
         return this.getProbabilityFVP(fvp.getFreq(), fvp.getVol());
+    }
+
+    public float getProbabilityFVP(FreqVolPair fvp, float[] subset) {
+        return this.hearingTestResults.getProbOfHearingFVP(fvp.getFreq(), fvp.getVol(), subset);
     }
 
     /**

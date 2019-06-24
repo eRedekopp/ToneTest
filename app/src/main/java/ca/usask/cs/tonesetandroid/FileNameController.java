@@ -214,20 +214,26 @@ public class FileNameController {
 
             out = new BufferedWriter(new FileWriter(fout));
 
-            // write header/info
-            out.write("Calibration Freqs: " + Arrays.toString(model.hearingTestResults.getTestedFreqs()));
-            out.newLine();
-            out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,sigDifferent");
-            out.newLine();
+            // test using different subsets of calibration data
+            for (float[] subset : Model.CONF_SUBSETS) {
+                // analyze results for current subset
+                this.model.analyzeConfidenceRestults(subset);
 
-            // write results for each freq-vol pair tested
-            // model.analysisResults should contain all freq-vol pairs tested if everything works correctly
-            for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
-                out.write(String.format(
-                        "%.2f,%.2f,%.2f,%.2f,%b,\n",
-                        result.freq, result.vol, result.confProbEstimate, result.probEstimate,
-                        result.alpha, result.beta, result.estimatesSigDifferent
-                ));
+                // write header/info
+                out.write("Calibration Freqs: " + Arrays.toString(model.hearingTestResults.getTestedFreqs()));
+                out.newLine();
+                out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,sigDifferent\n");
+
+                // write results for each freq-vol pair in subset
+                // model.analysisResults should contain all freq-vol pairs tested if everything works correctly
+                for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
+                    out.write(String.format(
+                            "%.2f,%.2f,%.2f,%.2f,%b,\n",
+                            result.freq, result.vol, result.confProbEstimate, result.probEstimate,
+                            result.alpha, result.beta, result.estimatesSigDifferent
+                    ));
+                }
+                out.newLine();
             }
 
             // make the scanner aware of the new file

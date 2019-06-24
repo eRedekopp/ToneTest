@@ -221,13 +221,12 @@ public class ConfidenceTestResultsContainer {
             this.vol = confResult.vol;
             this.confProbEstimate = confResult.getActual();
             this.probEstimate = probEstimate;
-            this.alpha = 0.05f;
+            this.alpha = 0.10f;
 
             // check for statistical significance
 
             // Null Hypothesis : confProb == probEstimate
             // Alt. Hypothesis : confProb != probEstimate
-            // Get p value from binomial distribution
             BinomialDistribution binDist =
                     new BinomialDistribution(confResult.getTotalTrials(), probEstimate);
 
@@ -310,5 +309,4 @@ public class ConfidenceTestResultsContainer {
             return this.nHeard + this.nNotHeard;
         }
     }
-
 }
