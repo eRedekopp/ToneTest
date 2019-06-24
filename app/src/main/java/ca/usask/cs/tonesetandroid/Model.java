@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Contains information about the current/most recent test as well as an interface for generating
+ * Contains information about the current/most recent tests as well as an interface for generating
  * sine wave audio
  *
  * @author redekopp, alexscott
@@ -71,7 +71,7 @@ public class Model {
 
     // vars for confidence test
 //    static final int CONF_NUMBER_OF_FVPS = 5;
-    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 30;
+    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 1;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;

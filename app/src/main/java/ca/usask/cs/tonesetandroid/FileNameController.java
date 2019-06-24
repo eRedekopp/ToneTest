@@ -198,8 +198,8 @@ public class FileNameController {
      */
     public void handleConfSaveClick(Context context) throws IllegalStateException {
 
-        if (! model.hasAnalysisResults())
-            throw new IllegalStateException("Confidence test analysis results must be present before saving");
+//        if (! model.hasAnalysisResults())
+//            throw new IllegalStateException("Confidence test analysis results must be present before saving");
 
         BufferedWriter out = null;
 

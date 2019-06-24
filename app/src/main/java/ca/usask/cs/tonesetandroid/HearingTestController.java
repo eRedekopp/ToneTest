@@ -164,6 +164,7 @@ public class HearingTestController {
         }).start();
     }
 
+    @SuppressWarnings("unchecked")
     private void reducePhase() {
         model.testThreadActive = true;
         new Thread(new Runnable() {
@@ -255,10 +256,12 @@ public class HearingTestController {
                         public void run() { // run on main thread
                             model.audioTrackCleanup();
                             model.setTestPhase(Model.TEST_PHASE_NULL);
-                            model.analyzeConfidenceResults();
+//                            model.analyzeConfidenceResults();
                         }
                     });
-                } finally { model.testThreadActive = false; }
+                } finally {
+                    model.testThreadActive = false;
+                }
             }
         }).start();
     }
@@ -296,6 +299,7 @@ public class HearingTestController {
      *
      * @author alexscott
      */
+    @SuppressWarnings("unchecked")
     public void rampUpTest() {
 
         model.testThreadActive = true;
