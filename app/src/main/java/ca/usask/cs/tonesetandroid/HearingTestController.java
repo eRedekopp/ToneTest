@@ -435,6 +435,7 @@ public class HearingTestController {
      */
     public void autoTest() {
         FreqVolPair[] periodogram = this.getPeriodogramFromLineIn(2048);
+
         // todo finish this later
     }
 
@@ -442,7 +443,8 @@ public class HearingTestController {
      * Get a sample of audio from the line in, then perform an FFT and get a periodogram from it
      *
      * @param sampleSize The number of audio samples to use for the calculations (must be a power of 2)
-     * @return FreqVolPairs representing each frequency bin and its corresponding amplitude in the periodogram
+     * @return FreqVolPairs where each frequency is the central frequency of a bin and the volume is the volume of that
+     *         frequency bin
      */
     public FreqVolPair[] getPeriodogramFromLineIn(int sampleSize) {
         // todo : take multiple samples and average them?
@@ -464,15 +466,23 @@ public class HearingTestController {
         for (int i = 0; i < fftResult.length / 2; i++) {
             float realPart = fftResult[i * 2];
             float imagPart = fftResult[i * 2 + 1];
-            // Power Spectral Density in dB= 20 * log10(sqrt(re^2 + im^2)) using first N/2 complex numbers of FFT output
-            // from StackOverflow user Ernest Barkowski
-            // https://stackoverflow.com/questions/6620544/fast-fourier-transform-fft-input-and-output-to-analyse-the-frequency-of-audio
-            psd[i] = (float) (20 * Math.log10(Math.sqrt(Math.pow(realPart, 2) + Math.pow(imagPart, 2))));
+
+/* Not using this anymore but keeping the comment here for now
+
+// Power Spectral Density in dB= 20 * log10(sqrt(re^2 + im^2)) using first N/2 complex numbers of FFT output
+// from StackOverflow user Ernest Barkowski
+// https://stackoverflow.com/questions/6620544/fast-fourier-transform-fft-input-and-output-to-analyse-the-frequency-of-audio
+*/
+
+// Power Spectral Density in dB = magnitude(fftResult) ^ 2
+// From StackOverflow user Jason R
+// https://dsp.stackexchange.com/questions/4691/what-is-the-difference-between-psd-and-squared-magnitude-of-frequency-spectrum?lq=1
+            psd[i] = (float) Math.pow(Math.sqrt(Math.pow(realPart, 2) + Math.pow(imagPart, 2)), 2);
         }
 
         FreqVolPair[] freqBins = new FreqVolPair[psd.length];
         for (int i = 0; i < psd.length; i++) {
-            float freq = (float) i * freqBinWidth;
+            float freq = (float) i * freqBinWidth + freqBinWidth / 2.0f;
             double vol = psd[i];
             freqBins[i] = new FreqVolPair(freq, vol);
         }

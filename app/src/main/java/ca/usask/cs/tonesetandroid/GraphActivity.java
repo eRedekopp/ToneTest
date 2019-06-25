@@ -3,6 +3,7 @@ package ca.usask.cs.tonesetandroid;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 import com.androidplot.xy.BoundaryMode;
@@ -14,7 +15,11 @@ import com.androidplot.xy.XYSeries;
 
 
 import java.util.Arrays;
+import java.util.Collections;
 
+/**
+ * An activity that displays a graph of freq-vol pairs - data must be previously set by another activity using setData()
+ */
 public class GraphActivity extends Activity {
 
     private XYPlot plot;
@@ -52,11 +57,13 @@ public class GraphActivity extends Activity {
         if (data == null) throw new IllegalStateException("data not initialized");
 
         // separate x/y data from FreqVolPairs
-        Number[]  xData = new Float[data.length];   // use wrapper classes for XYSeries constructor
+        Number[] xData = new Float[data.length];   // use wrapper classes for XYSeries constructor
         Number[] yData = new Double[data.length];
+        Double maxY = Double.MIN_VALUE;   // keep track of largest Y value for setting axis range
         for (int i = 0; i < data.length; i++) {
             xData[i] = data[i].getFreq();
             yData[i] = data[i].getVol();
+            if (maxY < (Double) yData[i]) maxY = (Double) yData[i];
         }
 
         // create series and formatter
@@ -74,11 +81,11 @@ public class GraphActivity extends Activity {
 
         // set boundaries
         this.plot.setDomainBoundaries(0, 8000, BoundaryMode.FIXED); // show 0Hz to 8KHz
-        this.plot.setRangeBoundaries(-60, 60, BoundaryMode.FIXED);
+        this.plot.setRangeBoundaries(0, maxY, BoundaryMode.FIXED);
 
         // set label steps
         this.plot.setDomainStep(StepMode.INCREMENT_BY_VAL, 500);
-        this.plot.setRangeStep(StepMode.INCREMENT_BY_VAL, 10);
+        this.plot.setRangeStep(StepMode.INCREMENT_BY_VAL, 1);
 
         // add data to plot
         this.plot.addSeries(dataSeries, lpFormatter);

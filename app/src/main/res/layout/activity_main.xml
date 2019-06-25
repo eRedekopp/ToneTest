@@ -26,11 +26,11 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="8dp"
-        android:text="Heard Tone"
         android:soundEffectsEnabled="false"
+        android:text="Heard Tone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
+        app:layout_constraintTop_toBottomOf="@+id/autoButton" />
 
     <Button
         android:id="@+id/saveCalibButton"
@@ -91,5 +91,17 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/resetButton" />
+
+    <Button
+        android:id="@+id/autoButton"
+        android:layout_width="275dp"
+        android:layout_height="75dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="25dp"
+        android:layout_marginEnd="8dp"
+        android:text="Auto-Calibrate"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
 
 </android.support.constraint.ConstraintLayout>

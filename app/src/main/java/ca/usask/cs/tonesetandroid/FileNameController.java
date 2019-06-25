@@ -370,7 +370,6 @@ public class FileNameController {
         HearingTestResultsContainer results = new HearingTestResultsContainer();
 
         try {
-            int j = 0;
             while (scanner.hasNext()) {
                 double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
                 int nextHeard = scanner.nextInt();

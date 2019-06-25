@@ -36,7 +36,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     HearingTestController controller;
     FileNameController fileController;
 
-    Button calibButton, heardButton, saveCalibButton, saveConfButton, confidenceButton, resetButton, pauseButton;
+    Button  calibButton,
+            heardButton,
+            saveCalibButton,
+            saveConfButton,
+            confidenceButton,
+            resetButton,
+            pauseButton,
+            autoButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +86,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         confidenceButton =  findViewById(R.id.confidenceButton);
         resetButton =       findViewById(R.id.resetButton);
         pauseButton =       findViewById(R.id.pauseButton);
+        autoButton =        findViewById(R.id.autoButton);
 
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
@@ -105,9 +113,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     fileController.handleSaveCalibClick(context);
                     model.setResultsSaved(true);
                 } catch (IllegalStateException e) {
-                    showErrorDialog("No results currently stored (this dialog should never happen)");
+                    showErrorDialog("No results currently stored");
                 } catch (RuntimeException e) {
-                    showErrorDialog("Unable to create target file (this dialog should never happen)");
+                    showErrorDialog("Unable to create target file");
                 }
             }
         });
@@ -119,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     model.setConfResultsSaved(true);
                 } catch (IllegalStateException e) {
                     e.printStackTrace();
-                    showErrorDialog("No results currently stored (this dialog should never happen)");
+                    showErrorDialog("No results currently stored");
                 } catch (RuntimeException e) {
                     e.printStackTrace();
                     showErrorDialog("Unable to create target file");
@@ -157,7 +165,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 } else {
                     model.setTestPaused(true);
                 }
-
+            }
+        });
+        autoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                showErrorDialog("This method is not complete and does not affect calibration");
+                goToAuto();
             }
         });
 
@@ -181,7 +195,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 confidenceButton.setEnabled(model.hasResults() && !model.testing());
                 saveCalibButton.setEnabled(model.hasResults() && !model.testing() && !model.resultsSaved());
                 saveConfButton.setEnabled(model.hasConfResults() && !model.testing() && !model.confResultsSaved());
-                resetButton.setEnabled(!model.testing());
+                resetButton.setEnabled(!model.testing() || model.testPaused());
                 pauseButton.setEnabled(model.testing());
 
                 controller.checkForHearingTestResume(); // resume hearing test if necessary
@@ -220,12 +234,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     private void goToAuto() {
 
         // todo implement autoTest later on
-//
-//        FreqVolPair[] periodogram = controller.getPeriodogramFromLineIn(2048);
-//        GraphActivity.setData(periodogram);
-//
-//        Intent graphIntent = new Intent(this, GraphActivity.class);
-//        startActivity(graphIntent);
+
+        FreqVolPair[] periodogram = controller.getPeriodogramFromLineIn(2048);
+        GraphActivity.setData(periodogram);
+
+        Intent graphIntent = new Intent(this, GraphActivity.class);
+        startActivity(graphIntent);
     }
 
     /**

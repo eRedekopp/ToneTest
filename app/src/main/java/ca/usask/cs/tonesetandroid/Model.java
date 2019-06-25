@@ -49,7 +49,8 @@ public class Model {
     HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
                                                     // (for finding bottom estimates)
     ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
-    HearingTestResultsContainer hearingTestResults;  // final results of test
+    HearingTestResultsContainer hearingTestResults;   // final results of test
+    HearingTestResultsContainer calibrationReslts;
     private boolean testPaused = false; // has the user paused the test?
     boolean testThreadActive = false; // is a thread currently performing a hearing test?
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
@@ -313,6 +314,7 @@ public class Model {
         }
 
         return lineDataFloat;
+//        return sineWave(1500, size, 1f);
     }
 
     /**
@@ -322,13 +324,13 @@ public class Model {
      * @param freq The frequency of the sine wave
      * @return PCM float values corresponding to a sine wave of the given frequency
      */
-    public static float[] sineWave(int freq, int nSamples) {
+    public static float[] sineWave(float freq, int nSamples, float amplitude) {
         float[] output = new float[nSamples];
-        float period = Model.INPUT_SAMPLE_RATE / (float) freq;
+        float period = Model.INPUT_SAMPLE_RATE / freq;
 
         for (int i = 0; i < nSamples; i++) {
             float angle = 2.0f * (float) Math.PI * i / period;
-            output[i] = (float) Math.sin(angle);
+            output[i] = (float) Math.sin(angle) * amplitude;
         }
         return output;
     }

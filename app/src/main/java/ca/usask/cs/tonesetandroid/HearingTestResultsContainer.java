@@ -265,7 +265,7 @@ public class HearingTestResultsContainer {
     /**
      * A class for storing the hearing test results for a single frequency at multiple volumes
      */
-    private class HearingTestSingleFreqResult {
+    protected class HearingTestSingleFreqResult {
 
         private float freq;
 
@@ -288,6 +288,7 @@ public class HearingTestResultsContainer {
          * @param vol The volume of the trial
          * @param heard Was the tone heard in the trial?
          */
+        @SuppressWarnings("ConstantConditions")
         public void addResult(double vol, boolean heard) {
             if (!testedVolumes.contains(vol)) testedVolumes.add(vol);
             if (heard)
@@ -306,9 +307,8 @@ public class HearingTestResultsContainer {
          * @param vol The volume whose probability is to be found
          * @return The probability of hearing a tone of this.freq Hz at the given volume
          */
-        @SuppressWarnings("ConstantConditions")
         public float getProbOfHearing(double vol) {
-            // sanity checks
+            // sanity check
             if (testedVolumes.isEmpty()) throw new IllegalStateException("testedVolumes unexpectedly empty");
 
             // find volumes just above and below, or if they are smaller than the smallest or larger than the
@@ -341,6 +341,7 @@ public class HearingTestResultsContainer {
          * @return The probability of hearing the volume
          * @throws IllegalArgumentException If the given volume was not tested
          */
+        @SuppressWarnings("ConstantConditions")
         public float getActualProb(double vol) throws IllegalArgumentException {
             if (! testedVolumes.contains(vol)) throw new IllegalArgumentException("Volume not present in results");
             int timesHeard, timesNotHeard;
@@ -379,6 +380,7 @@ public class HearingTestResultsContainer {
         }
 
         @Override
+        @SuppressWarnings("ConstantConditions")
         public String toString() {
             StringBuilder builder = new StringBuilder();
             Collections.sort(testedVolumes);
