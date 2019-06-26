@@ -1,11 +1,11 @@
 package ca.usask.cs.tonesetandroid;
 
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ListIterator;
 
 public class HearingTestResultsContainer {
 
@@ -139,7 +139,7 @@ public class HearingTestResultsContainer {
      * @param freq The frequency whose tested volumes are to be returned
      * @return A list of all volumes tested for the given frequency
      */
-    public List<Double> getTestedVolumesForFreq(float freq) {
+    public Collection<Double> getTestedVolumesForFreq(float freq) {
         try {
             return this.allResults.get(freq).getVolumes();
         } catch (NullPointerException e) {
@@ -189,6 +189,7 @@ public class HearingTestResultsContainer {
      * @param freq The frequency whose volume ceiling is to be estimated
      * @return An estimate of the volume ceiling for the given frequency
      */
+    @SuppressWarnings("ConstantConditions")
     public double getVolCeilingEstimateForFreq(float freq) {
         if (this.freqTested(freq)) return this.allResults.get(freq).getVolCeiling();
 
@@ -221,6 +222,34 @@ public class HearingTestResultsContainer {
             }
         if (curClosest == -1) throw new RuntimeException("Found unexpected value -1");
         return curClosest;
+    }
+
+    /**
+     * Return a new HearingTestResultsContainer with the same results as this one, but only containing the first n
+     * results for each frequency-volume pair (ie. as though Model.NUMBER_OF_TESTS_PER_VOL == n)
+     *
+     * @param n The number of trials per freq-vol pair in the new container
+     * @return A new container containing a subset of this one's results
+     * @throws IllegalArgumentException If n is greater than the number of trials performed in this test
+     */
+    public HearingTestResultsContainer getSubsetResults(int n) throws IllegalArgumentException {
+        if (n > this.getNumOfTrials())
+            throw new IllegalArgumentException(
+                    "n = " + n + " is larger than the actual sample size = " + this.getNumOfTrials());
+        HearingTestResultsContainer newContainer = new HearingTestResultsContainer();
+        for (HearingTestSingleFreqResult htsr : this.allResults.values())
+            newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));
+        return newContainer;
+    }
+
+    /**
+     * @return The number of trials in this hearing test (assumes all FVPs tested equal number of times)
+     */
+    @SuppressWarnings("ConstantConditions")
+    public int getNumOfTrials() {
+        HearingTestSingleFreqResult aResult = this.allResults.get(this.getTestedFreqs()[0]);
+        double aVol = aResult.getVolumes().iterator().next();
+        return aResult.getNumSamples(aVol);
     }
 
     @Override
@@ -267,19 +296,20 @@ public class HearingTestResultsContainer {
      */
     protected class HearingTestSingleFreqResult {
 
-        private float freq;
+        private final float freq;
 
+        // do not mutate these maps except in addResult()
         private HashMap<Double, Integer> timesHeardPerVol;
 
         private HashMap<Double, Integer> timesNotHeardPerVol;
 
-        private ArrayList<Double> testedVolumes;
+        private HashMap<Double, List<Boolean>> testResultsPerVol;
 
         private HearingTestSingleFreqResult(float freq) {
             this.freq = freq;
             this.timesHeardPerVol = new HashMap<>();
             this.timesNotHeardPerVol = new HashMap<>();
-            this.testedVolumes = new ArrayList<>();
+            this.testResultsPerVol = new HashMap<>();
         }
 
         /**
@@ -290,15 +320,20 @@ public class HearingTestResultsContainer {
          */
         @SuppressWarnings("ConstantConditions")
         public void addResult(double vol, boolean heard) {
-            if (!testedVolumes.contains(vol)) testedVolumes.add(vol);
+            // update testResultsPerVol
+            if (!testResultsPerVol.containsKey(vol)) testResultsPerVol.put(vol, new ArrayList<Boolean>());
+            testResultsPerVol.get(vol).add(heard);
+            // update to timesHeard / timesNotHeard
             if (heard)
                 if (timesHeardPerVol.containsKey(vol))
                     mapReplace(timesHeardPerVol, vol, timesHeardPerVol.get(vol) + 1);
+
                 else timesHeardPerVol.put(vol, 1);
             else
-            if (timesNotHeardPerVol.containsKey(vol))
-                mapReplace(timesNotHeardPerVol, vol, timesNotHeardPerVol.get(vol) + 1);
-            else timesNotHeardPerVol.put(vol, 1);
+                if (timesNotHeardPerVol.containsKey(vol))
+                    mapReplace(timesNotHeardPerVol, vol, timesNotHeardPerVol.get(vol) + 1);
+                else timesNotHeardPerVol.put(vol, 1);
+
         }
 
         /**
@@ -309,20 +344,20 @@ public class HearingTestResultsContainer {
          */
         public float getProbOfHearing(double vol) {
             // sanity check
-            if (testedVolumes.isEmpty()) throw new IllegalStateException("testedVolumes unexpectedly empty");
+            if (testResultsPerVol.isEmpty()) throw new IllegalStateException("testResultsPerVol unexpectedly empty");
 
             // find volumes just above and below, or if they are smaller than the smallest or larger than the
             // largest, then return the probability of the nearest volume
             double volBelow, volAbove;
             try {
-                volBelow = findNearestBelow(vol, testedVolumes);
+                volBelow = findNearestBelow(vol, this.getVolumes());
             } catch (IllegalArgumentException e) {
-                return this.getActualProb(findNearestAbove(vol, testedVolumes));
+                return this.getActualProb(findNearestAbove(vol, this.getVolumes()));
             }
             try {
-                volAbove = findNearestAbove(vol, testedVolumes);
+                volAbove = findNearestAbove(vol, this.getVolumes());
             } catch (IllegalArgumentException e) {
-                return this.getActualProb(findNearestBelow(vol, testedVolumes));
+                return this.getActualProb(findNearestBelow(vol, this.getVolumes()));
             }
 
             // what percentage of the way between volBelow and volAbove is vol?
@@ -343,7 +378,7 @@ public class HearingTestResultsContainer {
          */
         @SuppressWarnings("ConstantConditions")
         public float getActualProb(double vol) throws IllegalArgumentException {
-            if (! testedVolumes.contains(vol)) throw new IllegalArgumentException("Volume not present in results");
+            if (! this.getVolumes().contains(vol)) throw new IllegalArgumentException("Volume not present in results");
             int timesHeard, timesNotHeard;
             try {
                 timesHeard = timesHeardPerVol.get(vol);
@@ -363,8 +398,8 @@ public class HearingTestResultsContainer {
          */
         public double getVolFloor() {
             ArrayList<Double> unheardVols = new ArrayList<>();
-            for (double vol : testedVolumes) if (! timesHeardPerVol.containsKey(vol)) unheardVols.add(vol);
-            if (unheardVols.isEmpty()) return Collections.min(testedVolumes);
+            for (double vol : this.getVolumes()) if (! timesHeardPerVol.containsKey(vol)) unheardVols.add(vol);
+            if (unheardVols.isEmpty()) return Collections.min(this.getVolumes());
             else return Collections.max(unheardVols);
         }
 
@@ -374,15 +409,58 @@ public class HearingTestResultsContainer {
          */
         public double getVolCeiling() {
             ArrayList<Double> alwaysHeardVols = new ArrayList<>();
-            for (double vol : testedVolumes) if (! timesNotHeardPerVol.containsKey(vol)) alwaysHeardVols.add(vol);
-            if (alwaysHeardVols.isEmpty()) return Collections.max(testedVolumes);
+            for (double vol : this.getVolumes()) if (! timesNotHeardPerVol.containsKey(vol)) alwaysHeardVols.add(vol);
+            if (alwaysHeardVols.isEmpty()) return Collections.max(this.getVolumes());
             else return Collections.min(alwaysHeardVols);
+        }
+
+        /**
+         * Return the number of times that the given volume was sampled
+         *
+         * @param vol The volume whose number of samples is to be returned
+         * @return The number of times that the given volume was sampled
+         */
+        @SuppressWarnings("ConstantConditions")
+        public int getNumSamples(double vol) {
+            int heard, notHeard;
+            try {
+                heard = this.timesHeardPerVol.get(vol);
+            } catch (NullPointerException e) {
+                heard = 0;
+            }
+            try {
+                notHeard = this.timesNotHeardPerVol.get(vol);
+            } catch (NullPointerException e) {
+                notHeard = 0;
+            }
+            return heard + notHeard;
+        }
+
+        /**
+         * Returns a new HearingTestSingleFreqResult containing the first n results for each volume stored within this
+         * object
+         *
+         * @param n The number of results for each frequency
+         * @return A new HearingTestSingleFreqResult containing a subset of the results in this one
+         */
+        @SuppressWarnings("ConstantConditions")
+        public HearingTestSingleFreqResult getSubsetResult(int n) {
+            HearingTestSingleFreqResult newResult = new HearingTestSingleFreqResult(this.freq);
+            for (Double vol : this.getVolumes()) {
+                // addResult for the first n responses in the hearing test
+                ListIterator<Boolean> iter = this.testResultsPerVol.get(vol).listIterator();
+                for (int i = 0; i < n; i++) {
+                    newResult.addResult(vol, iter.next());
+                }
+            }
+            return newResult;
         }
 
         @Override
         @SuppressWarnings("ConstantConditions")
         public String toString() {
             StringBuilder builder = new StringBuilder();
+            ArrayList<Double> testedVolumes = new ArrayList<>(this.getVolumes());
             Collections.sort(testedVolumes);
 
             builder.append("Frequency: ");
@@ -433,8 +511,8 @@ public class HearingTestResultsContainer {
             return (HashMap<Double, Integer>) this.timesNotHeardPerVol.clone();
         }
 
-        public List<Double> getVolumes() {
-            return this.testedVolumes;
+        public Collection<Double> getVolumes() {
+            return this.testResultsPerVol.keySet();
         }
 
         /**

@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -62,7 +63,7 @@ public class FileNameController {
             for (float freq : results.getTestedFreqs()) {
                 HashMap<Double, Integer> timesHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
                 HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
-                List<Double> volumes = results.getTestedVolumesForFreq(freq);
+                Collection<Double> volumes = results.getTestedVolumesForFreq(freq);
                 for (Double vol : volumes) {
                     int nHeard, nNotHeard;
                     try {
@@ -210,28 +211,43 @@ public class FileNameController {
 
             out = new BufferedWriter(new FileWriter(fout));
 
-            // test using different subsets of calibration data
-            for (float[] subset : Model.CONF_SUBSETS) {
+            HearingTestResultsContainer results = model.getHearingTestResults();
 
-                // set model.analysisResults for current subset
-                this.model.analyzeConfidenceResults(subset);
-
-                // write header/info for current subset
-                out.write("Calibration Freqs: " + Arrays.toString(subset));
-                out.newLine();
-                out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent\n");
-
-                // write results for each freq-vol pair in subset
-                // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
-                for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
-                    out.write(String.format(
-                            "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
-                            result.freq, result.vol, result.confProbEstimate, result.probEstimate,
-                            result.alpha, result.beta, result.critLow, result.critHigh, result.estimatesSigDifferent
-                    ));
+            // test using different sample sizes
+            for (int n : Model.CONF_SAMP_SIZES) {  // todo test this
+                try {  // change hearing test results to new sample size
+                    model.hearingTestResults = results.getSubsetResults(n);
+                } catch (IllegalArgumentException e) {
+                    continue;
                 }
-                out.newLine();
+
+                out.write("### Sample Size = " + n + " ###\n");
+
+                // test using different subsets of calibration frequencies
+                for (float[] subset : Model.CONF_SUBSETS) {
+
+                    // set model.analysisResults for current subset
+                    this.model.analyzeConfidenceResults(subset);
+
+                    // write header/info for current subset
+                    out.write("Calibration Freqs: " + Arrays.toString(subset));
+                    out.newLine();
+                    out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent\n");
+
+                    // write results for each freq-vol pair in subset
+                    // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
+                    for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
+                        out.write(String.format(
+                                "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
+                                result.freq, result.vol, result.confProbEstimate, result.probEstimate,
+                                result.alpha, result.beta, result.critLow, result.critHigh, result.estimatesSigDifferent
+                        ));
+                    }
+                    out.newLine();
+                }
             }
+
+            model.hearingTestResults = results; // reset hearingTestResults
 
             // make the scanner aware of the new file
             MediaScannerConnection.scanFile(
