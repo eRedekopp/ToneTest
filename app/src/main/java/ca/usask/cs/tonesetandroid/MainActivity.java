@@ -39,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     Button  calibButton,
             upButton,
             downButton,
+            heardButton,
             saveCalibButton,
             saveConfButton,
             confidenceButton,
@@ -83,6 +84,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         calibButton =       findViewById(R.id.calibButton);
         downButton =        findViewById(R.id.downButton);
         upButton =          findViewById(R.id.upButton);
+        heardButton =       findViewById(R.id.heardButton);
         saveCalibButton =   findViewById(R.id.saveCalibButton);
         saveConfButton =    findViewById(R.id.saveConfButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
@@ -112,6 +114,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void onClick(View v) {
                 controller.handleDownClick();
+            }
+        });
+        heardButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controller.handleHeardClick();
             }
         });
         saveCalibButton.setOnClickListener(new View.OnClickListener() {
@@ -195,14 +203,27 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      * Enable/disable the buttons given the new status of the Model and iModel
      */
     public void modelChanged() {
-        // todo add "heard" button for early-stage hearing test - requires a button with clickHandler that calls
-        // hearingTest.handleHeardClick() for first stages, then use up and down buttons for main stage and conf
         new Handler(Looper.getMainLooper()).post(new Runnable() {  // always run on UI thread
             @Override
             public void run() {
+                // choose which test button to use depending on which test phase we are in
+                if (model.getTestPhase() == Model.TEST_PHASE_RAMP || model.getTestPhase() == Model.TEST_PHASE_REDUCE) {
+                    heardButton.setVisibility(View.VISIBLE);
+                    heardButton.setEnabled(true);
+                    upButton.setVisibility(View.GONE);
+                    upButton.setEnabled(false);
+                    downButton.setVisibility(View.GONE);
+                    upButton.setEnabled(false);
+                } else {
+                    heardButton.setVisibility(View.GONE);
+                    heardButton.setEnabled(false);
+                    upButton.setVisibility(View.VISIBLE);
+                    upButton.setEnabled(model.testing() && ! model.testPaused());
+                    downButton.setVisibility(View.VISIBLE);
+                    downButton.setEnabled(model.testing() && ! model.testPaused());
+                }
+
                 calibButton.setEnabled(!model.testing());
-                upButton.setEnabled(model.testing() && ! model.testPaused());
-                downButton.setEnabled(model.testing() && ! model.testPaused());
                 confidenceButton.setEnabled(model.hasResults() && !model.testing());
                 saveCalibButton.setEnabled(model.hasResults() && !model.testing() && !model.resultsSaved());
                 saveConfButton.setEnabled(model.hasConfResults() && !model.testing() && !model.confResultsSaved());

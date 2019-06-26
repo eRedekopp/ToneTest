@@ -237,8 +237,7 @@ public class HearingTestController {
                         Log.i("rampUpTest", "Testing frequency " + freq);
 
                         double rateOfRamp = 1.05;
-                        rampUp(rateOfRamp, freq, 0.1);  // play a tone for 50ms, then ramp up by 1.05 times until the tone
-                        // is heard starting at a volume of 0.1
+                        rampUp(rateOfRamp, freq, 0.1);
 
                         heardVol = model.volume; // record the volume when user paused
 
@@ -520,7 +519,7 @@ public class HearingTestController {
         return freqBins;
     }
 
-    //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////////
+    //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////
 
     public void handleCalibClick() {
         this.hearingTest();
