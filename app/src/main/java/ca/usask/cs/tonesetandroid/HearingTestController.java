@@ -255,6 +255,8 @@ public class HearingTestController {
                         // tone and ramping up at a slower rate
                         rampUp(rateOfRamp, freq, heardVol / 10.0);
 
+                        if (model.testPaused()) return; // check if user paused test before adding result
+
                         FreqVolPair results = new FreqVolPair(freq, model.volume);
                         model.topVolEstimates.add(results); //add the frequency volume pair to list of top estimates
 
@@ -299,7 +301,7 @@ public class HearingTestController {
         model.startAudio();
 
         for (model.volume = startingVol; model.volume < 32767; model.volume *= rateOfRamp) {
-            if (! model.audioPlaying()) return;
+            if (! model.audioPlaying() || model.testPaused()) return;
 
             if (iModel.heard) {
                 iModel.notHeard();//reset the iModel for the next ramp
@@ -334,12 +336,14 @@ public class HearingTestController {
                         model.currentVolumes.remove(0);
                         model.startAudio();
                         Log.i("mainTest", "Testing " + trial.toString());
-                        iModel.notHeard();
+                        iModel.resetAnswer();
                         playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
-                        model.hearingTestResults.addResult(trial, iModel.heard); // todo 'heard' is wrong for new test
+                        boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)
+                                          || (iModel.getAnswer() < 0 && ! trial.isUpward);
+                        model.hearingTestResults.addResult(trial, correct);
 
-                        model.stopAudio();  // sleep for for random length 1-3 seconds
-                        try {
+                        model.stopAudio();
+                        try {               // sleep for for random length 1-3 seconds
                             Thread.sleep((long) (Math.random() * 2000 + 1000));
                         } catch (InterruptedException e) {
                             return;
@@ -374,7 +378,6 @@ public class HearingTestController {
                     Handler mainHandler = new Handler(Looper.getMainLooper());
 
                     // configure model for test
-                    iModel.setTestMode(true);
                     model.configureAudio();
                     model.configureConfidenceTestPairs();
 
@@ -520,13 +523,19 @@ public class HearingTestController {
     //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////////
 
     public void handleCalibClick() {
-        iModel.setTestMode(true);
         this.hearingTest();
     }
 
     public void handleConfClick() {
-        iModel.setTestMode(true);
         this.confidenceTest();
+    }
+
+    public void handleUpClick() {
+        this.iModel.setAnswer(true);
+    }
+
+    public void handleDownClick() {
+        this.iModel.setAnswer(false);
     }
 
     public void handleHeardClick() {

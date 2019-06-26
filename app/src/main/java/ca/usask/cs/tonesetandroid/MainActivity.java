@@ -37,7 +37,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     FileNameController fileController;
 
     Button  calibButton,
-            heardButton,
+            upButton,
+            downButton,
             saveCalibButton,
             saveConfButton,
             confidenceButton,
@@ -80,7 +81,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
-        heardButton =       findViewById(R.id.downButton);
+        downButton =        findViewById(R.id.downButton);
+        upButton =          findViewById(R.id.upButton);
         saveCalibButton =   findViewById(R.id.saveCalibButton);
         saveConfButton =    findViewById(R.id.saveConfButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
@@ -100,10 +102,16 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 controller.handleConfClick();
             }
         });
-        heardButton.setOnClickListener(new View.OnClickListener() {
+        upButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                controller.handleHeardClick();
+                controller.handleUpClick();
+            }
+        });
+        downButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controller.handleDownClick();
             }
         });
         saveCalibButton.setOnClickListener(new View.OnClickListener() {
@@ -187,11 +195,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      * Enable/disable the buttons given the new status of the Model and iModel
      */
     public void modelChanged() {
+        // todo add "heard" button for early-stage hearing test - requires a button with clickHandler that calls
+        // hearingTest.handleHeardClick() for first stages, then use up and down buttons for main stage and conf
         new Handler(Looper.getMainLooper()).post(new Runnable() {  // always run on UI thread
             @Override
             public void run() {
                 calibButton.setEnabled(!model.testing());
-                heardButton.setEnabled(model.testing() && ! model.testPaused() );
+                upButton.setEnabled(model.testing() && ! model.testPaused());
+                downButton.setEnabled(model.testing() && ! model.testPaused());
                 confidenceButton.setEnabled(model.hasResults() && !model.testing());
                 saveCalibButton.setEnabled(model.hasResults() && !model.testing() && !model.resultsSaved());
                 saveConfButton.setEnabled(model.hasConfResults() && !model.testing() && !model.confResultsSaved());
