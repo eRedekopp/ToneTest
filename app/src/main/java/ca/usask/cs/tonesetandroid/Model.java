@@ -379,7 +379,7 @@ public class Model {
         if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) != maxVol)
             audioManager.setStreamVolume( // pin volume to max if not already done
                     AudioManager.STREAM_MUSIC,
-                    audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
+                    maxVol,
                     AudioManager.FLAG_PLAY_SOUND);
     }
 

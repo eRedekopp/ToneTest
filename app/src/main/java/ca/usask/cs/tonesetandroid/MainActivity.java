@@ -42,8 +42,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             saveConfButton,
             confidenceButton,
             resetButton,
-            pauseButton,
-            autoButton;
+            pauseButton /*,
+            autoButton*/;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         confidenceButton =  findViewById(R.id.confidenceButton);
         resetButton =       findViewById(R.id.resetButton);
         pauseButton =       findViewById(R.id.pauseButton);
-        autoButton =        findViewById(R.id.autoButton);
+//        autoButton =        findViewById(R.id.autoButton);
 
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
@@ -167,13 +167,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 }
             }
         });
-        autoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                showErrorDialog("This method is not complete and does not affect calibration");
-                goToAuto();
-            }
-        });
+//        autoButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                showErrorDialog("This method is not complete and does not affect calibration");
+//                goToAuto();
+//            }
+//        });
 
         // configure audio
         model.setAudioManager((AudioManager) this.getSystemService(Context.AUDIO_SERVICE));
