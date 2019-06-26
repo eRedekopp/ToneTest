@@ -11,8 +11,6 @@ import android.util.Log;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +28,7 @@ public class Model {
 
     private AudioManager audioManager;
 
-    // vars/values for hearing test
+    /////////////// vars/values for hearing test ///////////////
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
@@ -48,29 +46,30 @@ public class Model {
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
     HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
                                                     // (for finding bottom estimates)
-    ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
+    ArrayList<Interval> testIntervals;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer hearingTestResults;   // final results of test
-    HearingTestResultsContainer calibrationReslts;
     private boolean testPaused = false; // has the user paused the test?
     boolean testThreadActive = false; // is a thread currently performing a hearing test?
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
                                                                                         // Audiology
+    static final float INTERVAL_FREQ_RATIO = 1.25f; // 5:4 ratio = major third
 
-    // Vars/values for audio
+
+    /////////////// Vars/values for audio ///////////////
     AudioTrack lineOut;
-    public static final int OUTPUT_SAMPLE_RATE  = 44100; // output samples at 44.1 kHz always
+    public static final int OUTPUT_SAMPLE_RATE  = 44100;  // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     public int duration_ms; // how long to play each tone in a test
     double volume;          // amplitude multiplier
     byte[] buf;
     private boolean audioPlaying;
 
-    // Vars for file io
+    /////////////// Vars for file io ///////////////
     private int subjectId = -1;     // -1 indicates not set
     private boolean resultsSaved = false;       // have hearing test results been saved since the model was initialized?
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
-    // vars for confidence test
+    /////////////// vars for confidence test ///////////////
     static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 20;
     ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
@@ -103,7 +102,7 @@ public class Model {
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
         this.confidenceTestPairs = new ArrayList<>();
         this.analysisResults = new ArrayList<>();
-        this.testPairs = new ArrayList<>();
+        this.testIntervals = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
         this.hearingTestResults = new HearingTestResultsContainer();
@@ -150,20 +149,23 @@ public class Model {
     /**
      * Set currentVolumes to contain all frequencies and volumes to be tested during the main stage of the hearing test
      */
-    public void configureTestPairs() {
+    public void configureTestIntervals() {
         for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
             double topVolEst = getVolForFreq(topVolEstimates, freq);
             for (double vol = bottomVolEst;
-                 vol < topVolEst;
-                 vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
-                testPairs.add(new FreqVolPair(freq, vol));
+                vol < topVolEst;
+                vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
+
+                testIntervals.add(new Interval(freq, freq * INTERVAL_FREQ_RATIO, vol)); // add upward interval
+                testIntervals.add(new Interval(freq, freq / INTERVAL_FREQ_RATIO, vol)); // add downward interval
             }
         }
-        // fill CurrentVolumes with one freqvolpair for each individual tone that will be played in the test
-        this.currentVolumes = new ArrayList<>();
-        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) this.currentVolumes.addAll(this.testPairs);
-        Collections.shuffle(this.currentVolumes);
+        // fill testIntervals with one item for each individual interval that will be played in the test
+        ArrayList<Interval> allTests = new ArrayList<>();
+        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(this.testIntervals);
+        this.testIntervals = allTests;
+        Collections.shuffle(this.testIntervals);
     }
 
     /**
@@ -171,31 +173,33 @@ public class Model {
      */
     public void configureConfidenceTestPairs() {
 
-        ArrayList<Float> confFreqs = new ArrayList<>();
-        for (float freq : CONF_FREQS) confFreqs.add(freq);
+        // todo
 
-        // randomize the order of test frequencies
-        Collections.shuffle(confFreqs);
-
-        // for each frequency, add a new fvp to confidenceTestPairs with the frequency and a volume some percentage
-        // of the way between completely inaudible and perfectly audible
-        float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
-        float jumpSize = 1.0f / CONF_FREQS.length;
-        for (Float freq : confFreqs) {
-            double volFloor = this.hearingTestResults.getVolFloorEstimateForFreq(freq);
-            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForFreq(freq);
-            double testVol = volFloor + pct * (volCeiling - volFloor);
-            this.confidenceTestPairs.add(new FreqVolPair(freq, testVol));
-            pct += jumpSize;
-        }
-
-        // prepare list of all trials
-        ArrayList<FreqVolPair> allTrials = new ArrayList<>();
-        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; i++) {
-            allTrials.addAll(this.confidenceTestPairs);
-        }
-        Collections.shuffle(allTrials);
-        this.confidenceTestPairs = allTrials;
+//        ArrayList<Float> confFreqs = new ArrayList<>();
+//        for (float freq : CONF_FREQS) confFreqs.add(freq);
+//
+//        // randomize the order of test frequencies
+//        Collections.shuffle(confFreqs);
+//
+//        // for each frequency, add a new fvp to confidenceTestPairs with the frequency and a volume some percentage
+//        // of the way between completely inaudible and perfectly audible
+//        float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
+//        float jumpSize = 1.0f / CONF_FREQS.length;
+//        for (Float freq : confFreqs) {
+//            double volFloor = this.hearingTestResults.getVolFloorEstimateForFreq(freq);
+//            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForFreq(freq);
+//            double testVol = volFloor + pct * (volCeiling - volFloor);
+//            this.confidenceTestPairs.add(new FreqVolPair(freq, testVol));
+//            pct += jumpSize;
+//        }
+//
+//        // prepare list of all trials
+//        ArrayList<FreqVolPair> allTrials = new ArrayList<>();
+//        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; i++) {
+//            allTrials.addAll(this.confidenceTestPairs);
+//        }
+//        Collections.shuffle(allTrials);
+//        this.confidenceTestPairs = allTrials;
     }
 
     /**
@@ -206,11 +210,12 @@ public class Model {
      * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
      */
     public void analyzeConfidenceResults(float[] subset) throws IllegalStateException, IllegalArgumentException {
-        if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
-        this.analysisResults = new ArrayList<>();
-        for (FreqVolPair fvp : this.confidenceTestResults.getTestedFVPs())
-            this.analysisResults.add(
-                    this.confidenceTestResults.performAnalysis(fvp, this.getProbabilityFVP(fvp, subset)));
+        // todo
+//        if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
+//        this.analysisResults = new ArrayList<>();
+//        for (FreqVolPair fvp : this.confidenceTestResults.getTestedFVPs())
+//            this.analysisResults.add(
+//                    this.confidenceTestResults.performAnalysis(fvp, this.getProbabilityFVP(fvp, subset)));
     }
 
     /**
@@ -221,17 +226,13 @@ public class Model {
      * @return The probability of the given freq-vol pair being heard given the calibration results
      * @throws IllegalStateException If there are no calibration results stored in the model
      */
-    public float getProbabilityFVP(float freq, double vol) throws IllegalStateException {
+    public float getProbabilityForInterval(Interval interval) throws IllegalStateException {
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
-        return this.hearingTestResults.getProbOfHearingFVP(freq, vol);
+        return this.hearingTestResults.getProbOfCorrectAnswer(interval);
     }
 
-    public float getProbabilityFVP(FreqVolPair fvp) throws IllegalStateException {
-        return this.getProbabilityFVP(fvp.getFreq(), fvp.getVol());
-    }
-
-    public float getProbabilityFVP(FreqVolPair fvp, float[] subset) {
-        return this.hearingTestResults.getProbOfHearingFVP(fvp.getFreq(), fvp.getVol(), subset);
+    public float getProbabilityFVP(Interval interval, float[] subset) {
+        return this.hearingTestResults.getProbOfCorrectAnswer(interval.freq1, interval.isUpward, interval.vol, subset);
     }
 
     /**

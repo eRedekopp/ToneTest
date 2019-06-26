@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
-        heardButton =       findViewById(R.id.heardButton);
+        heardButton =       findViewById(R.id.downButton);
         saveCalibButton =   findViewById(R.id.saveCalibButton);
         saveConfButton =    findViewById(R.id.saveConfButton);
         confidenceButton =  findViewById(R.id.confidenceButton);

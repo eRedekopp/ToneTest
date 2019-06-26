@@ -60,10 +60,9 @@ public class HearingTestController {
      * @param duration_ms The duration of the sine wave in milliseconds
      */
     private void playSine(float freq, double vol, int duration_ms) {
-        long count = 0;
         model.enforceMaxVolume();
         model.startAudio();
-        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++, count++) {
+        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
             if (iModel.heard) break;
 
             float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
@@ -76,6 +75,35 @@ public class HearingTestController {
         model.stopAudio();
     }
 
+    /**
+     * Play two sine waves consecutively
+     *
+     * @param freq1 The frequency of the first sine
+     * @param freq2 The frequency of the second sine
+     * @param vol The volume of the sine waves
+     * @param duration_ms The duration of each sine in milliseconds
+     */
+    private void playInterval(float freq1, float freq2, double vol, int duration_ms) {
+        model.enforceMaxVolume();
+        model.startAudio();
+        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq1;
+            double angle = 2 * i / (period) * Math.PI;
+            short a = (short) (Math.sin(angle) * vol);
+            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+            model.lineOut.write(model.buf, 0, 2);
+        }
+        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq2;
+            double angle = 2 * i / (period) * Math.PI;
+            short a = (short) (Math.sin(angle) * vol);
+            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+            model.lineOut.write(model.buf, 0, 2);
+        }
+    }
+
     /////////////////////////////////////// Methods for hearing test //////////////////////////////////////////////////
 
     /**
@@ -83,7 +111,6 @@ public class HearingTestController {
      *
      * @author redekopp
      */
-    @SuppressWarnings("unchecked")
     public void hearingTest() {
         // Algorithm:
         //      1 Get estimates for volumes at which the listener will hear the tone 100% of the time for each frequency
@@ -138,7 +165,7 @@ public class HearingTestController {
                         @Override
                         public void run() {
                             model.bottomVolEstimates = (ArrayList<FreqVolPair>) model.currentVolumes.clone();
-                            model.configureTestPairs();
+                            model.configureTestIntervals();
                             model.setTestPhase(Model.TEST_PHASE_MAIN);
                             // show information for next segment of test
                             view.showInformationDialog(mainInfo);
@@ -292,7 +319,7 @@ public class HearingTestController {
     }
 
     /**
-     * Perform the "main" hearing test: test all frequencies in testPairs and save results in model
+     * Perform the "main" hearing test: test all frequencies in testIntervals and save results in model
      */
     private void mainTest() {
         model.testThreadActive = true;
@@ -300,16 +327,16 @@ public class HearingTestController {
             @Override
             public void run() {
                 try {
-                    while (!model.currentVolumes.isEmpty()) {
+                    while (!model.testIntervals.isEmpty()) {
                         if (model.testPaused()) return;
 
-                        FreqVolPair trial = model.currentVolumes.get(0);
+                        Interval trial = model.testIntervals.get(0);
                         model.currentVolumes.remove(0);
                         model.startAudio();
                         Log.i("mainTest", "Testing " + trial.toString());
                         iModel.notHeard();
-                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
-                        model.hearingTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
+                        model.hearingTestResults.addResult(trial, iModel.heard); // todo 'heard' is wrong for new test
 
                         model.stopAudio();  // sleep for for random length 1-3 seconds
                         try {
@@ -338,6 +365,7 @@ public class HearingTestController {
      * Perform a full confidence test
      */
     public void confidenceTest() {
+        // todo make this work with intervals
         model.testThreadActive = true;
         new Thread(new Runnable() {
             @Override

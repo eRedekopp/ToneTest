@@ -47,61 +47,62 @@ public class FileNameController {
      * @throws IllegalStateException If there are no calibration test results stored in model
      */
     public void handleSaveCalibClick(Context context) throws IllegalStateException {
-        if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
-        
-        if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());
-
-        BufferedWriter out = null;
-        File fout = null;
-        try {
-            fout = getDestinationFileCalib();
-            if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
-            out = new BufferedWriter(new FileWriter(fout));
-            out.write("Freq(Hz),Volume,nHeard,nNotHeard");
-            out.newLine();
-            HearingTestResultsContainer results = model.getHearingTestResults();
-            for (float freq : results.getTestedFreqs()) {
-                HashMap<Double, Integer> timesHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
-                HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
-                Collection<Double> volumes = results.getTestedVolumesForFreq(freq);
-                for (Double vol : volumes) {
-                    int nHeard, nNotHeard;
-                    try {
-                        nHeard = timesHeardPerVol.get(vol);
-                    } catch (NullPointerException e) {
-                        nHeard = 0;
-                    }
-                    try {
-                        nNotHeard = timesNotHeardPerVol.get(vol);
-                    } catch (NullPointerException e) {
-                        nNotHeard = 0;
-                    }
-                    out.write(String.format("%.1f,%.2f,%d,%d,\n", freq, vol, nHeard, nNotHeard));
-                }
-            }
-        } catch (FileNotFoundException e) {
-            // File was not found
-            Log.e("FileNameController", "Output file not found");
-            e.printStackTrace();
-        } catch (IOException e) {
-            // Problem when writing to the file
-            Log.e("FileNameController", "Unable to write to output file");
-            e.printStackTrace();
-        } finally {
-            try {
-                if (out != null) out.close();
-            } catch (IOException e) {
-                Log.e("FileNameController", "Error closing test result file");
-                e.printStackTrace();
-            }
-        }
-
-        // make the scanner aware of the new file
-        MediaScannerConnection.scanFile(
-                context,
-                new String[]{fout.getAbsolutePath()},
-                new String[]{"text/csv"},
-                null);
+        // todo
+//        if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
+//
+//        if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());
+//
+//        BufferedWriter out = null;
+//        File fout = null;
+//        try {
+//            fout = getDestinationFileCalib();
+//            if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
+//            out = new BufferedWriter(new FileWriter(fout));
+//            out.write("Freq(Hz),Volume,nHeard,nNotHeard");
+//            out.newLine();
+//            HearingTestResultsContainer results = model.getHearingTestResults();
+//            for (float freq : results.getTestedFreqs()) {
+//                HashMap<Double, Integer> timesHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
+//                HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
+//                Collection<Double> volumes = results.getTestedVolumesForFreq(freq);
+//                for (Double vol : volumes) {
+//                    int nHeard, nNotHeard;
+//                    try {
+//                        nHeard = timesHeardPerVol.get(vol);
+//                    } catch (NullPointerException e) {
+//                        nHeard = 0;
+//                    }
+//                    try {
+//                        nNotHeard = timesNotHeardPerVol.get(vol);
+//                    } catch (NullPointerException e) {
+//                        nNotHeard = 0;
+//                    }
+//                    out.write(String.format("%.1f,%.2f,%d,%d,\n", freq, vol, nHeard, nNotHeard));
+//                }
+//            }
+//        } catch (FileNotFoundException e) {
+//            // File was not found
+//            Log.e("FileNameController", "Output file not found");
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            // Problem when writing to the file
+//            Log.e("FileNameController", "Unable to write to output file");
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                if (out != null) out.close();
+//            } catch (IOException e) {
+//                Log.e("FileNameController", "Error closing test result file");
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        // make the scanner aware of the new file
+//        MediaScannerConnection.scanFile(
+//                context,
+//                new String[]{fout.getAbsolutePath()},
+//                new String[]{"text/csv"},
+//                null);
     }
 
     /**
@@ -367,40 +368,41 @@ public class FileNameController {
      * @param model The model to be initialized from the file
      */
     public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
-        File file = new File(filePath);
-        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
-        Scanner scanner;
-
-        try {
-            scanner = new Scanner(file);
-        } catch (FileNotFoundException e) {
-            Log.e("initializeModel", "Error: file not found");
-            e.printStackTrace();
-            return;
-        }
-
-        // parse test information
-        scanner.useDelimiter(",");
-
-        scanner.nextLine(); // skip header
-        HearingTestResultsContainer results = new HearingTestResultsContainer();
-
-        try {
-            while (scanner.hasNext()) {
-                double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
-                int nextHeard = scanner.nextInt();
-                int nextNotHeard = scanner.nextInt();
-                for (int i = 0; i < nextHeard; i++) results.addResult((float) nextFreq, nextVol, true);
-                for (int i = 0; i < nextNotHeard; i++) results.addResult((float) nextFreq, nextVol, false);
-                if (scanner.hasNextLine()) scanner.nextLine();
-            }
-            model.hearingTestResults = results;
-        } catch (NoSuchElementException e) {
-            Log.e("InitializeModel", "Error reading file: EOF reached before input finished");
-            e.printStackTrace();
-        } catch (RuntimeException e) {
-            Log.e("InitializeModel", "Unknown error while reading file");
-            e.printStackTrace();
-        } finally { scanner.close(); }
+        // todo
+//        File file = new File(filePath);
+//        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
+//        Scanner scanner;
+//
+//        try {
+//            scanner = new Scanner(file);
+//        } catch (FileNotFoundException e) {
+//            Log.e("initializeModel", "Error: file not found");
+//            e.printStackTrace();
+//            return;
+//        }
+//
+//        // parse test information
+//        scanner.useDelimiter(",");
+//
+//        scanner.nextLine(); // skip header
+//        HearingTestResultsContainer results = new HearingTestResultsContainer();
+//
+//        try {
+//            while (scanner.hasNext()) {
+//                double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
+//                int nextHeard = scanner.nextInt();
+//                int nextNotHeard = scanner.nextInt();
+//                for (int i = 0; i < nextHeard; i++) results.addResult((float) nextFreq, nextVol, true);
+//                for (int i = 0; i < nextNotHeard; i++) results.addResult((float) nextFreq, nextVol, false);
+//                if (scanner.hasNextLine()) scanner.nextLine();
+//            }
+//            model.hearingTestResults = results;
+//        } catch (NoSuchElementException e) {
+//            Log.e("InitializeModel", "Error reading file: EOF reached before input finished");
+//            e.printStackTrace();
+//        } catch (RuntimeException e) {
+//            Log.e("InitializeModel", "Unknown error while reading file");
+//            e.printStackTrace();
+//        } finally { scanner.close(); }
     }
 }
