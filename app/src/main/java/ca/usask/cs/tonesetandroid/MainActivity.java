@@ -306,6 +306,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         AlertDialog.Builder infoBuilder = new AlertDialog.Builder(this);
         infoBuilder.setTitle("Information");
         infoBuilder.setMessage(message);
+        infoBuilder.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
         infoBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
             @Override
             public void onCancel(DialogInterface dialogInterface) {

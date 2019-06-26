@@ -10,7 +10,7 @@
     <Button
         android:id="@+id/calibButton"
         android:layout_width="275dp"
-        android:layout_height="75dp"
+        android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
@@ -22,7 +22,7 @@
     <Button
         android:id="@+id/heardButton"
         android:layout_width="275dp"
-        android:layout_height="75dp"
+        android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="8dp"
@@ -35,7 +35,7 @@
     <Button
         android:id="@+id/saveCalibButton"
         android:layout_width="275dp"
-        android:layout_height="75dp"
+        android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="8dp"
@@ -47,7 +47,7 @@
     <Button
         android:id="@+id/confidenceButton"
         android:layout_width="275dp"
-        android:layout_height="75dp"
+        android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="8dp"
@@ -59,7 +59,7 @@
     <Button
         android:id="@+id/resetButton"
         android:layout_width="275dp"
-        android:layout_height="75dp"
+        android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="8dp"
@@ -71,7 +71,7 @@
     <Button
         android:id="@+id/saveConfButton"
         android:layout_width="275dp"
-        android:layout_height="75dp"
+        android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="25dp"
         android:layout_marginEnd="8dp"
@@ -83,7 +83,7 @@
     <Button
         android:id="@+id/pauseButton"
         android:layout_width="275dp"
-        android:layout_height="75dp"
+        android:layout_height="60dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="28dp"
         android:layout_marginEnd="8dp"
