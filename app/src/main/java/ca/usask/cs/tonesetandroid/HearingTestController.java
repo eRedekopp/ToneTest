@@ -39,6 +39,11 @@ public class HearingTestController {
             "In this test, tones of various frequencies and volumes will be played at random times. Please press the " +
             "\"Heard Tone\" button each time that you hear a tone";
 
+    private static final String intervalInfo =
+            "In this test, two tones will be played in sequence at various frequencies and volumes at random times. " +
+            "Please press the \"Up\" button if the second tone was higher than the first tone, press the \"Down\" " +
+            "button if the second tone was lower than the first tone, or do nothing if you couldn't tell";
+
     /**
      * Checks if a test phase is supposed to be started or resumed, then starts a test on a new thread if it is
      */
@@ -168,7 +173,7 @@ public class HearingTestController {
                             model.configureTestIntervals();
                             model.setTestPhase(Model.TEST_PHASE_MAIN);
                             // show information for next segment of test
-                            view.showInformationDialog(mainInfo);
+                            view.showInformationDialog(intervalInfo);
                         }
                     });
                     // after getting bottom estimates, prepare for next phase of test
@@ -198,6 +203,9 @@ public class HearingTestController {
             if (! iModel.heard)
                 mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
                         model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
+            Log.i("reducePhase", iModel.heard ? "Tone Heard" : "Tone not heard");   // print message indicating whether
+                                                                                    // tone was heard
+
             try {
                 Thread.sleep((long) (Math.random() * 2000 + 1000));
             } catch (InterruptedException e) { return; }
@@ -330,9 +338,9 @@ public class HearingTestController {
                 try {
                     while (!model.testIntervals.isEmpty()) {
                         if (model.testPaused()) return;
-
+                        Log.d("mainTest", model.testIntervals.toString());
                         Interval trial = model.testIntervals.get(0);
-                        model.currentVolumes.remove(0);
+                        model.testIntervals.remove(0);
                         model.startAudio();
                         Log.i("mainTest", "Testing " + trial.toString());
                         iModel.resetAnswer();
@@ -340,6 +348,7 @@ public class HearingTestController {
                         boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)
                                           || (iModel.getAnswer() < 0 && ! trial.isUpward);
                         model.hearingTestResults.addResult(trial, correct);
+                        Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly"); // log answer
 
                         model.stopAudio();
                         try {               // sleep for for random length 1-3 seconds
@@ -402,10 +411,10 @@ public class HearingTestController {
             public void run() {
                 try {
                     // perform trials
-                    while (! model.confidenceTestPairs.isEmpty()) {
+                    while (! model.confidenceTestIntervals.isEmpty()) {
                         if (model.testPaused()) return;
-                        FreqVolPair trial = model.confidenceTestPairs.get(0);
-                        model.confidenceTestPairs.remove(0);
+                        Interval trial = model.confidenceTestIntervals.get(0);
+                        model.confidenceTestIntervals.remove(0);
                         model.startAudio();
                         new Handler(Looper.getMainLooper()).post(new Runnable() {
                             @Override
@@ -413,10 +422,10 @@ public class HearingTestController {
                                 iModel.notHeard();
                             }
                         });
-                        Log.i("confTest", "Testing freq : " + trial.getFreq() + " | vol : " + trial.getVol());
-                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
+                        Log.i("confTest", "Testing interval: " + trial.toString());
+                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
                         model.stopAudio();
-                        model.confidenceTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+                        model.confidenceTestResults.addResult(trial, iModel.heard);
                         try {  // sleep from 1 to 3 seconds
                             Thread.sleep((long) (Math.random() * 2000 + 1000));
                         } catch (InterruptedException e) { return; }

@@ -13,11 +13,11 @@ public class HearingTestInteractionModel {
 
     private int answer = ANSWER_NONE;
 
-    static final int ANSWER_UP = 1;     // indicate how the user answered
-    static final int ANSWER_DOWN = -1;
-    static final int ANSWER_NONE = 0;
+    private static final int ANSWER_UP = 1;     // indicate how the user answered
+    private static final int ANSWER_DOWN = -1;
+    private static final int ANSWER_NONE = 0;
 
-    ArrayList<ModelListener> subscribers;
+    private ArrayList<ModelListener> subscribers;
 
     /**
      * Constructor for the interaction model
@@ -61,7 +61,6 @@ public class HearingTestInteractionModel {
 
     /**
      * Add a subscriber to the array list of model listeners
-     * @param sub
      */
     public void addSubscriber(ModelListener sub) {
         subscribers.add(sub);

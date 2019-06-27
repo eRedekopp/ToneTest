@@ -9,7 +9,6 @@ import android.media.MediaRecorder;
 import android.os.Build;
 import android.util.Log;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -50,7 +49,7 @@ public class Model {
     HearingTestResultsContainer hearingTestResults;   // final results of test
     private boolean testPaused = false; // has the user paused the test?
     boolean testThreadActive = false; // is a thread currently performing a hearing test?
-    public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
+    public static final float[] FREQUENCIES = {/*200, 500, 1000, 2000,*/ 4000, /*8000*/};   // From British Society of
                                                                                         // Audiology
     static final float INTERVAL_FREQ_RATIO = 1.25f; // 5:4 ratio = major third
 
@@ -71,7 +70,7 @@ public class Model {
 
     /////////////// vars for confidence test ///////////////
     static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 20;
-    ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
+    ArrayList<Interval> confidenceTestIntervals;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
     public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 4 octaves of A
@@ -100,7 +99,7 @@ public class Model {
         this.bottomVolEstimates = new ArrayList<>();
         this.currentVolumes = new ArrayList<>();
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
-        this.confidenceTestPairs = new ArrayList<>();
+        this.confidenceTestIntervals = new ArrayList<>();
         this.analysisResults = new ArrayList<>();
         this.testIntervals = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
@@ -169,37 +168,37 @@ public class Model {
     }
 
     /**
-     * Populate model.confidenceTestPairs with all freqvolpairs that will be tested in the next confidence test
+     * Populate model.confidenceTestIntervals with all freqvolpairs that will be tested in the next confidence test
      */
     public void configureConfidenceTestPairs() {
+        ArrayList<Float> confFreqs = new ArrayList<>();
+        for (float freq : CONF_FREQS) confFreqs.add(freq);
 
-        // todo
+        // randomize the order of test frequencies
+        Collections.shuffle(confFreqs);
 
-//        ArrayList<Float> confFreqs = new ArrayList<>();
-//        for (float freq : CONF_FREQS) confFreqs.add(freq);
-//
-//        // randomize the order of test frequencies
-//        Collections.shuffle(confFreqs);
-//
-//        // for each frequency, add a new fvp to confidenceTestPairs with the frequency and a volume some percentage
-//        // of the way between completely inaudible and perfectly audible
-//        float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
-//        float jumpSize = 1.0f / CONF_FREQS.length;
-//        for (Float freq : confFreqs) {
-//            double volFloor = this.hearingTestResults.getVolFloorEstimateForFreq(freq);
-//            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForFreq(freq);
-//            double testVol = volFloor + pct * (volCeiling - volFloor);
-//            this.confidenceTestPairs.add(new FreqVolPair(freq, testVol));
-//            pct += jumpSize;
-//        }
-//
-//        // prepare list of all trials
-//        ArrayList<FreqVolPair> allTrials = new ArrayList<>();
-//        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; i++) {
-//            allTrials.addAll(this.confidenceTestPairs);
-//        }
-//        Collections.shuffle(allTrials);
-//        this.confidenceTestPairs = allTrials;
+        // for each frequency, add a new fvp to confidenceTestIntervals with the frequency and a volume some percentage
+        // of the way between completely inaudible and perfectly audible
+        float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
+        float jumpSize = 1.0f / CONF_FREQS.length;
+        for (Float freq : confFreqs) {
+            for (boolean b : new boolean[]{true, false}) {  // add both upward and downward for each
+                double volFloor = this.hearingTestResults.getVolFloorEstimateForFreq(freq, b);
+                double volCeiling = this.hearingTestResults.getVolCeilingEstimateForFreq(freq, b);
+                double testVol = volFloor + pct * (volCeiling - volFloor);
+                float freq2 = b ? freq * INTERVAL_FREQ_RATIO : freq / INTERVAL_FREQ_RATIO;
+                this.confidenceTestIntervals.add(new Interval(freq, freq2, testVol));
+                pct += jumpSize;
+            }
+        }
+
+        // prepare list of all trials
+        ArrayList<Interval> allTrials = new ArrayList<>();
+        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; i++) {
+            allTrials.addAll(this.confidenceTestIntervals);
+        }
+        Collections.shuffle(allTrials);
+        this.confidenceTestIntervals = allTrials;
     }
 
     /**
@@ -341,6 +340,7 @@ public class Model {
     /**
      * Reduce all elements of currentVolumes by [element * HEARING_TEST_REDUCE_RATE]
      */
+    @SuppressWarnings("ConstantConditions")
     public void reduceCurrentVolumes() {
         ArrayList<FreqVolPair> newVols = new ArrayList<>();
         for (FreqVolPair fvp : currentVolumes) {
@@ -388,8 +388,8 @@ public class Model {
      * Accessor method to return the confidenceTest ArrayList
      * @return the confidence test array list
      */
-    public ArrayList<FreqVolPair> getConfidenceTestPairs(){
-        return confidenceTestPairs;
+    public List<Interval> getConfidenceTestIntervals(){
+        return confidenceTestIntervals;
     }
 
     public void addSubscriber(ModelListener newSub) {

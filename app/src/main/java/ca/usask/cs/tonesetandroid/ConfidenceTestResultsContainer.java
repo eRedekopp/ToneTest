@@ -12,35 +12,41 @@ import java.util.Set;
 
 public class ConfidenceTestResultsContainer {
 
-    // map each frequency to all single test results of that frequency
-    private HashMap<Float, List<ConfidenceSingleTestResult>> allResults;
+    // Map starting frequency of interval to all single test results of that frequency, separated by direction
+    private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsUpward;
+    private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsDownward;
 
     public ConfidenceTestResultsContainer() {
-        this.allResults = new HashMap<>();
+        this.allResultsUpward = new HashMap<>();
+        this.allResultsDownward = new HashMap<>();
     }
 
     /**
-     * Add a new confidence test result to this container
+     * Add a new confidence test trial result to this container
      *
-     * @param freq The frequency of the trial
+     * @param freq1 The first frequency of the interval in the trial
+     * @param upward Is the interval upward?
      * @param vol The volume of the trial
-     * @param heard Whether the tone was heard in the trial
+     * @param correct Did the user answer correctly?
      */
-    public void addResult(float freq, double vol, boolean heard) {
-        FreqVolPair fvp = new FreqVolPair(freq, vol);
-        ConfidenceSingleTestResult cstr = this.getResultForFVP(fvp);
+    @SuppressWarnings("ConstantConditions")
+    public void addResult(Interval interval, boolean correct) {
+        ConfidenceSingleTestResult cstr = this.getResultForInterval(interval);
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
+                interval.isUpward ? this.allResultsUpward : this.allResultsDownward;
+
         // create new cstr and/or allResults entry if required
         if (cstr == null) {
-            cstr = new ConfidenceSingleTestResult(fvp);
+            cstr = new ConfidenceSingleTestResult(interval);
             try {
-                allResults.get(freq).add(cstr);
+                resultMap.get(interval.freq1).add(cstr);
             } catch (NullPointerException e) {
                 List<ConfidenceSingleTestResult> newList = new ArrayList<>();
                 newList.add(cstr);
-                allResults.put(freq, newList);
+                resultMap.put(interval.freq1, newList);
             }
         }
-        cstr.addTrial(heard);
+        cstr.addTrial(correct);
     }
 
     /**
@@ -49,13 +55,17 @@ public class ConfidenceTestResultsContainer {
      * @param freq The frequency whose test results are to be queried
      * @return A mapping of each volume tested at the given frequency to the number of times it was heard
      */
-    public HashMap<Double, Integer> getTimesHeardPerVolForFreq(float freq) {
+    @SuppressWarnings("ConstantConditions")
+    public HashMap<Double, Integer> getTimesHeardPerVolForInterval(float freq1, boolean upward) {
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
+                upward ? this.allResultsUpward : this.allResultsDownward;
+
         List<ConfidenceSingleTestResult> results;
         HashMap<Double, Integer> outMap= new HashMap<>();
         try {
-            results = this.allResults.get(freq);
+            results = resultMap.get(freq1);
             for (ConfidenceSingleTestResult cstr : results) {
-                outMap.put(cstr.vol, cstr.getTimesHeard());
+                outMap.put(cstr.vol, cstr.getTimesCorrect());
             }
         } catch (NullPointerException e) { if (! outMap.isEmpty()) throw e; }
         return outMap;
@@ -67,24 +77,29 @@ public class ConfidenceTestResultsContainer {
      * @param freq The frequency whose test results are to be queried
      * @return A mapping of each volume tested at the given frequency to the number of times it was not heard
      */
-    public HashMap<Double, Integer> getTimesNotHeardPerVolForFreq(float freq) {
+    @SuppressWarnings("ConstantConditions")
+    public HashMap<Double, Integer> getTimesNotHeardPerVolForInterval(float freq1, boolean upward) {
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
+                upward ? this.allResultsUpward : this.allResultsDownward;
         List<ConfidenceSingleTestResult> results;
         HashMap<Double, Integer> outMap= new HashMap<>();
         try {
-            results = this.allResults.get(freq);
+            results = resultMap.get(freq1);
             for (ConfidenceSingleTestResult cstr : results) {
-                outMap.put(cstr.vol, cstr.getTimesNotHeard());
+                outMap.put(cstr.vol, cstr.getTimesIncorrect());
             }
         } catch (NullPointerException e) { if (! outMap.isEmpty()) throw e; }
         return outMap;
     }
 
     /**
+     * Note: assumes that frequencies tested upward were also tested downward, and vice versa
+     *
      * @return An array of all frequencies present in these confidence test results
      */
     public float[] getTestedFrequencies() {
-        float[] outArr = new float[this.allResults.size()];
-        Set<Float> freqSet = this.allResults.keySet();
+        float[] outArr = new float[this.allResultsUpward.size()];
+        Set<Float> freqSet = this.allResultsUpward.keySet();
         int i = 0;
         for (Float f : freqSet) outArr[i++] = f;
         return outArr;
@@ -94,7 +109,7 @@ public class ConfidenceTestResultsContainer {
      * @return True if there are no results stored in this container
      */
     public boolean isEmpty() {
-        return this.allResults.isEmpty();
+        return this.allResultsUpward.isEmpty() && this.allResultsDownward.isEmpty();
     }
 
     /**
@@ -103,9 +118,13 @@ public class ConfidenceTestResultsContainer {
      * @param freq The frequency whose tested volumes are to be found
      * @return All volumes at which the given frequency was tested
      */
-    public double[] getTestedVolsForFreq(float freq) {
+    @SuppressWarnings("ConstantConditions")
+    public double[] getTestedVolsForInterval(float freq1, boolean upward) {
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
+                upward ? this.allResultsUpward : this.allResultsDownward;
+
         try {
-            List<ConfidenceSingleTestResult> resultList = this.allResults.get(freq);
+            List<ConfidenceSingleTestResult> resultList = resultMap.get(freq1);
             double[] outArr = new double[resultList.size()];
             int i = 0;
             for (ConfidenceSingleTestResult cstr : resultList) outArr[i++] = cstr.vol;
@@ -118,11 +137,16 @@ public class ConfidenceTestResultsContainer {
     /**
      * @return A list containing all the frequency-volume pairs present in these confidence results
      */
-    public List<FreqVolPair> getTestedFVPs() {
-        ArrayList<FreqVolPair> returnList = new ArrayList<>();
-        for (List<ConfidenceSingleTestResult> lst : this.allResults.values()) {
+    public List<Interval> getTestedIntervals() {
+        ArrayList<Interval> returnList = new ArrayList<>();
+        for (List<ConfidenceSingleTestResult> lst : this.allResultsUpward.values()) {
             for (ConfidenceSingleTestResult cstr : lst) {
-                returnList.add(new FreqVolPair(cstr.freq, cstr.vol));
+                returnList.add(new Interval(cstr.freq1, cstr.freq2, cstr.vol));
+            }
+        }
+        for (List<ConfidenceSingleTestResult> lst : this.allResultsDownward.values()) {
+            for (ConfidenceSingleTestResult cstr : lst) {
+                returnList.add(new Interval(cstr.freq1, cstr.freq2, cstr.vol));
             }
         }
         return returnList;
@@ -137,14 +161,14 @@ public class ConfidenceTestResultsContainer {
      * @param vol The volume whose results are to be queried
      * @return The fraction (0 <= result <= 1) of times that the tone was heard for the given freq-vol pair
      */
-    public float getActualResultForFVP(float freq, double vol) throws IllegalArgumentException {
-        ConfidenceSingleTestResult result = this.getResultForFVP(freq, vol);
+    public float getActualResultForInterval(float freq1, boolean upward, double vol) throws IllegalArgumentException {
+        ConfidenceSingleTestResult result = this.getResultForInterval(freq1, upward, vol);
         if (result == null) throw new IllegalArgumentException("frequency-volume pair not present in results");
         return result.getActual();
     }
 
-    public float getActualResultForFVP(FreqVolPair fvp) {
-        return getActualResultForFVP(fvp.getFreq(), fvp.getVol());
+    public float getActualResultForInterval(Interval interval) {
+        return getActualResultForInterval(interval.freq1, interval.isUpward, interval.vol);
     }
 
     /**
@@ -154,18 +178,21 @@ public class ConfidenceTestResultsContainer {
      * @param vol The volume of the desired CSTR
      * @return The CSTR with the given frequency and volume, or null if none found
      */
-    private ConfidenceSingleTestResult getResultForFVP(float freq, double vol) {
-        List<ConfidenceSingleTestResult> resultList = allResults.get(freq);
+    private ConfidenceSingleTestResult getResultForInterval(float freq1, boolean upward, double vol) {
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
+                upward ? this.allResultsUpward : this.allResultsDownward;
+
+        List<ConfidenceSingleTestResult> resultList = resultMap.get(freq1);
         if (resultList == null) return null;
         for (ConfidenceSingleTestResult cstr : resultList)
-            if (cstr.vol == vol && cstr.freq == freq) return cstr;
-            else if (cstr.freq != freq)
-                throw new AssertionError("Result with frequency " + cstr.freq + " found in list for frequency " + freq);
+            if (cstr.vol == vol && cstr.freq1 == freq1) return cstr;
+            else if (cstr.freq1 != freq1)
+                throw new AssertionError("Result with frequency "+cstr.freq1+" found in list for frequency "+freq1);
         return null;
     }
 
-    private ConfidenceSingleTestResult getResultForFVP(FreqVolPair fvp) {
-        return getResultForFVP(fvp.getFreq(), fvp.getVol());
+    private ConfidenceSingleTestResult getResultForInterval(Interval interval) {
+        return getResultForInterval(interval.freq1, interval.isUpward, interval.vol);
     }
 
     /**
@@ -178,15 +205,11 @@ public class ConfidenceTestResultsContainer {
      * @return A StatsAnalysisResultsContainer containing the results of the analysis
      * @throws IllegalArgumentException If the given frequency and volume were not tested in the confidence test
      */
-    public StatsAnalysisResultsContainer performAnalysis(float freq, double vol, float estimate)
+    public StatsAnalysisResultsContainer performAnalysis(Interval interval, float estimate)
                                                          throws IllegalArgumentException {
-        ConfidenceSingleTestResult result = this.getResultForFVP(freq, vol);
-        if (result == null) throw new IllegalArgumentException("Frequency-volume pair not present in results");
+        ConfidenceSingleTestResult result = this.getResultForInterval(interval);
+        if (result == null) throw new IllegalArgumentException("Interval not present in results");
         return new StatsAnalysisResultsContainer(result, estimate);
-    }
-
-    public StatsAnalysisResultsContainer performAnalysis(FreqVolPair fvp, float estimate) {
-        return performAnalysis(fvp.getFreq(), fvp.getVol(), estimate);
     }
 
     /**
@@ -194,19 +217,23 @@ public class ConfidenceTestResultsContainer {
      */
     public class StatsAnalysisResultsContainer {
 
-        public final float freq;
+        public final float freq1; // the first frequency of the interval being analyzed
 
-        public final double vol;
+        public final float freq2; // the second frequency of the interval being analyzed
 
-        public final float confProbEstimate;
+        public final boolean upward; // is the interval upward?
 
-        public final float probEstimate;
+        public final double vol;  // the volume of the interval being analyzed
 
-        public final boolean estimatesSigDifferent;
+        public final float confProbEstimate;  // The probability estimate as determined by the confidence test
 
-        public final float alpha;
+        public final float probEstimate;  // the probability estimate as determined by the model
 
-        public final float beta;
+        public final boolean estimatesSigDifferent; // Are the results statistically significantly different?
+
+        public final float alpha; // the value of alpha used for this analysis
+
+        public final float beta;  // the probability of a type II error in this analysis
 
         public final int critLow;   // = min({x | P(X < x) > alpha/2})
 
@@ -223,11 +250,13 @@ public class ConfidenceTestResultsContainer {
             // todo : check that this actually works. Redo with normal approximation?
 
             // set constants
-            this.freq = confResult.freq;
+            this.freq1 = confResult.freq1;
+            this.freq2 = confResult.freq2;
             this.vol = confResult.vol;
             this.confProbEstimate = confResult.getActual();
             this.probEstimate = probEstimate;
             this.alpha = 0.10f;
+            this.upward = confResult.upward;
 
             // check for statistical significance
             // Null Hypothesis : confProb == probEstimate
@@ -261,60 +290,64 @@ public class ConfidenceTestResultsContainer {
     }
 
     /**
-     * A class to store the result of a single freq-vol pair test from a confidence test
+     * A class to store the responses for a single interval + volume in a confidence test
      *
      * @author redekopp
      */
     private class ConfidenceSingleTestResult {
 
-        final float freq;
+        final float freq1;
+        final float freq2;
+        final boolean upward;
         final double vol;
 
-        private int nHeard;
-        private int nNotHeard;
+        private int nCorrect;
+        private int nIncorrect;
 
-        public ConfidenceSingleTestResult(FreqVolPair fvp) {
-            this.nHeard = 0;
-            this.nNotHeard = 0;
-            this.freq = fvp.getFreq();
-            this.vol = fvp.getVol();
+        public ConfidenceSingleTestResult(Interval interval) {
+            this.nCorrect = 0;
+            this.nIncorrect = 0;
+            this.freq1 = interval.freq1;
+            this.freq2 = interval.freq2;
+            this.vol = interval.vol;
+            this.upward = interval.isUpward;
         }
 
         /**
          * Add a new trial to this single test result
-         * @param heard Whether the tone was heard in the trial to be added
+         * @param correct Did the user correctly answer in this trial?
          */
-        public void addTrial(boolean heard) {
-            if (heard) this.nHeard++;
-            else this.nNotHeard++;
+        public void addTrial(boolean correct) {
+            if (correct) this.nCorrect++;
+            else this.nIncorrect++;
         }
 
         /**
-         * @return The fraction [0, 1] of times that the tone was heard
+         * @return The fraction [0, 1] of correct answers
          */
         public float getActual() {
-            return (float) this.nHeard / (float) (this.nNotHeard + this.nHeard);
+            return (float) this.nCorrect / (float) (this.nIncorrect + this.nCorrect);
         }
 
         /**
-         * @return The number of tests in this result which were heard
+         * @return The number of correct answers for this interval and volume
          */
-        public int getTimesHeard() {
-            return this.nHeard;
+        public int getTimesCorrect() {
+            return this.nCorrect;
         }
 
         /**
-         * @return The number of tests in this result which were not heard
+         * @return The number of incorrect answers for this interval and volume
          */
-        public int getTimesNotHeard() {
-            return  this.nNotHeard;
+        public int getTimesIncorrect() {
+            return  this.nIncorrect;
         }
 
         /**
-         * @return The total number of trials at this frequency and volume
+         * @return The total number of trials at this interval and volume
          */
         public int getTotalTrials() {
-            return this.nHeard + this.nNotHeard;
+            return this.nCorrect + this.nIncorrect;
         }
     }
 }

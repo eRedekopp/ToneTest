@@ -199,80 +199,82 @@ public class FileNameController {
      */
     public void handleConfSaveClick(Context context) throws IllegalStateException {
 
-        BufferedWriter out = null;
+        // todo
 
-        try {
-            File fout = getDestinationFileConf();
-
-            if (! fout.createNewFile()) {
-                Log.e("HandleConfSaveClick", "Unable to create confidence file");
-                Log.d("HandleConfSaveClick", "fout.exists() = " + fout.exists());
-                return;
-            }
-
-            out = new BufferedWriter(new FileWriter(fout));
-
-            HearingTestResultsContainer results = model.getHearingTestResults();
-
-            // test using different sample sizes
-            for (int n : Model.CONF_SAMP_SIZES) {  // todo test this
-                try {  // change hearing test results to new sample size
-                    model.hearingTestResults = results.getSubsetResults(n);
-                } catch (IllegalArgumentException e) {
-                    continue;
-                }
-
-                out.write("### Sample Size = " + n + " ###\n");
-
-                // test using different subsets of calibration frequencies
-                for (float[] subset : Model.CONF_SUBSETS) {
-
-                    // set model.analysisResults for current subset
-                    this.model.analyzeConfidenceResults(subset);
-
-                    // write header/info for current subset
-                    out.write("Calibration Freqs: " + Arrays.toString(subset));
-                    out.newLine();
-                    out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent\n");
-
-                    // write results for each freq-vol pair in subset
-                    // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
-                    for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
-                        out.write(String.format(
-                                "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
-                                result.freq, result.vol, result.confProbEstimate, result.probEstimate,
-                                result.alpha, result.beta, result.critLow, result.critHigh, result.estimatesSigDifferent
-                        ));
-                    }
-                    out.newLine();
-                }
-            }
-
-            model.hearingTestResults = results; // reset hearingTestResults
-
-            // make the scanner aware of the new file
-            MediaScannerConnection.scanFile(
-                    context,
-                    new String[]{fout.getAbsolutePath()},
-                    new String[]{"text/csv"},
-                    null);
-
-        } catch (FileNotFoundException e) {
-            // File was not found
-            Log.e("saveConfResults", "File not found");
-            e.printStackTrace();
-        } catch (IOException e) {
-            // Problem when writing to the file
-            Log.e("saveConfResults", "Error writing to file");
-            e.printStackTrace();
-        } finally {
-            try {
-                if (out != null) out.close();
-            } catch (IOException e) {
-                Log.e("saveConfResults", "Error closing confidence test result file");
-                e.printStackTrace();
-            }
-        }
+//        BufferedWriter out = null;
+//
+//        try {
+//            File fout = getDestinationFileConf();
+//
+//            if (! fout.createNewFile()) {
+//                Log.e("HandleConfSaveClick", "Unable to create confidence file");
+//                Log.d("HandleConfSaveClick", "fout.exists() = " + fout.exists());
+//                return;
+//            }
+//
+//            out = new BufferedWriter(new FileWriter(fout));
+//
+//            HearingTestResultsContainer results = model.getHearingTestResults();
+//
+//            // test using different sample sizes
+//            for (int n : Model.CONF_SAMP_SIZES) {  // todo test this
+//                try {  // change hearing test results to new sample size
+//                    model.hearingTestResults = results.getSubsetResults(n);
+//                } catch (IllegalArgumentException e) {
+//                    continue;
+//                }
+//
+//                out.write("### Sample Size = " + n + " ###\n");
+//
+//                // test using different subsets of calibration frequencies
+//                for (float[] subset : Model.CONF_SUBSETS) {
+//
+//                    // set model.analysisResults for current subset
+//                    this.model.analyzeConfidenceResults(subset);
+//
+//                    // write header/info for current subset
+//                    out.write("Calibration Freqs: " + Arrays.toString(subset));
+//                    out.newLine();
+//                    out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent\n");
+//
+//                    // write results for each freq-vol pair in subset
+//                    // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
+//                    for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
+//                        out.write(String.format(
+//                                "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
+//                                result.freq, result.vol, result.confProbEstimate, result.probEstimate,
+//                                result.alpha, result.beta, result.critLow, result.critHigh, result.estimatesSigDifferent
+//                        ));
+//                    }
+//                    out.newLine();
+//                }
+//            }
+//
+//            model.hearingTestResults = results; // reset hearingTestResults
+//
+//            // make the scanner aware of the new file
+//            MediaScannerConnection.scanFile(
+//                    context,
+//                    new String[]{fout.getAbsolutePath()},
+//                    new String[]{"text/csv"},
+//                    null);
+//
+//        } catch (FileNotFoundException e) {
+//            // File was not found
+//            Log.e("saveConfResults", "File not found");
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            // Problem when writing to the file
+//            Log.e("saveConfResults", "Error writing to file");
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                if (out != null) out.close();
+//            } catch (IOException e) {
+//                Log.e("saveConfResults", "Error closing confidence test result file");
+//                e.printStackTrace();
+//            }
+//        }
     }
 
     /**

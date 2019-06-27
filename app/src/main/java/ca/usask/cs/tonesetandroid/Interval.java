@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.support.annotation.NonNull;
+
 public class Interval implements Cloneable {
 
     public final float freq1;
@@ -16,6 +18,13 @@ public class Interval implements Cloneable {
         this.vol = vol;
         this.isUpward = freq1 < freq2;
     }
+
+    @Override
+    @NonNull
+    public String toString() {
+        return String.format("| Freq1: %.1f, Freq2: %.1f, vol: %.1f | ", this.freq1, this.freq2, this.vol);
+    }
+
 
     @Override
     public Interval clone() {

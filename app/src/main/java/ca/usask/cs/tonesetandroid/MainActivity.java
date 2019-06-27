@@ -9,7 +9,9 @@ import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -213,7 +215,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     upButton.setVisibility(View.GONE);
                     upButton.setEnabled(false);
                     downButton.setVisibility(View.GONE);
-                    upButton.setEnabled(false);
+                    downButton.setEnabled(false);
                 } else {
                     heardButton.setVisibility(View.GONE);
                     heardButton.setEnabled(false);
@@ -278,6 +280,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      * Handle data received from InitActivity
      */
     @Override
+    @SuppressWarnings("ConstantConditions")
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
@@ -301,8 +304,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                                           int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
         if (requestCode == REQUEST_PERMISSIONS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.i("Main","Permission successfully granted");
