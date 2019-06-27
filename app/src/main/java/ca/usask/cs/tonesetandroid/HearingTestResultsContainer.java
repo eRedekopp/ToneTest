@@ -222,7 +222,7 @@ public class HearingTestResultsContainer {
      * @return An estimate of the volume floor for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolFloorEstimateForFreq(float freq1, boolean upward) {
+    public double getVolFloorEstimateForInterval(float freq1, boolean upward) {
         HashMap<Float, HearingTestSingleIntervalResult> resultMap =
                 upward ? this.allResultsUpward : allResultsDownward;
 
@@ -250,7 +250,7 @@ public class HearingTestResultsContainer {
      * @return An estimate of the volume ceiling for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolCeilingEstimateForFreq(float freq1, boolean upward) {
+    public double getVolCeilingEstimateForInterval(float freq1, boolean upward) {
         HashMap<Float, HearingTestSingleIntervalResult> resultMap =
                 upward ? this.allResultsUpward : allResultsDownward;
 
@@ -305,6 +305,12 @@ public class HearingTestResultsContainer {
         for (HearingTestSingleIntervalResult htsr : this.allResultsDownward.values())
             newContainer.allResultsDownward.put(htsr.freq1, htsr.getSubsetResult(n));
         return newContainer;
+    }
+
+    public List<HearingTestSingleIntervalResult> getAllResults() {
+        ArrayList<HearingTestSingleIntervalResult> outList = new ArrayList<>(this.allResultsUpward.values());
+        outList.addAll(this.allResultsDownward.values());
+        return outList;
     }
 
     /**
@@ -370,9 +376,9 @@ public class HearingTestResultsContainer {
      */
     protected class HearingTestSingleIntervalResult {
 
-        private final float freq1; // the first frequency of the interval
+        public final float freq1; // the first frequency of the interval
 
-        private final float freq2; // the second frequency of the interval
+        public final float freq2; // the second frequency of the interval
 
         public final boolean isUpward; // true -> upward interval, false -> downward interval
 
