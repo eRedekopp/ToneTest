@@ -187,9 +187,6 @@ public class FileNameController {
      * @param context The context of the calling thread (ie. MainActivity.this)
      */
     public void handleConfSaveClick(Context context) throws IllegalStateException {
-
-        // todo
-
         BufferedWriter out = null;
 
         try {

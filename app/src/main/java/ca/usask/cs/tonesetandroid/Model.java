@@ -209,12 +209,12 @@ public class Model {
      * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
      */
     public void analyzeConfidenceResults(float[] subset) throws IllegalStateException, IllegalArgumentException {
-        // todo
-//        if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
-//        this.analysisResults = new ArrayList<>();
-//        for (FreqVolPair fvp : this.confidenceTestResults.getTestedFVPs())
-//            this.analysisResults.add(
-//                    this.confidenceTestResults.performAnalysis(fvp, this.getProbabilityFVP(fvp, subset)));
+        if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
+        this.analysisResults = new ArrayList<>();
+        for (Interval interval : this.confidenceTestResults.getTestedIntervals())
+            this.analysisResults.add(
+                    this.confidenceTestResults.performAnalysis(
+                            interval, this.getProbabilityForInterval(interval, subset)));
     }
 
     /**
@@ -230,7 +230,7 @@ public class Model {
         return this.hearingTestResults.getProbOfCorrectAnswer(interval);
     }
 
-    public float getProbabilityFVP(Interval interval, float[] subset) {
+    public float getProbabilityForInterval(Interval interval, float[] subset) {
         return this.hearingTestResults.getProbOfCorrectAnswer(interval.freq1, interval.isUpward, interval.vol, subset);
     }
 

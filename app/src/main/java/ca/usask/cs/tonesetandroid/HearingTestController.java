@@ -377,7 +377,6 @@ public class HearingTestController {
      * Perform a full confidence test
      */
     public void confidenceTest() {
-        // todo make this work with intervals
         model.testThreadActive = true;
         new Thread(new Runnable() {
             @Override
