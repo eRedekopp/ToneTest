@@ -32,8 +32,8 @@ public class Model {
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
                                                         // considered "inaudible"
-    static final int NUMBER_OF_VOLS_PER_FREQ = 3;   // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 3;  // number of times to repeat each freq-vol combination in the test
+    static final int NUMBER_OF_VOLS_PER_FREQ = 6;   // number of volumes to test for each frequency
+    static final int NUMBER_OF_TESTS_PER_VOL = 10;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
     static final int TEST_PHASE_REDUCE = 1;
     static final int TEST_PHASE_MAIN = 2;
@@ -49,7 +49,7 @@ public class Model {
     HearingTestResultsContainer hearingTestResults;   // final results of test
     private boolean testPaused = false; // has the user paused the test?
     boolean testThreadActive = false; // is a thread currently performing a hearing test?
-    public static final float[] FREQUENCIES = {/*200, 500, 1000, 2000,*/ 4000, /*8000*/};   // From British Society of
+    public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
                                                                                         // Audiology
     static final float INTERVAL_FREQ_RATIO = 1.25f; // 5:4 ratio = major third
 
@@ -316,7 +316,6 @@ public class Model {
         }
 
         return lineDataFloat;
-//        return sineWave(1500, size, 1f);
     }
 
     /**

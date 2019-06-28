@@ -46,6 +46,7 @@ public class FileNameController {
      * @param context The context of the calling thread (ie. MainActivity.this)
      * @throws IllegalStateException If there are no calibration test results stored in model
      */
+    @SuppressWarnings("ConstantConditions")
     public void handleSaveCalibClick(Context context) throws IllegalStateException {
         if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
 
@@ -61,12 +62,23 @@ public class FileNameController {
             HearingTestResultsContainer results = model.getHearingTestResults();
             for (HearingTestResultsContainer.HearingTestSingleIntervalResult htsr : results.getAllResults()) {
                 for (Double vol : htsr.getVolumes()) {
-                    out.write(String.format("%.1f,%.2f,%d,%d,\n",
+                    int timesCorr, timesIncorr;
+                    try {
+                        timesCorr = htsr.getTimesCorrPerVol().get(vol);
+                    } catch (NullPointerException e) {
+                        timesCorr = 0;
+                    }
+                    try {
+                        timesIncorr = htsr.getTimesIncorrPerVol().get(vol);
+                    } catch (NullPointerException e) {
+                        timesIncorr = 0;
+                    }
+                    out.write(String.format("%.1f,%s,%.2f,%d,%d,\n",
                                 htsr.freq1,
                                 htsr.isUpward ? "Up" : "Down",
                                 vol,
-                                htsr.getTimesCorrPerVol().get(vol),
-                                htsr.getTimesIncorrPerVol().get(vol)));
+                                timesCorr,
+                                timesIncorr));
                 }
             }
         } catch (FileNotFoundException e) {

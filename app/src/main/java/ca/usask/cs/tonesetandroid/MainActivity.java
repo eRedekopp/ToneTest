@@ -132,8 +132,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     model.setResultsSaved(true);
                 } catch (IllegalStateException e) {
                     showErrorDialog("No results currently stored");
+                    e.printStackTrace();
                 } catch (RuntimeException e) {
                     showErrorDialog("Unable to create target file");
+                    e.printStackTrace();
                 }
             }
         });
