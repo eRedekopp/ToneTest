@@ -5,6 +5,7 @@ generates a chart from the data, and saves it as a .png
 
 import sys
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def read_csv(abs_path):
@@ -14,13 +15,17 @@ def read_csv(abs_path):
         freq_results = {}  # map frequencies to tuple = (vol, P(heard))
         for line in f.readlines():
             line = line.split(',')
-            freq = line[0]
-            vol = line[1]
-            p = float(line[2]) / float(line[2] + line[3])
+            freq = float(line[0])
+            vol = float(line[1])
+            n_heard = int(line[2])
+            n_not_heard = int(line[3])
+            total = n_heard + n_not_heard
+            p = float(n_heard) / float(total)
             if freq in list(freq_results):
                 freq_results[freq].append((vol, p))
             else:
                 freq_results[freq] = [(vol, p)]
+        del freq_results[200]    # delete result for 200Hz because it makes the chart look awful
         return subID, freq_results
 
 
@@ -43,14 +48,21 @@ def generate_graph(freq_results):
         x_data.append(new_x_list)
         y_data.append(new_y_list)
 
-    for i in range(len(x_data)):        # plot
-        plt.plot(x_data[i], y_data[i], line_color_args[i], label=str(freq_list[i]) + " Hz")
-
-    plt.xlabel("Volume")                # beautify
+    max_x = float(max([max(lst) for lst in x_data]))        # aesthetics
+    x_ticks = np.arange(0, max_x, 100)
+    y_ticks = np.arange(0, 1.1, 0.1)
+    plt.xticks(x_ticks)
+    plt.yticks(y_ticks)
+    plt.figure(figsize=(12, 6))
+    plt.xlabel("Volume")
     plt.ylabel("P(heard)")
     plt.title("Participant " + subID + " Calibration")
 
-    plt.savefig("Subject"+subID)
+    for i in range(len(x_data)):            # plot
+        plt.plot(x_data[i], y_data[i], line_color_args[i], label=str(freq_list[i]) + " Hz")
+
+    plt.legend()
+    plt.savefig(sys.argv[1][0:-4]+"_plot")  # use same name as calibration file
 
 
 if __name__ == "__main__":
@@ -61,9 +73,3 @@ if __name__ == "__main__":
             print("File not found : " + sys.argv[1])
     else:
         print("Usage: " + sys.argv[0] + " absolute/file/path.csv")
-
-
-
-
-
-
