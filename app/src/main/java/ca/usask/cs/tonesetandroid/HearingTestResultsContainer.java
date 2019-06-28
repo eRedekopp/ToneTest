@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.support.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -457,6 +459,7 @@ public class HearingTestResultsContainer {
         }
 
         @Override
+        @NonNull
         @SuppressWarnings("ConstantConditions")
         public String toString() {
             StringBuilder builder = new StringBuilder();

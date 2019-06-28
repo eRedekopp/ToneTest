@@ -57,7 +57,7 @@ public class FileNameController {
             fout = getDestinationFileCalib();
             if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
-            out.write("ParticipantID 0"); //todo make sure this didn't break anything
+            out.write("ParticipantID " + model.getSubjectId());
             out.write("Freq(Hz),Volume,nHeard,nNotHeard");
             out.newLine();
             HearingTestResultsContainer results = model.getHearingTestResults();
