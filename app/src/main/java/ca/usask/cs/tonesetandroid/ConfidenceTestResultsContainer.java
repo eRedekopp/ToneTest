@@ -1,7 +1,5 @@
 package ca.usask.cs.tonesetandroid;
 
-import android.util.Log;
-
 import org.apache.commons.math3.distribution.BinomialDistribution;
 
 import java.util.ArrayList;

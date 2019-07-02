@@ -86,11 +86,12 @@ public class HearingTestController {
      * @param freq1 The frequency of the first sine
      * @param freq2 The frequency of the second sine
      * @param vol The volume of the sine waves
-     * @param duration_ms The duration of each sine in milliseconds
+     * @param duration_ms The duration of both tones combined
      */
     private void playInterval(float freq1, float freq2, double vol, int duration_ms) {
         model.enforceMaxVolume();
         model.startAudio();
+        duration_ms /= 2;  // halve tone duration so entire interval lasts duration_ms milliseconds
         for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
             float period = (float) Model.OUTPUT_SAMPLE_RATE / freq1;
             double angle = 2 * i / (period) * Math.PI;
@@ -155,6 +156,10 @@ public class HearingTestController {
         }).start();
     }
 
+    /**
+     * Perform the reduction phase of the calibration test: get bottom volume estimates by reducing volumes and asking
+     * user whether they can hear them until no tones are audible.
+     */
     @SuppressWarnings("unchecked")
     private void reducePhase() {
         model.testThreadActive = true;
@@ -375,7 +380,7 @@ public class HearingTestController {
     /////////////////////////////////// methods for confidence test ///////////////////////////////////////////////////
 
     /**
-     * Perform a full confidence test
+     * Begin a confidence test
      */
     public void confidenceTest() {
         model.testThreadActive = true;
@@ -404,6 +409,10 @@ public class HearingTestController {
         }).start();
     }
 
+    /**
+     * The actual legs of the confidence test - test all remaining confidence trials stored in model and store
+     * results in confidenceTestResults
+     */
     private void mainConfTest() {
         model.testThreadActive = true;
         new Thread(new Runnable() {
@@ -506,13 +515,6 @@ public class HearingTestController {
             float realPart = fftResult[i * 2];
             float imagPart = fftResult[i * 2 + 1];
 
-/* Not using this anymore but keeping the comment here for now
-
-// Power Spectral Density in dB= 20 * log10(sqrt(re^2 + im^2)) using first N/2 complex numbers of FFT output
-// from StackOverflow user Ernest Barkowski
-// https://stackoverflow.com/questions/6620544/fast-fourier-transform-fft-input-and-output-to-analyse-the-frequency-of-audio
-*/
-
 // Power Spectral Density in dB = magnitude(fftResult) ^ 2
 // From StackOverflow user Jason R
 // https://dsp.stackexchange.com/questions/4691/what-is-the-difference-between-psd-and-squared-magnitude-of-frequency-spectrum?lq=1
@@ -588,6 +590,14 @@ public class HearingTestController {
         return sum / (float) arr.length;
     }
 
+    /**
+     * Replace the value associated with the given key in the map with the given new value, or just associate the key
+     * with the value if not already present.
+     *
+     * @param map A HashMap
+     * @param key A valid key for that hashmap (not necessarily present in map)
+     * @param newValue The new value with which to associate the key
+     */
     public void mapReplace(HashMap<Float, Integer> map, Float key, Integer newValue) {
         map.remove(key);
         map.put(key, newValue);
