@@ -3,7 +3,6 @@ package ca.usask.cs.tonesetandroid;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 
 import com.androidplot.xy.BoundaryMode;
@@ -15,7 +14,6 @@ import com.androidplot.xy.XYSeries;
 
 
 import java.util.Arrays;
-import java.util.Collections;
 
 /**
  * An activity that displays a graph of freq-vol pairs - data must be previously set by another activity using setData()

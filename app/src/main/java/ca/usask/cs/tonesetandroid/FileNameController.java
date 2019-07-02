@@ -387,7 +387,8 @@ public class FileNameController {
         // parse test information
         scanner.useDelimiter(",");
 
-        scanner.nextLine(); // skip header
+        scanner.nextLine(); // skip headers
+        scanner.nextLine();
         HearingTestResultsContainer results = new HearingTestResultsContainer();
 
         try {

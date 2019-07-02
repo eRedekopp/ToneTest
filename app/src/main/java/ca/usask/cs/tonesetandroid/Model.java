@@ -14,6 +14,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+/*
+ * Test timing (worst case):
+ *      Calib. time in minutes = (#freqs * #vol/freq * #trial/vol * #seconds/trial + 40s * #freqs) / 60seconds/minute
+ *                          21 =    5    *     6     *     10     *       3.5      +     200       / 60
+ *
+ *      Conf. time in minutes  = #freqs * #vol/freq * #trial/vol * #seconds/trial / 60seconds/minute
+ *                          5  =   4    *     1     *     20     *        3.5     / 60
+ *
+ * 2 calibrations + 2 confidence tests/calibration (one in each type of bg. noise) = approx 60 minutes
+ */
+
 /**
  * Contains information about the current/most recent tests as well as an interface for generating
  * sine wave audio
@@ -523,5 +534,4 @@ public class Model {
         for (float f : arr) if (f > max) max = f;
         return max;
     }
-
 }
