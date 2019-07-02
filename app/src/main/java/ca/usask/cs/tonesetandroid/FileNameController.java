@@ -46,6 +46,7 @@ public class FileNameController {
      * @param context The context of the calling thread (ie. MainActivity.this)
      * @throws IllegalStateException If there are no calibration test results stored in model
      */
+    @SuppressWarnings("ConstantConditions")
     public void handleSaveCalibClick(Context context) throws IllegalStateException {
         if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
         
@@ -214,8 +215,11 @@ public class FileNameController {
 
             HearingTestResultsContainer results = model.getHearingTestResults();
 
+            // write calibration results used for this confidence test
+            out.write("Confidence test results:\n" + results.toString() + '\n');
+
             // test using different sample sizes
-            for (int n : Model.CONF_SAMP_SIZES) {  // todo test this
+            for (int n : Model.CONF_SAMP_SIZES) {
                 try {  // change hearing test results to new sample size
                     model.hearingTestResults = results.getSubsetResults(n);
                 } catch (IllegalArgumentException e) {

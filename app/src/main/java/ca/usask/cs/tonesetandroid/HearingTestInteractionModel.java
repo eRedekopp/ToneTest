@@ -11,9 +11,6 @@ public class HearingTestInteractionModel {
 
     boolean heard; //boolean value to indicate that the tone was heard
 
-    //Boolean values representing whether the buttons are enabled or not
-    private boolean testMode;
-
     ArrayList<ModelListener> subscribers;
 
     /**
@@ -40,18 +37,8 @@ public class HearingTestInteractionModel {
         notifySubscribers();
     }
 
-    public boolean isInTestMode() {
-        return testMode;
-    }
-
-    public void setTestMode(boolean b) {
-        this.testMode = b;
-        this.notifySubscribers();
-    }
-
     /**
      * Add a subscriber to the array list of model listeners
-     * @param sub
      */
     public void addSubscriber(ModelListener sub) {
         subscribers.add(sub);

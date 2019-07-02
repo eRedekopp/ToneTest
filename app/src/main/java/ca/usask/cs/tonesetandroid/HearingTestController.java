@@ -346,7 +346,6 @@ public class HearingTestController {
                     Handler mainHandler = new Handler(Looper.getMainLooper());
 
                     // configure model for test
-                    iModel.setTestMode(true);
                     model.configureAudio();
                     model.configureConfidenceTestPairs();
 
@@ -492,12 +491,10 @@ public class HearingTestController {
     //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////////
 
     public void handleCalibClick() {
-        iModel.setTestMode(true);
         this.hearingTest();
     }
 
     public void handleConfClick() {
-        iModel.setTestMode(true);
         this.confidenceTest();
     }
 

@@ -9,10 +9,7 @@ import android.media.MediaRecorder;
 import android.os.Build;
 import android.util.Log;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +58,6 @@ public class Model {
                                                     // (for finding bottom estimates)
     ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer hearingTestResults;   // final results of test
-    HearingTestResultsContainer calibrationReslts;
     private boolean testPaused = false; // has the user paused the test?
     boolean testThreadActive = false; // is a thread currently performing a hearing test?
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
@@ -327,7 +323,6 @@ public class Model {
         }
 
         return lineDataFloat;
-//        return sineWave(1500, size, 1f);
     }
 
     /**
@@ -351,6 +346,7 @@ public class Model {
     /**
      * Reduce all elements of currentVolumes by [element * HEARING_TEST_REDUCE_RATE]
      */
+    @SuppressWarnings("ConstantConditions")
     public void reduceCurrentVolumes() {
         ArrayList<FreqVolPair> newVols = new ArrayList<>();
         for (FreqVolPair fvp : currentVolumes) {
@@ -534,5 +530,4 @@ public class Model {
         for (float f : arr) if (f > max) max = f;
         return max;
     }
-
 }

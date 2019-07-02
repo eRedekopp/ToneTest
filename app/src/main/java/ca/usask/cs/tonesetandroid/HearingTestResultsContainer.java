@@ -46,6 +46,7 @@ public class HearingTestResultsContainer {
     /**
      * @return  the probability of hearing a tone of the given frequency at the given volume
      */
+    @SuppressWarnings("ConstantConditions")
     public float getProbOfHearingFVP(float freq, double vol) {
 
         // find frequencies tested just above and below freq
@@ -77,6 +78,7 @@ public class HearingTestResultsContainer {
      * @return The estimated probability of hearing the tone, based on the given subset
      * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
      */
+    @SuppressWarnings("ConstantConditions")
     public float getProbOfHearingFVP(float freq, double vol, float[] subset) throws IllegalArgumentException{
         Float[] subsetAsObj = new Float[subset.length];
         for (int i = 0; i < subset.length; i++)
@@ -113,6 +115,7 @@ public class HearingTestResultsContainer {
      * @param freq The frequency whose volume results are to be returned
      * @return A mapping of volumes to the number of times they were heard
      */
+    @SuppressWarnings("ConstantConditions")
     public HashMap<Double, Integer> getTimesHeardPerVolForFreq(float freq) {
         try {
             return this.allResults.get(freq).getTimesHeardPerVol();
@@ -127,6 +130,7 @@ public class HearingTestResultsContainer {
      * @param freq The frequency whose volume results are to be returned
      * @return A mapping of volumes to the number of times they weren't heard
      */
+    @SuppressWarnings("ConstantConditions")
     public HashMap<Double, Integer> getTimesNotHeardPerVolForFreq(float freq) {
         try {
             return this.allResults.get(freq).getTimesNotHeardPerVol();
@@ -141,6 +145,7 @@ public class HearingTestResultsContainer {
      * @param freq The frequency whose tested volumes are to be returned
      * @return A list of all volumes tested for the given frequency
      */
+    @SuppressWarnings("ConstantConditions")
     public Collection<Double> getTestedVolumesForFreq(float freq) {
         try {
             return this.allResults.get(freq).getVolumes();
@@ -169,6 +174,7 @@ public class HearingTestResultsContainer {
      * @param freq The frequency whose volume floor is to be estimated
      * @return An estimate of the volume floor for the given frequency
      */
+    @SuppressWarnings("ConstantConditions")
     public double getVolFloorEstimateForFreq(float freq) {
         if (this.freqTested(freq)) return this.allResults.get(freq).getVolFloor();
 
@@ -255,6 +261,7 @@ public class HearingTestResultsContainer {
     }
 
     @Override
+    @NonNull
     public String toString() {
         StringBuilder builder = new StringBuilder();
         for (HearingTestSingleFreqResult result : allResults.values()) builder.append(result.toString());

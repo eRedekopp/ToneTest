@@ -26,6 +26,7 @@ public class ConfidenceTestResultsContainer {
      * @param vol The volume of the trial
      * @param heard Whether the tone was heard in the trial
      */
+    @SuppressWarnings("ConstantConditions")
     public void addResult(float freq, double vol, boolean heard) {
         FreqVolPair fvp = new FreqVolPair(freq, vol);
         ConfidenceSingleTestResult cstr = this.getResultForFVP(fvp);
@@ -49,6 +50,7 @@ public class ConfidenceTestResultsContainer {
      * @param freq The frequency whose test results are to be queried
      * @return A mapping of each volume tested at the given frequency to the number of times it was heard
      */
+    @SuppressWarnings("ConstantConditions")
     public HashMap<Double, Integer> getTimesHeardPerVolForFreq(float freq) {
         List<ConfidenceSingleTestResult> results;
         HashMap<Double, Integer> outMap= new HashMap<>();
@@ -67,6 +69,7 @@ public class ConfidenceTestResultsContainer {
      * @param freq The frequency whose test results are to be queried
      * @return A mapping of each volume tested at the given frequency to the number of times it was not heard
      */
+    @SuppressWarnings("ConstantConditions")
     public HashMap<Double, Integer> getTimesNotHeardPerVolForFreq(float freq) {
         List<ConfidenceSingleTestResult> results;
         HashMap<Double, Integer> outMap= new HashMap<>();
@@ -103,6 +106,7 @@ public class ConfidenceTestResultsContainer {
      * @param freq The frequency whose tested volumes are to be found
      * @return All volumes at which the given frequency was tested
      */
+    @SuppressWarnings("ConstantConditions")
     public double[] getTestedVolsForFreq(float freq) {
         try {
             List<ConfidenceSingleTestResult> resultList = this.allResults.get(freq);
