@@ -14,9 +14,11 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 
 import java.io.FileNotFoundException;
 
@@ -110,14 +112,26 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         saveCalibButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    fileController.handleSaveCalibClick(context);
-                    model.setResultsSaved(true);
-                } catch (IllegalStateException e) {
-                    showErrorDialog("No results currently stored");
-                } catch (RuntimeException e) {
-                    showErrorDialog("Unable to create target file");
-                }
+                // get noise type from user, then save after user presses OK
+                AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                final EditText input = new EditText(context);
+                input.setInputType(InputType.TYPE_CLASS_TEXT);
+                builder.setView(input);
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        try {
+                            fileController.handleSaveCalibClick(context, input.getText().toString());
+                            model.setResultsSaved(true);
+                        } catch (IllegalStateException e) {
+                            showErrorDialog("No results currently stored");
+                        } catch (RuntimeException e) {
+                            showErrorDialog("Unable to create target file");
+                        } finally {
+                            dialog.cancel();
+                        }
+                    }
+                });
             }
         });
         saveConfButton.setOnClickListener(new View.OnClickListener() {

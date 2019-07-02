@@ -44,10 +44,11 @@ public class FileNameController {
      * A method to write the results of the calibration test currently stored in the model to a file
      *
      * @param context The context of the calling thread (ie. MainActivity.this)
+     * @param noiseType A string representing the type of background noise in which the calibration was run
      * @throws IllegalStateException If there are no calibration test results stored in model
      */
     @SuppressWarnings("ConstantConditions")
-    public void handleSaveCalibClick(Context context) throws IllegalStateException {
+    public void handleSaveCalibClick(Context context, String noiseType) throws IllegalStateException {
         if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
         
         if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());
@@ -58,9 +59,8 @@ public class FileNameController {
             fout = getDestinationFileCalib();
             if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
-            out.write("ParticipantID " + model.getSubjectId());
-            out.write("Freq(Hz),Volume,nHeard,nNotHeard");
-            out.newLine();
+            out.write(String.format("ParticipantID %d NoiseType %s", model.getSubjectId(), noiseType));
+            out.write("Freq(Hz),Volume,nHeard,nNotHeard\n");
             HearingTestResultsContainer results = model.getHearingTestResults();
             for (float freq : results.getTestedFreqs()) {
                 HashMap<Double, Integer> timesHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
