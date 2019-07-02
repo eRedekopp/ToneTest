@@ -213,6 +213,9 @@ public class FileNameController {
 
             HearingTestResultsContainer results = model.getHearingTestResults();
 
+            // write calibration info
+            out.write("Calibration:\n" + results.toString() + '\n');
+
             // test using different sample sizes
             for (int n : Model.CONF_SAMP_SIZES) {
                 try {  // change hearing test results to new sample size
