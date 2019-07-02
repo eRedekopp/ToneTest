@@ -59,6 +59,10 @@ public class HearingTestInteractionModel {
         return this.answer;
     }
 
+    public boolean answered() {
+        return this.answer != ANSWER_NONE;
+    }
+
     /**
      * Add a subscriber to the array list of model listeners
      */

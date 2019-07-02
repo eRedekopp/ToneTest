@@ -247,8 +247,6 @@ public class ConfidenceTestResultsContainer {
          *                          results) for the frequency and volume tested in confResult
          */
         private StatsAnalysisResultsContainer(ConfidenceSingleTestResult confResult, float probEstimate) {
-            // todo : check that this actually works. Redo with normal approximation?
-
             // set constants
             this.freq1 = confResult.freq1;
             this.freq2 = confResult.freq2;
@@ -284,8 +282,6 @@ public class ConfidenceTestResultsContainer {
             // beta = P(x outside rejection region | confProbEstimate is true)
             binDist = new BinomialDistribution(confResult.getTotalTrials(), confProbEstimate);
             this.beta = (float) (binDist.cumulativeProbability(critAbove) - binDist.cumulativeProbability(critBelow));
-
-            Log.d("statsResults", "crit region = [" + critBelow + ", " + critAbove + "], x = " + x);
         }
     }
 

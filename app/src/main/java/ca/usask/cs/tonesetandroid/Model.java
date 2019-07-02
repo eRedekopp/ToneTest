@@ -68,8 +68,8 @@ public class Model {
     private boolean resultsSaved = false;       // have hearing test results been saved since the model was initialized?
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
-    /////////////// vars for confidence test ///////////////
-    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 20;
+    /////////////// vars/values for confidence test ///////////////
+    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 3;
     ArrayList<Interval> confidenceTestIntervals;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;

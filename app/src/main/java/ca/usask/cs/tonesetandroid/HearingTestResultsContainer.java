@@ -1,5 +1,8 @@
 package ca.usask.cs.tonesetandroid;
 
+
+import android.support.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -113,6 +116,10 @@ public class HearingTestResultsContainer {
         // find subset frequencies just above and below tested frequencies
         float freqAbove = findNearestAbove(freq1, subsetAsObj);
         float freqBelow = findNearestBelow(freq1, subsetAsObj);
+
+        // if freq1 is higher than highest or lower than lowest in subset, return probability of nearest
+        if (freqAbove == -1) return resultMap.get(freqBelow).getProbOfHearing(vol);
+        if (freqBelow == -1) return resultMap.get(freqAbove).getProbOfHearing(vol);
 
         // find the probabilities of each of these frequencies
         float probAbove = resultMap.get(freqAbove).getProbOfHearing(vol);
@@ -324,6 +331,7 @@ public class HearingTestResultsContainer {
     }
 
     @Override
+    @NonNull
     public String toString() {
         StringBuilder builder = new StringBuilder();
         for (HearingTestSingleIntervalResult result : allResultsUpward.values()) builder.append(result.toString());
@@ -555,6 +563,7 @@ public class HearingTestResultsContainer {
         }
 
         @Override
+        @NonNull
         public String toString() {
             StringBuilder builder = new StringBuilder();
             ArrayList<Double> testedVolumes = new ArrayList<>(this.getVolumes());

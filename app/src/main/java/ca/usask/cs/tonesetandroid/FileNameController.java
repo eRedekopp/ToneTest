@@ -214,7 +214,7 @@ public class FileNameController {
             HearingTestResultsContainer results = model.getHearingTestResults();
 
             // test using different sample sizes
-            for (int n : Model.CONF_SAMP_SIZES) {  // todo test this
+            for (int n : Model.CONF_SAMP_SIZES) {
                 try {  // change hearing test results to new sample size
                     model.hearingTestResults = results.getSubsetResults(n);
                 } catch (IllegalArgumentException e) {  // skip if n is invalid

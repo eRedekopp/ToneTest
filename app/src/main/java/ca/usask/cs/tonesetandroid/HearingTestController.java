@@ -100,6 +100,7 @@ public class HearingTestController {
             model.lineOut.write(model.buf, 0, 2);
         }
         for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+            if (iModel.answered()) return;
             float period = (float) Model.OUTPUT_SAMPLE_RATE / freq2;
             double angle = 2 * i / (period) * Math.PI;
             short a = (short) (Math.sin(angle) * vol);
