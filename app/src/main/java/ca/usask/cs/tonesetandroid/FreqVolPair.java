@@ -40,7 +40,11 @@ public class FreqVolPair implements Cloneable {
 
     @Override
     public FreqVolPair clone() {
-        return new FreqVolPair(this.freq, this.vol);
+        try {
+            return (FreqVolPair) super.clone();
+        } catch (CloneNotSupportedException e) {
+            return new FreqVolPair(this.freq, this.vol);
+        }
     }
 
 }

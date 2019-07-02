@@ -38,6 +38,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     FileNameController fileController;
 
     Button  calibButton,
+            upButton,
+            downButton,
             heardButton,
             saveCalibButton,
             saveConfButton,
@@ -81,6 +83,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
+        downButton =        findViewById(R.id.downButton);
+        upButton =          findViewById(R.id.upButton);
         heardButton =       findViewById(R.id.heardButton);
         saveCalibButton =   findViewById(R.id.saveCalibButton);
         saveConfButton =    findViewById(R.id.saveConfButton);
@@ -101,6 +105,18 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 controller.handleConfClick();
             }
         });
+        upButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controller.handleUpClick();
+            }
+        });
+        downButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controller.handleDownClick();
+            }
+        });
         heardButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -115,8 +131,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     model.setResultsSaved(true);
                 } catch (IllegalStateException e) {
                     showErrorDialog("No results currently stored");
+                    e.printStackTrace();
                 } catch (RuntimeException e) {
                     showErrorDialog("Unable to create target file");
+                    e.printStackTrace();
                 }
             }
         });
@@ -191,8 +209,24 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         new Handler(Looper.getMainLooper()).post(new Runnable() {  // always run on UI thread
             @Override
             public void run() {
+                // choose which test button to use depending on which test phase we are in
+                if (model.getTestPhase() == Model.TEST_PHASE_RAMP || model.getTestPhase() == Model.TEST_PHASE_REDUCE) {
+                    heardButton.setVisibility(View.VISIBLE);
+                    heardButton.setEnabled(true);
+                    upButton.setVisibility(View.GONE);
+                    upButton.setEnabled(false);
+                    downButton.setVisibility(View.GONE);
+                    downButton.setEnabled(false);
+                } else {
+                    heardButton.setVisibility(View.GONE);
+                    heardButton.setEnabled(false);
+                    upButton.setVisibility(View.VISIBLE);
+                    upButton.setEnabled(model.testing() && ! model.testPaused());
+                    downButton.setVisibility(View.VISIBLE);
+                    downButton.setEnabled(model.testing() && ! model.testPaused());
+                }
+
                 calibButton.setEnabled(!model.testing());
-                heardButton.setEnabled(model.testing() && ! model.testPaused() );
                 confidenceButton.setEnabled(model.hasResults() && !model.testing());
                 saveCalibButton.setEnabled(model.hasResults() && !model.testing() && !model.resultsSaved());
                 saveConfButton.setEnabled(model.hasConfResults() && !model.testing() && !model.confResultsSaved());
