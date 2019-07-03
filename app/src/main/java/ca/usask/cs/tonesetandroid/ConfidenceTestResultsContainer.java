@@ -15,6 +15,8 @@ public class ConfidenceTestResultsContainer {
     // map each frequency to all single test results of that frequency
     private HashMap<Float, List<ConfidenceSingleTestResult>> allResults;
 
+    private BackgroundNoiseType noiseType;
+
     public ConfidenceTestResultsContainer() {
         this.allResults = new HashMap<>();
     }
@@ -191,6 +193,14 @@ public class ConfidenceTestResultsContainer {
 
     public StatsAnalysisResultsContainer performAnalysis(FreqVolPair fvp, float estimate) {
         return performAnalysis(fvp.getFreq(), fvp.getVol(), estimate);
+    }
+
+    public BackgroundNoiseType getNoiseType() {
+        return noiseType;
+    }
+
+    public void setNoiseType(BackgroundNoiseType noiseType) {
+        this.noiseType = noiseType;
     }
 
     /**

@@ -173,6 +173,10 @@ public class Model {
         Collections.shuffle(this.currentVolumes);
     }
 
+    public void resetConfidenceResults() {
+        this.confidenceTestResults = new ConfidenceTestResultsContainer();
+    }
+
     /**
      * Populate model.confidenceTestPairs with all freqvolpairs that will be tested in the next confidence test
      */
@@ -371,7 +375,7 @@ public class Model {
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
             AudioFormat format =
                     new AudioFormat.Builder().setChannelMask(AudioFormat.CHANNEL_OUT_DEFAULT)
-                            .setSampleRate(44100).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
+                            .setSampleRate(OUTPUT_SAMPLE_RATE).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
             lineOut = new AudioTrack(audioAttributes, format, minBufferSize,
                     AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
             lineOut.setVolume(1.0f); // unity gain - no amplification

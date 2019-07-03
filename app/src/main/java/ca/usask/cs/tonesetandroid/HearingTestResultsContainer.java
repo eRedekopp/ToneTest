@@ -12,7 +12,9 @@ import java.util.ListIterator;
 public class HearingTestResultsContainer {
 
     // each frequency tested mapped to its corresponding SingleFreqResult
-    public HashMap<Float, HearingTestSingleFreqResult> allResults;
+    private HashMap<Float, HearingTestSingleFreqResult> allResults;
+
+    private BackgroundNoiseType backgroundNoise;
 
     public HearingTestResultsContainer() {
         allResults = new HashMap<>();
@@ -247,6 +249,7 @@ public class HearingTestResultsContainer {
         HearingTestResultsContainer newContainer = new HearingTestResultsContainer();
         for (HearingTestSingleFreqResult htsr : this.allResults.values())
             newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));
+        newContainer.setBackgroundNoise(this.backgroundNoise);
         return newContainer;
     }
 
@@ -258,6 +261,14 @@ public class HearingTestResultsContainer {
         HearingTestSingleFreqResult aResult = this.allResults.get(this.getTestedFreqs()[0]);
         double aVol = aResult.getVolumes().iterator().next();
         return aResult.getNumSamples(aVol);
+    }
+
+    public BackgroundNoiseType getBackgroundNoise() {
+        return backgroundNoise;
+    }
+
+    public void setBackgroundNoise(BackgroundNoiseType backgroundNoise) {
+        this.backgroundNoise = backgroundNoise;
     }
 
     @Override

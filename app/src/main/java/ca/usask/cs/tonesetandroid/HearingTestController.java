@@ -27,6 +27,7 @@ public class HearingTestController {
     Model model;
     HearingTestInteractionModel iModel;
     HearingTestView view;
+    BackgroundNoiseController noiseController;
 
     // The length of each test tone
     private static final int TONE_DURATION_MS = 1500;
@@ -79,7 +80,7 @@ public class HearingTestController {
     /////////////////////////////////////// Methods for hearing test //////////////////////////////////////////////////
 
     /**
-     * Begin a hearing test
+     * Begin a hearing test. model.hearingTestResults must have a background noise type saved before calling this method
      *
      * @author redekopp
      */
@@ -105,7 +106,6 @@ public class HearingTestController {
             @Override
             public void run() {
                 try {
-                    model.reset();
                     model.configureAudio();
 
                     // show information for ramp segment of test
@@ -114,6 +114,8 @@ public class HearingTestController {
                         @Override
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_RAMP);
+                            Log.d("hearingTest", model.hearingTestResults.getBackgroundNoise().toString());
+                            noiseController.playNoise(model.hearingTestResults.getBackgroundNoise());
                             view.showInformationDialog(rampInfo);
                         }
                     });
@@ -349,13 +351,13 @@ public class HearingTestController {
                     model.configureAudio();
                     model.configureConfidenceTestPairs();
 
-
                     // show info dialog
                     model.setTestPaused(true);
                     mainHandler.post(new Runnable() {
                         @Override
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_CONF);
+                            noiseController.playNoise(model.confidenceTestResults.getNoiseType());
                             view.showInformationDialog(mainInfo);
                         }
                     });
@@ -491,10 +493,15 @@ public class HearingTestController {
     //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////////
 
     public void handleCalibClick() {
+        if (this.model.hearingTestResults.getBackgroundNoise() == null)
+            throw new IllegalStateException("Background Noise must be configured before beginning test");
+        else Log.d("handleCalibClick()", "bgNoise = " + model.hearingTestResults.getBackgroundNoise().toString());
         this.hearingTest();
     }
 
     public void handleConfClick() {
+        if (this.model.confidenceTestResults.getNoiseType() == null)
+            throw new IllegalStateException("Background noise must be configured before beginning test");
         this.confidenceTest();
     }
 
@@ -512,6 +519,10 @@ public class HearingTestController {
 
     public void setView(HearingTestView view) {
         this.view = view;
+    }
+
+    public void setNoiseController(BackgroundNoiseController noiseController) {
+        this.noiseController = noiseController;
     }
 
     /**

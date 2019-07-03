@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,9 +15,9 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.text.InputType;
 import android.util.Log;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -48,6 +49,22 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             pauseButton /*,
             autoButton*/;
 
+    private int dialogSelectedItem;  // for noise type selection
+    private int dialogNoiseID;
+    private int dialogVolume;
+
+    private void setDialogNoiseID() {
+        this.dialogNoiseID = this.dialogSelectedItem;
+    }
+
+    private void setDialogVolume() {
+        this.dialogVolume = this.dialogSelectedItem;
+    }
+
+    private void setDialogSelectedItem(int dialogSelectedItem) {
+        this.dialogSelectedItem = dialogSelectedItem;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -68,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         HearingTestInteractionModel newIModel = new HearingTestInteractionModel();
         HearingTestController newController = new HearingTestController();
         final FileNameController newFController = new FileNameController();
+        BackgroundNoiseController newNoiseController = new BackgroundNoiseController();
 
         // set up relations
         this.setFileController(newFController);
@@ -80,6 +98,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.controller.setiModel(newIModel);
         this.controller.setView(this);
         this.fileController.setModel(this.model);
+        this.controller.setNoiseController(newNoiseController);
+        newNoiseController.setModel(this.model);
 
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
@@ -94,13 +114,15 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                controller.handleCalibClick();
+                model.reset();
+                getBackgroundNoiseAndBeginTest(true);
             }
         });
         confidenceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                controller.handleConfClick();
+                model.resetConfidenceResults();
+                getBackgroundNoiseAndBeginTest(false);
             }
         });
         heardButton.setOnClickListener(new View.OnClickListener() {
@@ -112,26 +134,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         saveCalibButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // get noise type from user, then save after user presses OK
-                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                final EditText input = new EditText(context);
-                input.setInputType(InputType.TYPE_CLASS_TEXT);
-                builder.setView(input);
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        try {
-                            fileController.handleSaveCalibClick(context, input.getText().toString());
-                            model.setResultsSaved(true);
-                        } catch (IllegalStateException e) {
-                            showErrorDialog("No results currently stored");
-                        } catch (RuntimeException e) {
-                            showErrorDialog("Unable to create target file");
-                        } finally {
-                            dialog.cancel();
-                        }
-                    }
-                });
+                try {
+                    fileController.handleSaveCalibClick(context);
+                    model.setResultsSaved(true);
+                } catch (IllegalStateException e) {
+                    showErrorDialog("No results currently stored");
+                } catch (RuntimeException e) {
+                    showErrorDialog("Unable to create target file");
+                }
             }
         });
         saveConfButton.setOnClickListener(new View.OnClickListener() {
@@ -160,6 +170,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
+                        model.stopAudio();
                         goToInit();
                     }
                 });
@@ -299,14 +310,135 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     }
 
     /**
+     * Show dialogs to get a background noise type from the user, then pass them to the model and begin the
+     * appropriate test
+     *
+     * @param isCalib Is the new test to be started a calibration test? If not, it is a confidence test
+     */
+    private void getBackgroundNoiseAndBeginTest(final boolean isCalib) {
+        // show dialog to get noise type
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setSingleChoiceItems(BackgroundNoiseType.NOISE_TYPE_STRINGS, 0, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                setDialogSelectedItem(i);
+            }
+        });
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                setDialogNoiseID();
+                Log.d("mainActivity", "noise type ID set as " + dialogNoiseID);
+                dialogInterface.cancel();
+                getBackgroundNoiseAndBeginTest_2(isCalib);
+            }
+        });
+        builder.setTitle("Select the background noise type for this test");
+        builder.show();
+    }
+
+    /**
+     * Show the second dialog (if required) for beginning a background noise test. This method should only be called
+     * by getBackgroundNoiseAndBeginTest
+     */
+    private void getBackgroundNoiseAndBeginTest_2(final boolean isCalib) {
+        if (this.dialogNoiseID == BackgroundNoiseType.NOISE_TYPE_NONE) {    // set volume to 0 and continue if no noise
+            this.setDialogSelectedItem(0);
+            this.setDialogVolume();
+            Log.d("mainActivity", "noise volume set as " + dialogNoiseID);
+            getBackgroundNoiseAndBeginTest_3(isCalib);
+        } else {                                                            // else get volume from user
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            final EditText editText = new EditText(context);
+            editText.setInputType(EditorInfo.TYPE_CLASS_NUMBER);
+            editText.setText("0");
+            builder.setView(editText);
+            builder.setTitle("Please enter the volume of the noise for this test");
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    int oldDialogSelectedItem = dialogSelectedItem;
+                    try {
+                        setDialogSelectedItem(Integer.parseInt(editText.getText().toString()));
+                    } catch (NumberFormatException e) {
+                        dialogInterface.cancel();
+                        showErrorDialog("Unable to parse input", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.cancel();
+                                getBackgroundNoiseAndBeginTest_2(isCalib);
+                            }
+                        });
+                        return;
+                    }
+                    if (dialogSelectedItem > 100 || dialogSelectedItem < 0) { // ensure number in proper range
+                        setDialogSelectedItem(oldDialogSelectedItem);
+                        dialogInterface.cancel();
+                        showErrorDialog("Number out of range: please enter a number from 0 to 100",
+                                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.cancel();
+                                getBackgroundNoiseAndBeginTest_2(isCalib);
+                            }
+                        });
+                    } else {
+                        setDialogVolume();
+                        Log.d("mainActivity", "noise volume set as " + dialogVolume);
+                        dialogInterface.cancel();
+                        getBackgroundNoiseAndBeginTest_3(isCalib);
+                    }
+                }
+            });
+            builder.show();
+        }
+    }
+
+    /**
+     * Setup for test and ask user to press OK to begin. This method should only be called by
+     * getBackgroundNoiseAndBeginTest_2
+     */
+    private void getBackgroundNoiseAndBeginTest_3(final boolean isCalib) {
+        // prompt user to press OK to begin test
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setMessage("Press the button when you are ready to begin the test");
+        builder.setPositiveButton("BEGIN", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.cancel();
+                BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
+                if (isCalib) {
+                    model.hearingTestResults.setBackgroundNoise(noiseType);
+                    controller.handleCalibClick();
+                }
+                else {
+                    model.confidenceTestResults.setNoiseType(noiseType);
+                    controller.handleConfClick();
+                }
+            }
+        });
+        builder.show();
+    }
+
+    /**
      * Show a dialog with title "Error" and the given message
      * @param message The message to be displayed
      */
-    public void showErrorDialog(String message) {
+    public void showErrorDialog(String message, DialogInterface.OnClickListener onOKClick) {
         AlertDialog.Builder warningBuilder = new AlertDialog.Builder(this);
         warningBuilder.setTitle("Error");
         warningBuilder.setMessage(message);
+        warningBuilder.setPositiveButton("OK", onOKClick);
         warningBuilder.show();
+    }
+
+    public void showErrorDialog(String message) {
+        showErrorDialog(message, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                dialogInterface.cancel();
+            }
+        });
     }
 
     /**

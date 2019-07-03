@@ -48,7 +48,7 @@ public class FileNameController {
      * @throws IllegalStateException If there are no calibration test results stored in model
      */
     @SuppressWarnings("ConstantConditions")
-    public void handleSaveCalibClick(Context context, String noiseType) throws IllegalStateException {
+    public void handleSaveCalibClick(Context context) throws IllegalStateException {
         if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
         
         if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());
@@ -59,7 +59,8 @@ public class FileNameController {
             fout = getDestinationFileCalib();
             if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
-            out.write(String.format("ParticipantID %d NoiseType %s", model.getSubjectId(), noiseType));
+            out.write(String.format("ParticipantID %d BackgroundNoise %s", model.getSubjectId(),
+                                    model.hearingTestResults.getBackgroundNoise().toString()));
             out.write("Freq(Hz),Volume,nHeard,nNotHeard\n");
             HearingTestResultsContainer results = model.getHearingTestResults();
             for (float freq : results.getTestedFreqs()) {
@@ -199,7 +200,6 @@ public class FileNameController {
      * @param context The context of the calling thread (ie. MainActivity.this)
      */
     public void handleConfSaveClick(Context context) throws IllegalStateException {
-
         BufferedWriter out = null;
 
         try {
@@ -215,15 +215,19 @@ public class FileNameController {
 
             HearingTestResultsContainer results = model.getHearingTestResults();
 
+            // write header
+            out.write(String.format("ParticipantID: %d NoiseType %s", model.getSubjectId(),
+                                    model.confidenceTestResults.getNoiseType().toString()));
+
             // write calibration results used for this confidence test
-            out.write("Confidence test results:\n" + results.toString() + '\n');
+            out.write("Calibration test results:\n" + results.toString() + '\n');
 
             // test using different sample sizes
             for (int n : Model.CONF_SAMP_SIZES) {
                 try {  // change hearing test results to new sample size
                     model.hearingTestResults = results.getSubsetResults(n);
                 } catch (IllegalArgumentException e) {
-                    continue;
+                    continue;  // do nothing if invalid size
                 }
 
                 out.write("### Sample Size = " + n + " ###\n");
@@ -384,12 +388,20 @@ public class FileNameController {
             return;
         }
 
+        HearingTestResultsContainer results = new HearingTestResultsContainer();
+
+        scanner.useDelimiter(" ");
+        scanner.next(); scanner.next();     // skip subject id          // todo test this
+        scanner.next();                     // skip noise type label
+        String noiseType = scanner.next();
+        int volume = scanner.nextInt();
+        results.setBackgroundNoise(new BackgroundNoiseType(noiseType, volume));
+
+        scanner.nextLine();                 // skip header
+
         // parse test information
         scanner.useDelimiter(",");
 
-        scanner.nextLine(); // skip headers
-        scanner.nextLine();
-        HearingTestResultsContainer results = new HearingTestResultsContainer();
 
         try {
             while (scanner.hasNext()) {
