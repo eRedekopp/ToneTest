@@ -27,6 +27,7 @@ public class HearingTestController {
     Model model;
     HearingTestInteractionModel iModel;
     HearingTestView view;
+    BackgroundNoiseController noiseController;
 
     // The length of each test tone
     private static final int TONE_DURATION_MS = 1500;
@@ -114,7 +115,7 @@ public class HearingTestController {
     /////////////////////////////////////// Methods for hearing test //////////////////////////////////////////////////
 
     /**
-     * Begin a hearing test
+     * Begin a hearing test. Model must have a background noise set before calling this method
      *
      * @author redekopp
      */
@@ -139,15 +140,16 @@ public class HearingTestController {
             @Override
             public void run() {
                 try {
-                    model.reset();
                     model.configureAudio();
 
                     // show information for ramp segment of test
                     model.setTestPaused(true);
+
                     mainHandler.post(new Runnable() {
                         @Override
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_RAMP);
+                            noiseController.playNoise(model.hearingTestResults.getNoiseType());
                             view.showInformationDialog(rampInfo);
                         }
                     });
@@ -401,6 +403,7 @@ public class HearingTestController {
                         @Override
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_CONF);
+                            noiseController.playNoise(model.confidenceTestResults.getNoiseType());
                             view.showInformationDialog(mainInfo);
                         }
                     });
@@ -533,10 +536,14 @@ public class HearingTestController {
     //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////
 
     public void handleCalibClick() {
+        if (this.model.hearingTestResults.getNoiseType() == null)
+            throw new IllegalStateException("Background noise must be configured before beginning calibration");
         this.hearingTest();
     }
 
     public void handleConfClick() {
+        if (this.model.confidenceTestResults.getNoiseType() == null)
+            throw new IllegalStateException("Background noise must be configured before beginning confidence test");
         this.confidenceTest();
     }
 
@@ -562,6 +569,10 @@ public class HearingTestController {
 
     public void setView(HearingTestView view) {
         this.view = view;
+    }
+
+    public void setNoiseController(BackgroundNoiseController noiseController) {
+        this.noiseController = noiseController;
     }
 
     /**

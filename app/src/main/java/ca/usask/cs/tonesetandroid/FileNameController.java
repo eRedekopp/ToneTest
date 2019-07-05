@@ -58,8 +58,10 @@ public class FileNameController {
             fout = getDestinationFileCalib();
             if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
-            out.write("Freq1(Hz),Direction,Volume,nCorr,nIncorr\n");
             HearingTestResultsContainer results = model.getHearingTestResults();
+            out.write(String.format("ParticipantID %d NoiseType %s",
+                      model.getSubjectId(), results.getNoiseType().toString()));
+            out.write("Freq1(Hz),Direction,Volume,nCorr,nIncorr\n");
             for (HearingTestResultsContainer.HearingTestSingleIntervalResult htsr : results.getAllResults()) {
                 for (Double vol : htsr.getVolumes()) {
                     int timesCorr, timesIncorr;
@@ -212,6 +214,10 @@ public class FileNameController {
             out = new BufferedWriter(new FileWriter(fout));
 
             HearingTestResultsContainer results = model.getHearingTestResults();
+
+            // write background noise info
+            out.write(String.format("ParticipantID %d BackgroundNoise %s",
+                                    model.getSubjectId(), results.getNoiseType()));
 
             // write calibration info
             out.write("Calibration:\n" + results.toString() + '\n');

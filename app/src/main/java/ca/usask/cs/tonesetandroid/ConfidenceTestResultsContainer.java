@@ -14,9 +14,19 @@ public class ConfidenceTestResultsContainer {
     private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsUpward;
     private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsDownward;
 
+    private BackgroundNoiseType noiseType;
+
     public ConfidenceTestResultsContainer() {
         this.allResultsUpward = new HashMap<>();
         this.allResultsDownward = new HashMap<>();
+    }
+
+    public BackgroundNoiseType getNoiseType() {
+        return noiseType;
+    }
+
+    public void setNoiseType(BackgroundNoiseType noiseType) {
+        this.noiseType = noiseType;
     }
 
     /**

@@ -14,17 +14,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-/*
- * Test timing (worst case):
- *      Calib. time in minutes = (#freqs * #vol/freq * #trial/vol * #seconds/trial + 40s * #freqs) / 60seconds/minute
- *                          21 =    5    *     6     *     10     *       3.5      +     200       / 60
- *
- *      Conf. time in minutes  = #freqs * #vol/freq * #trial/vol * #seconds/trial / 60seconds/minute
- *                          5  =   4    *     1     *     20     *        3.5     / 60
- *
- * 2 calibrations + 2 confidence tests/calibration (one in each type of bg. noise) = approx 60 minutes
- */
-
 /**
  * Contains information about the current/most recent tests as well as an interface for generating
  * sine wave audio
@@ -50,7 +39,7 @@ public class Model {
     static final int TEST_PHASE_MAIN = 2;
     static final int TEST_PHASE_CONF = 3;
     static final int TEST_PHASE_NULL = -1;
-    private int testPhase = TEST_PHASE_NULL;
+    private int testPhase;
     ArrayList<FreqVolPair> topVolEstimates;     // The rough estimates for volumes which have P(heard) = 1
     ArrayList<FreqVolPair> bottomVolEstimates;  // The rough estimates for volumes which have P(heard) = 0
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
@@ -118,6 +107,8 @@ public class Model {
         this.hearingTestResults = new HearingTestResultsContainer();
         this.resultsSaved = false;
         this.confResultsSaved = false;
+        this.testThreadActive = false;
+        this.setTestPhase(TEST_PHASE_NULL);
     }
 
     /**
@@ -176,6 +167,10 @@ public class Model {
         for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(this.testIntervals);
         this.testIntervals = allTests;
         Collections.shuffle(this.testIntervals);
+    }
+
+    public void resetConfidenceResults() {
+        this.confidenceTestResults = new ConfidenceTestResultsContainer();
     }
 
     /**
@@ -375,7 +370,7 @@ public class Model {
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
             AudioFormat format =
                     new AudioFormat.Builder().setChannelMask(AudioFormat.CHANNEL_OUT_DEFAULT)
-                            .setSampleRate(44100).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
+                            .setSampleRate(OUTPUT_SAMPLE_RATE).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
             lineOut = new AudioTrack(audioAttributes, format, minBufferSize,
                     AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
             lineOut.setVolume(1.0f); // unity gain - no amplification
@@ -457,11 +452,13 @@ public class Model {
 
     public void setTestPhase(int phase) {
         this.testPhase = phase;
+        this.audioPlaying = phase != TEST_PHASE_NULL;
         this.notifySubscribers();
     }
 
     public void setTestPaused(boolean b) {
         this.testPaused = b;
+        this.audioPlaying = !b;
         this.notifySubscribers();
     }
 

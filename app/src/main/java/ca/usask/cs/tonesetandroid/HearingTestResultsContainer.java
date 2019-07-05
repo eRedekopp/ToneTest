@@ -17,6 +17,7 @@ public class HearingTestResultsContainer {
 
     public HashMap<Float, HearingTestSingleIntervalResult> allResultsDownward; // for downward intervals
 
+    private BackgroundNoiseType noiseType;
 
     public HearingTestResultsContainer() {
         allResultsUpward = new HashMap<>();
@@ -311,6 +312,7 @@ public class HearingTestResultsContainer {
             newContainer.allResultsUpward.put(htsr.freq1, htsr.getSubsetResult(n));
         for (HearingTestSingleIntervalResult htsr : this.allResultsDownward.values())
             newContainer.allResultsDownward.put(htsr.freq1, htsr.getSubsetResult(n));
+        newContainer.setNoiseType(this.noiseType);
         return newContainer;
     }
 
@@ -328,6 +330,14 @@ public class HearingTestResultsContainer {
         HearingTestSingleIntervalResult aResult = this.allResultsUpward.get(this.getTestedFreqs()[0]);
         double aVol = aResult.getVolumes().iterator().next();
         return aResult.getNumSamples(aVol);
+    }
+
+    public BackgroundNoiseType getNoiseType() {
+        return noiseType;
+    }
+
+    public void setNoiseType(BackgroundNoiseType noiseType) {
+        this.noiseType = noiseType;
     }
 
     @Override
