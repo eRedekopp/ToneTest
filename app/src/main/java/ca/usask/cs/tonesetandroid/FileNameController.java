@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 
 /**
@@ -216,7 +217,7 @@ public class FileNameController {
             HearingTestResultsContainer results = model.getHearingTestResults();
 
             // write background noise info
-            out.write(String.format("ParticipantID %d BackgroundNoise %s",
+            out.write(String.format("ParticipantID %d BackgroundNoise %s\n",
                                     model.getSubjectId(), results.getNoiseType()));
 
             // write calibration info
@@ -380,8 +381,8 @@ public class FileNameController {
     public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
         File file = new File(filePath);
         if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
-        Scanner scanner;
 
+        Scanner scanner;
         try {
             scanner = new Scanner(file);
         } catch (FileNotFoundException e) {
@@ -390,12 +391,21 @@ public class FileNameController {
             return;
         }
 
-        // parse test information
-        scanner.useDelimiter(",");
-
-        scanner.nextLine(); // skip headers
-        scanner.nextLine();
         HearingTestResultsContainer results = new HearingTestResultsContainer();
+
+        // parse test information
+        scanner.useDelimiter(Pattern.compile("\\s"));
+
+        scanner.next(); scanner.next();  // skip participant id (already entered in InitActivity)
+        scanner.next();  // skip noise type label
+        String noiseType = scanner.next();
+        int noiseVol = scanner.nextInt();
+        results.setNoiseType(new BackgroundNoiseType(noiseType, noiseVol));
+
+        scanner.nextLine();  // clear rest of line
+        scanner.nextLine();  // skip header
+
+        scanner.useDelimiter(",");
 
         try {
             while (scanner.hasNext()) {

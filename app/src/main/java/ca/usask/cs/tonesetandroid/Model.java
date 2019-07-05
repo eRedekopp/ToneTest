@@ -32,8 +32,8 @@ public class Model {
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
                                                         // considered "inaudible"
-    static final int NUMBER_OF_VOLS_PER_FREQ = 6;   // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 10;  // number of times to repeat each freq-vol combination in the test
+    static final int NUMBER_OF_VOLS_PER_FREQ = 3;   // number of volumes to test for each frequency
+    static final int NUMBER_OF_TESTS_PER_VOL = 3;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
     static final int TEST_PHASE_REDUCE = 1;
     static final int TEST_PHASE_MAIN = 2;
@@ -69,7 +69,7 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     /////////////// vars/values for confidence test ///////////////
-    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 3;
+    static final int CONF_NUMBER_OF_TRIALS_PER_INTERVAL = 3;
     ArrayList<Interval> confidenceTestIntervals;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
@@ -92,7 +92,8 @@ public class Model {
     }
 
     /**
-     * Resets this model to its just-initialized state
+     * Resets this model to its just-initialized state. Only resets hearingTestResults if it is null - reset those
+     * with this.resetHearingTestResults
      */
     public void reset() {
         this.topVolEstimates = new ArrayList<>();
@@ -104,11 +105,13 @@ public class Model {
         this.testIntervals = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
-        this.hearingTestResults = new HearingTestResultsContainer();
-        this.resultsSaved = false;
         this.confResultsSaved = false;
         this.testThreadActive = false;
         this.setTestPhase(TEST_PHASE_NULL);
+        if (this.hearingTestResults == null) {
+            this.hearingTestResults = new HearingTestResultsContainer();
+            this.resultsSaved = false;
+        }
     }
 
     /**
@@ -173,6 +176,11 @@ public class Model {
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
     }
 
+    public void resetHearingTestResults() {
+        this.hearingTestResults = new HearingTestResultsContainer();
+        this.resultsSaved = false;
+    }
+
     /**
      * Populate model.confidenceTestIntervals with all freqvolpairs that will be tested in the next confidence test
      */
@@ -200,7 +208,7 @@ public class Model {
 
         // prepare list of all trials
         ArrayList<Interval> allTrials = new ArrayList<>();
-        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; i++) {
+        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_INTERVAL; i++) {
             allTrials.addAll(this.confidenceTestIntervals);
         }
         Collections.shuffle(allTrials);
@@ -494,7 +502,10 @@ public class Model {
      * Print the contents of hearingTestResults to the console (for testing)
      */
     public void printResultsToConsole() {
-        Log.i("printResultsToConsole", "Subject ID: " + this.subjectId);
+        Log.i("printResultsToConsole", String.format("Subject ID: %d\nCalibration Background Noise Type: %s",
+                                    this.subjectId,
+                                    this.hearingTestResults.getNoiseType() == null ? "N/A" :  // show noise type if
+                                        this.hearingTestResults.getNoiseType().toString()));  // applicable
         if (hearingTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", hearingTestResults.toString());
     }

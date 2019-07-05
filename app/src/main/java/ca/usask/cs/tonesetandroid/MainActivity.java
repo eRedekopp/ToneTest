@@ -105,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
+                model.resetHearingTestResults();
                 model.reset();
                 getBackgroundNoiseAndBeginTest(true);
             }
