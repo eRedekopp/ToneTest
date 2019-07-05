@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 
 /**
@@ -59,7 +60,7 @@ public class FileNameController {
             fout = getDestinationFileCalib();
             if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
-            out.write(String.format("ParticipantID %d BackgroundNoise %s", model.getSubjectId(),
+            out.write(String.format("ParticipantID %d BackgroundNoise %s\n", model.getSubjectId(),
                                     model.hearingTestResults.getBackgroundNoise().toString()));
             out.write("Freq(Hz),Volume,nHeard,nNotHeard\n");
             HearingTestResultsContainer results = model.getHearingTestResults();
@@ -216,7 +217,7 @@ public class FileNameController {
             HearingTestResultsContainer results = model.getHearingTestResults();
 
             // write header
-            out.write(String.format("ParticipantID: %d NoiseType %s", model.getSubjectId(),
+            out.write(String.format("ParticipantID: %d NoiseType %s\n", model.getSubjectId(),
                                     model.confidenceTestResults.getNoiseType().toString()));
 
             // write calibration results used for this confidence test
@@ -390,18 +391,18 @@ public class FileNameController {
 
         HearingTestResultsContainer results = new HearingTestResultsContainer();
 
-        scanner.useDelimiter(" ");
-        scanner.next(); scanner.next();     // skip subject id          // todo test this
+        scanner.useDelimiter(Pattern.compile("\\s"));
+        scanner.next(); scanner.next();     // skip subject id
         scanner.next();                     // skip noise type label
         String noiseType = scanner.next();
         int volume = scanner.nextInt();
         results.setBackgroundNoise(new BackgroundNoiseType(noiseType, volume));
 
+        scanner.nextLine();                 // skip rest of line
         scanner.nextLine();                 // skip header
 
         // parse test information
         scanner.useDelimiter(",");
-
 
         try {
             while (scanner.hasNext()) {
