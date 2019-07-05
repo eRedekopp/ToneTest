@@ -50,7 +50,7 @@ public class Model {
     static final int TEST_PHASE_MAIN = 2;
     static final int TEST_PHASE_CONF = 3;
     static final int TEST_PHASE_NULL = -1;
-    private int testPhase = TEST_PHASE_NULL;
+    private int testPhase;
     ArrayList<FreqVolPair> topVolEstimates;     // The rough estimates for volumes which have P(heard) = 1
     ArrayList<FreqVolPair> bottomVolEstimates;  // The rough estimates for volumes which have P(heard) = 0
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
@@ -116,6 +116,8 @@ public class Model {
         this.hearingTestResults = new HearingTestResultsContainer();
         this.resultsSaved = false;
         this.confResultsSaved = false;
+        this.testThreadActive = false;
+        this.testPhase = TEST_PHASE_NULL;
     }
 
     /**
@@ -391,7 +393,7 @@ public class Model {
             audioManager.setStreamVolume( // pin volume to max if not already done
                     AudioManager.STREAM_MUSIC,
                     maxVol,
-                    AudioManager.FLAG_PLAY_SOUND);
+                    AudioManager.FLAG_PLAY_SOUND); // todo this also adjusts bg noise volume
     }
 
     /**
@@ -457,11 +459,13 @@ public class Model {
 
     public void setTestPhase(int phase) {
         this.testPhase = phase;
+        this.audioPlaying = phase != TEST_PHASE_NULL;
         this.notifySubscribers();
     }
 
     public void setTestPaused(boolean b) {
         this.testPaused = b;
+        this.audioPlaying = !b;
         this.notifySubscribers();
     }
 

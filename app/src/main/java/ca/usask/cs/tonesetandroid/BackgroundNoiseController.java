@@ -1,26 +1,30 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
+import android.media.MediaPlayer;
 
 import java.util.Random;
 
 public class BackgroundNoiseController {
 
-    // todo this doesn't actually produce any noise (?)
-
     private Model model;
 
     private AudioTrack lineOut = null;
 
-    private int volume;
+    private MediaPlayer mediaPlayer = null;
 
-    public static final int MAX_VOL = 32767;  // same max vol as ramp up test
+    private Context context;  // the context to use for new objects created
 
-    public BackgroundNoiseController() {
+    public static final int MAX_VOL = Short.MAX_VALUE;
+
+    public BackgroundNoiseController(Context context) {
+        this.context = context;
         this.setupLineOut();
+        this.setupMediaPlayer();
     }
 
     public void setModel(Model model) {
@@ -34,12 +38,13 @@ public class BackgroundNoiseController {
      * @throws IllegalStateException if the background noise is of an unknown type
      */
     public void playNoise(BackgroundNoiseType noise) throws IllegalStateException {
-        this.volume = convertVolToInternal(noise.volume);
-
         switch (noise.noiseType) {
-            case BackgroundNoiseType.NOISE_TYPE_NONE: break;
-            case BackgroundNoiseType.NOISE_TYPE_WHITE: this.playWhiteNoise(); break;
-            case BackgroundNoiseType.NOISE_TYPE_CROWD: this.playCrowdNoise(); break;
+            case BackgroundNoiseType.NOISE_TYPE_NONE:
+                break;
+            case BackgroundNoiseType.NOISE_TYPE_WHITE:
+                this.playWhiteNoise(convertVolToInternal(noise.volume)); break;
+            case BackgroundNoiseType.NOISE_TYPE_CROWD:
+                this.playCrowdNoise(convertVolToInternal(noise.volume)); break;
             default: throw new IllegalStateException("Unknown noise type identifier: " + noise.noiseType);
         }
     }
@@ -62,28 +67,67 @@ public class BackgroundNoiseController {
     }
 
     /**
+     * Sets up the MediaPlayer to be ready to play crowd noise
+     */
+    private void setupMediaPlayer() {
+        if (mediaPlayer == null) // perform on separate thread because sometimes takes a few seconds to prepare
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    AudioAttributes audioAttributes =
+                            new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
+                    mediaPlayer = MediaPlayer.create(context, R.raw.crowdnoise, audioAttributes,
+                                  AudioManager.AUDIO_SESSION_ID_GENERATE);
+                    if (mediaPlayer == null)
+                        throw new RuntimeException("Error creating MediaPlayer");
+                    else mediaPlayer.setLooping(true);
+                }
+            }).start();
+    }
+
+    /**
      * Play crowd noise on a new thread until the model is no longer in test mode. Does nothing if the model is not
      * testing when this method is called.
+     *
+     * @param volume The volume at which the noise is to be played, 0 <= volume <= MAX_VOL
      */
-    private void playWhiteNoise() {
+    private void playWhiteNoise(final int volume) {
+        if (volume > MAX_VOL) throw new IllegalArgumentException("Volume out of range : " + volume);
         new Thread(new Runnable() {
             @Override
             public void run() {
                 short[] buffer = new short[2];
                 Random random = new Random();
+                lineOut.play();
                 while (model.testing()) {
-                    buffer[0] = (short) (random.nextGaussian() * volume * Short.MAX_VALUE / 10 / 100);
-                    buffer[1] = (short) (random.nextGaussian() * volume * Short.MAX_VALUE / 10 / 100);
+                    buffer[0] = (short) (random.nextGaussian() * volume);
+                    buffer[1] = (short) (random.nextGaussian() * volume);
                     lineOut.write(buffer, 0, 2);
                 }
+                lineOut.stop();
+                lineOut.flush();
             }
         }).start();
     }
 
     /**
      * Play crowd noise until the model is no longer in test mode
+     *
+     * @param volume The volume at which the noise is to be played, 0 <= volume <= MAX_VOL
      */
-    private void playCrowdNoise() {
+    private void playCrowdNoise(final int volume) {
+        if (volume > MAX_VOL) throw new IllegalArgumentException("Volume out of range : " + volume);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mediaPlayer.start();
+                float floatVol = (float) (volume) / (float) MAX_VOL;
+                mediaPlayer.setVolume(floatVol, floatVol);
+                while (model.testing()) continue;  // Continue playing until model.testing() becomes false
+                mediaPlayer.pause();
+            }
+        }).start();
 
     }
 
@@ -94,7 +138,6 @@ public class BackgroundNoiseController {
      * @return The volume externalVol % of the way from 0 to MAX_VOL
      */
     private static int convertVolToInternal(int externalVol) {
-        return MAX_VOL * (externalVol / 100);
+        return (int) Math.round((double) MAX_VOL * ((double) externalVol / 100.0));
     }
-
 }

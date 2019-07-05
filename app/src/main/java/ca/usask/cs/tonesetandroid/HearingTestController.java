@@ -114,7 +114,6 @@ public class HearingTestController {
                         @Override
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_RAMP);
-                            Log.d("hearingTest", model.hearingTestResults.getBackgroundNoise().toString());
                             noiseController.playNoise(model.hearingTestResults.getBackgroundNoise());
                             view.showInformationDialog(rampInfo);
                         }
@@ -495,7 +494,6 @@ public class HearingTestController {
     public void handleCalibClick() {
         if (this.model.hearingTestResults.getBackgroundNoise() == null)
             throw new IllegalStateException("Background Noise must be configured before beginning test");
-        else Log.d("handleCalibClick()", "bgNoise = " + model.hearingTestResults.getBackgroundNoise().toString());
         this.hearingTest();
     }
 

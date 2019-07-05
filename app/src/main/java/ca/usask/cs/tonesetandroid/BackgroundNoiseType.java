@@ -7,9 +7,9 @@ import java.util.ArrayList;
 public class BackgroundNoiseType {
 
     // Array indices correspond to ID int (eg. NOISE_TYPE_NONE = 0 -> "No Noise" = NOISE_TYPE_STRINGS[0])
-    public static final String[] NOISE_TYPE_STRINGS = {"No Noise", "White Noise"};  // for UI
+    public static final String[] NOISE_TYPE_STRINGS = {"No Noise", "White Noise", "Crowd Noise"};  // for UI
 
-    public static final String[] NOISE_TYPE_STRINGS_F = {"None", "White"};          // for file io
+    public static final String[] NOISE_TYPE_STRINGS_F = {"None", "White", "Crowd"};          // for file io
 
     public static final int NOISE_TYPE_CROWD = 2;
 

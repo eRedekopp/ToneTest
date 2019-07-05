@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         HearingTestInteractionModel newIModel = new HearingTestInteractionModel();
         HearingTestController newController = new HearingTestController();
         final FileNameController newFController = new FileNameController();
-        BackgroundNoiseController newNoiseController = new BackgroundNoiseController();
+        BackgroundNoiseController newNoiseController = new BackgroundNoiseController(this);
 
         // set up relations
         this.setFileController(newFController);
@@ -249,6 +249,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      * Starts an InitActivity which initializes the model with an ID number and possibly data
      */
     private void goToInit() {
+        if (model.testing()) model.setTestPhase(Model.TEST_PHASE_NULL);
         Intent initIntent = new Intent(this, InitActivity.class);
         int reqCode = 1;
         startActivityForResult(initIntent, reqCode);
@@ -345,7 +346,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         if (this.dialogNoiseID == BackgroundNoiseType.NOISE_TYPE_NONE) {    // set volume to 0 and continue if no noise
             this.setDialogSelectedItem(0);
             this.setDialogVolume();
-            Log.d("mainActivity", "noise volume set as " + dialogNoiseID);
             getBackgroundNoiseAndBeginTest_3(isCalib);
         } else {                                                            // else get volume from user
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -374,7 +374,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     if (dialogSelectedItem > 100 || dialogSelectedItem < 0) { // ensure number in proper range
                         setDialogSelectedItem(oldDialogSelectedItem);
                         dialogInterface.cancel();
-                        showErrorDialog("Number out of range: please enter a number from 0 to 100",
+                        showErrorDialog("Volume out of range: please enter a value from 0 to 100",
                                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
