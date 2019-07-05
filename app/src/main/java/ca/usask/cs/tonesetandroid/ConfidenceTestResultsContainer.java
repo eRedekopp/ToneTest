@@ -269,8 +269,6 @@ public class ConfidenceTestResultsContainer {
             // beta = P(x outside rejection region | confProbEstimate is true)
             binDist = new BinomialDistribution(confResult.getTotalTrials(), confProbEstimate);
             this.beta = (float) (binDist.cumulativeProbability(critAbove) - binDist.cumulativeProbability(critBelow));
-
-            Log.d("statsResults", "crit region = [" + critBelow + ", " + critAbove + "], x = " + x);
         }
     }
 

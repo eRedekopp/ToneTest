@@ -501,7 +501,10 @@ public class Model {
      * Print the contents of hearingTestResults to the console (for testing)
      */
     public void printResultsToConsole() {
-        Log.i("printResultsToConsole", "Subject ID: " + this.subjectId);
+        Log.i("printResultsToConsole", String.format("Subject ID: %d\nCalibration Noise Type: %s",
+                                        this.subjectId,
+                                        this.hearingTestResults.getBackgroundNoise() == null ? "N/A" :  // show bg noise
+                                            this.hearingTestResults.getBackgroundNoise().toString()));  // if applicable
         if (hearingTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", hearingTestResults.toString());
     }
