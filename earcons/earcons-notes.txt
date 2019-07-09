@@ -1,0 +1,40 @@
+All files have amplitude normalized using ffmpeg-normalize 1.15.1 /// ffmpeg 4.1.3
+Two-pass normalization per EBU R128 standard
+
+Earcons:
+  Timbres:
+    - clav   = clavinet             - Logic Pro X "seventies clav"
+    - mari   = marimba              - Logic Pro X "marimba"
+    - pno    = piano                - Logic Pro X "Yamaha Grand Piano"
+    - saw    = sawtooth sine        - Logic Pro X ES2 sawtooth waveform default
+    - sine   = pure sine            - Logic Pro X EXS24 blank settings
+    - square = square sine          - Logic Pro X ES2 square waveform default
+    - wurlie = wurlitzer e-piano    - Logic Pro X "wurlitzer classic"
+  Classes:
+    - chrom  = chromatic scale (7 notes)
+    - maj3   = major third interval (2 notes)
+    - neg    = "negative" tone, minor 2nd interval played twice
+    - scale  = major scale followed by major triad "tada"
+    - spooky = major triad and diminished triad of same root (order depends on direction)
+    - susp   = major triad and sus4 triad of same root (order depends on direction)
+    - triad  = first inversion major triad arpeggio
+  Direction / Rhythm:
+    - down-*   = notes get lower throughout the earcon
+    - up-*     = notes get higher throughout the earcon
+    - *-short  = quick earcon / short notes
+    - *-long   = notes are exactly double the length of short
+    - *-rhythm = notes are played as some syncopated rhythm, different than short/long rhythms
+  Frequencies:
+    - Fundamental frequency of the first note of the earcon
+    - If first 'note' is a chord, based on lowest note in voicing
+    - Special case: 'susp' frequency based on first "moving note",
+      eg. Cmaj -> Csus4 frequency is the E /// Csus4 -> Cmaj frequency is the F
+
+Directories:
+Sorted by timbre
+            earcon class
+              direction + rhythm
+                frequency
+
+Filenames:
+filename = {frequency}Hz{timbre}{earcon class}{dir}{rhythm}.wav - all lowercase except Hz
