@@ -25,7 +25,6 @@ public class Interval implements Cloneable {
         return String.format("| Freq1: %.1f, Freq2: %.1f, vol: %.1f | ", this.freq1, this.freq2, this.vol);
     }
 
-
     @Override
     public Interval clone() {
         try {

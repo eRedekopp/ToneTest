@@ -45,7 +45,7 @@ public class Model {
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
     HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
                                                     // (for finding bottom estimates)
-    ArrayList<Interval> testIntervals;  // all the freq-vol combinations that will be tested in the main test
+    ArrayList<Earcon> testEarcons;  // all the earcon-vol combinations to be tested in the main part of the test
     HearingTestResultsContainer hearingTestResults;   // final results of test
     private boolean testPaused = false; // has the user paused the test?
     boolean testThreadActive = false; // is a thread currently performing a hearing test?
@@ -102,7 +102,7 @@ public class Model {
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
         this.confidenceTestIntervals = new ArrayList<>();
         this.analysisResults = new ArrayList<>();
-        this.testIntervals = new ArrayList<>();
+        this.testEarcons = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
         this.confResultsSaved = false;
@@ -153,23 +153,40 @@ public class Model {
     /**
      * Set currentVolumes to contain all frequencies and volumes to be tested during the main stage of the hearing test
      */
-    public void configureTestIntervals() {
-        for (float freq : FREQUENCIES) {
+    public void configureTestEarcons() {
+
+        float[] testFreqs = {262f, 523f, 1046f, 1568f, 3136f};
+
+        for (float freq : testFreqs) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
             double topVolEst = getVolForFreq(topVolEstimates, freq);
             for (double vol = bottomVolEst;
                 vol < topVolEst;
                 vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
 
-                testIntervals.add(new Interval(freq, freq * INTERVAL_FREQ_RATIO, vol)); // add upward interval
-                testIntervals.add(new Interval(freq, freq / INTERVAL_FREQ_RATIO, vol)); // add downward interval
+                testEarcons.add(        // add upward
+                        new Earcon(freq, getWavRawIDForFreq(freq, Earcon.DIRECTION_UP), vol, Earcon.DIRECTION_UP));
+                testEarcons.add(        // add downward
+                        new Earcon(freq, getWavRawIDForFreq(freq, Earcon.DIRECTION_DOWN), vol, Earcon.DIRECTION_DOWN));
             }
         }
         // fill testIntervals with one item for each individual interval that will be played in the test
-        ArrayList<Interval> allTests = new ArrayList<>();
-        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(this.testIntervals);
-        this.testIntervals = allTests;
-        Collections.shuffle(this.testIntervals);
+        ArrayList<Earcon> allTests = new ArrayList<>();
+        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(this.testEarcons);
+        this.testEarcons = allTests;
+        Collections.shuffle(this.testEarcons);
+    }
+
+    /**
+     * Given a frequency and direction, get the R.raw id of the audio file associated with that frequency and direction
+     *
+     * @param freq The base frequency of the earcon wav file to be found (ie. freq of the first note)
+     * @param direction An int indiating the direction of the requested earcon (use int Earcon.DIRECTION_*)
+     * @return The integer ID of the R.raw audio file associated with the frequency and direction
+     */
+    public static int getWavRawIDForFreq(float freq, int direction) {
+        // todo
+        return -1;
     }
 
     public void resetConfidenceResults() {

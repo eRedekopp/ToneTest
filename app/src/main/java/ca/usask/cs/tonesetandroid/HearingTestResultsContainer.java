@@ -12,6 +12,8 @@ import java.util.ListIterator;
 
 public class HearingTestResultsContainer {
 
+    // todo rework this to make sense with earcons
+
     // Keyed by Interval.freq1
     public HashMap<Float, HearingTestSingleIntervalResult> allResultsUpward;   // for upward intervals
 
@@ -32,16 +34,17 @@ public class HearingTestResultsContainer {
      * @param heard Was the trial heard?
      */
     @SuppressWarnings("ConstantConditions")
-    public void addResult(Interval interval, boolean heard) {
-        HashMap<Float, HearingTestSingleIntervalResult> mapToUpdate =
-                interval.isUpward ? allResultsUpward : allResultsDownward;
-        try {
-            mapToUpdate.get(interval.freq1).addResult(interval.vol, heard);
-        } catch (NullPointerException e) {
-            HearingTestSingleIntervalResult r = new HearingTestSingleIntervalResult(interval.freq1, interval.freq2);
-            r.addResult(interval.vol, heard);
-            mapToUpdate.put(interval.freq1, r);
-        }
+    public void addResult(Earcon earcon, boolean heard) {
+        // todo make this work with earcons
+//        HashMap<Float, HearingTestSingleIntervalResult> mapToUpdate =
+//                interval.isUpward ? allResultsUpward : allResultsDownward;
+//        try {
+//            mapToUpdate.get(interval.freq1).addResult(interval.vol, heard);
+//        } catch (NullPointerException e) {
+//            HearingTestSingleIntervalResult r = new HearingTestSingleIntervalResult(interval.freq1, interval.freq2);
+//            r.addResult(interval.vol, heard);
+//            mapToUpdate.put(interval.freq1, r);
+//        }
     }
 
     /**

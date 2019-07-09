@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.controller.setView(this);
         this.fileController.setModel(this.model);
         this.controller.setNoiseController(newNoiseController);
+        this.controller.setContext(this);
         newNoiseController.setModel(this.model);
 
         // set up view elements for main screen

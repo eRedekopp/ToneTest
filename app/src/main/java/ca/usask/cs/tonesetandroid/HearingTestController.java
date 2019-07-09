@@ -1,5 +1,6 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -7,10 +8,13 @@ import android.util.Log;
 import com.paramsen.noise.Noise;
 import com.paramsen.noise.NoiseOptimized;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+
+import java.io.InputStream;
 
 /**
  * A class for performing PureTone and RampUp tests, and handling clicks on the main menu
@@ -29,7 +33,9 @@ public class HearingTestController {
     HearingTestView view;
     BackgroundNoiseController noiseController;
 
-    // The length of each test tone
+    Context context;
+
+    // The length of each test tone for initial calibration
     private static final int TONE_DURATION_MS = 1500;
 
     private static final String rampInfo =
@@ -112,6 +118,19 @@ public class HearingTestController {
         }
     }
 
+    private void playEarcon(Earcon earcon) {
+        InputStream rawPCM = this.context.getResources().openRawResource(earcon.audioResourceID);
+        try {
+            while (rawPCM.available() > 0) {
+                rawPCM.read(model.buf, 0, 2);
+                model.lineOut.write(model.buf, 0, 2);
+            }
+        } catch (IOException e) {
+            Log.e("playEarcon", "Error playing earcon file");
+            e.printStackTrace();
+        }
+    }
+
     /////////////////////////////////////// Methods for hearing test //////////////////////////////////////////////////
 
     /**
@@ -178,7 +197,7 @@ public class HearingTestController {
                         @Override
                         public void run() {
                             model.bottomVolEstimates = (ArrayList<FreqVolPair>) model.currentVolumes.clone();
-                            model.configureTestIntervals();
+                            model.configureTestEarcons();
                             model.setTestPhase(Model.TEST_PHASE_MAIN);
                             // show information for next segment of test
                             view.showInformationDialog(intervalInfo);
@@ -344,17 +363,17 @@ public class HearingTestController {
             @Override
             public void run() {
                 try {
-                    while (!model.testIntervals.isEmpty()) {
+                    while (!model.testEarcons.isEmpty()) {
                         if (model.testPaused()) return;
-                        Log.d("mainTest", model.testIntervals.toString());
-                        Interval trial = model.testIntervals.get(0);
-                        model.testIntervals.remove(0);
+                        Log.d("mainTest", model.testEarcons.toString());
+                        Earcon trial = model.testEarcons.get(0);
+                        model.testEarcons.remove(0);
                         model.startAudio();
                         Log.i("mainTest", "Testing " + trial.toString());
                         iModel.resetAnswer();
-                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
-                        boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)
-                                          || (iModel.getAnswer() < 0 && ! trial.isUpward);
+                        playEarcon(trial);
+                        boolean correct = (iModel.getAnswer() > 0 && trial.direction == Earcon.DIRECTION_UP)
+                                          || (iModel.getAnswer() < 0 && trial.direction == Earcon.DIRECTION_DOWN);
                         model.hearingTestResults.addResult(trial, correct);
                         Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly"); // log answer
 
@@ -573,6 +592,10 @@ public class HearingTestController {
 
     public void setNoiseController(BackgroundNoiseController noiseController) {
         this.noiseController = noiseController;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
     }
 
     /**

@@ -10,6 +10,8 @@ import java.util.Set;
 
 public class ConfidenceTestResultsContainer {
 
+    // todo make this make sense with earcons
+
     // Map starting frequency of interval to all single test results of that frequency, separated by direction
     private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsUpward;
     private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsDownward;

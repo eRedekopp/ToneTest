@@ -1,5 +1,9 @@
 All files have amplitude normalized using ffmpeg-normalize 1.15.1 /// ffmpeg 4.1.3
-Two-pass normalization per EBU R128 standard
+Two passes of normalization by EBU R128 standard
+
+Note: These earcons were created in bulk as quickly as possible, and so they have not
+necessarily all been individually listened to and verified (at least some almost certainly
+did not export properly). Be sure to listen to each .wav file before using it in a study
 
 Earcons:
   Timbres:
