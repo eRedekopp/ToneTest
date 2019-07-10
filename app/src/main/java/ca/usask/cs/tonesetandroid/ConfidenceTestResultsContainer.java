@@ -12,13 +12,15 @@ public class ConfidenceTestResultsContainer {
 
     // Map starting frequency of interval to all single test results of that frequency, separated by direction
     private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsUpward;
+    private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsFlat;
     private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsDownward;
 
-    private BackgroundNoiseType noiseType;
+    private BackgroundNoiseType noiseType;  // the background noise type used in the test from which these results come
 
     public ConfidenceTestResultsContainer() {
         this.allResultsUpward = new HashMap<>();
         this.allResultsDownward = new HashMap<>();
+        this.allResultsFlat = new HashMap<>();
     }
 
     public BackgroundNoiseType getNoiseType() {
@@ -32,26 +34,23 @@ public class ConfidenceTestResultsContainer {
     /**
      * Add a new confidence test trial result to this container
      *
-     * @param freq1 The first frequency of the interval in the trial
-     * @param upward Is the interval upward?
-     * @param vol The volume of the trial
+     * @param earcon An Earcon object storing the exact earcon that this trial was testing
      * @param correct Did the user answer correctly?
      */
     @SuppressWarnings("ConstantConditions")
-    public void addResult(Interval interval, boolean correct) {
-        ConfidenceSingleTestResult cstr = this.getResultForInterval(interval);
-        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
-                interval.isUpward ? this.allResultsUpward : this.allResultsDownward;
+    public void addResult(Earcon earcon, boolean correct) {
+        ConfidenceSingleTestResult cstr = this.getResultForEarcon(earcon);
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap = this.getMapForDirection(earcon.direction);
 
         // create new cstr and/or allResults entry if required
         if (cstr == null) {
-            cstr = new ConfidenceSingleTestResult(interval);
+            cstr = new ConfidenceSingleTestResult(earcon);
             try {
-                resultMap.get(interval.freq1).add(cstr);
+                resultMap.get(earcon.frequency).add(cstr);
             } catch (NullPointerException e) {
                 List<ConfidenceSingleTestResult> newList = new ArrayList<>();
                 newList.add(cstr);
-                resultMap.put(interval.freq1, newList);
+                resultMap.put(earcon.frequency, newList);
             }
         }
         cstr.addTrial(correct);
@@ -61,19 +60,19 @@ public class ConfidenceTestResultsContainer {
      * Return a mapping of each tested volume to the number of times the volume was heard for the given frequency
      *
      * @param freq The frequency whose test results are to be queried
+     * @param direction An integer representing the direction of the earcon being queried (Earcon.DIRECTION_*)
      * @return A mapping of each volume tested at the given frequency to the number of times it was heard
      */
     @SuppressWarnings("ConstantConditions")
-    public HashMap<Double, Integer> getTimesHeardPerVolForInterval(float freq1, boolean upward) {
-        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
-                upward ? this.allResultsUpward : this.allResultsDownward;
+    public HashMap<Double, Integer> getTimesHeardPerVolForInterval(float freq, int direction) {
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap = this.getMapForDirection(direction);
 
         List<ConfidenceSingleTestResult> results;
         HashMap<Double, Integer> outMap= new HashMap<>();
         try {
-            results = resultMap.get(freq1);
+            results = resultMap.get(freq);
             for (ConfidenceSingleTestResult cstr : results) {
-                outMap.put(cstr.vol, cstr.getTimesCorrect());
+                outMap.put(cstr.earcon.volume, cstr.getTimesCorrect());
             }
         } catch (NullPointerException e) { if (! outMap.isEmpty()) throw e; }
         return outMap;
@@ -83,25 +82,25 @@ public class ConfidenceTestResultsContainer {
      * Return a mapping of each tested volume to the number of times the volume was not heard for the given frequency
      *
      * @param freq The frequency whose test results are to be queried
+     * @param direction An integer representing the direction of the earcon being queried (Earcon.DIRECTION_*)
      * @return A mapping of each volume tested at the given frequency to the number of times it was not heard
      */
     @SuppressWarnings("ConstantConditions")
-    public HashMap<Double, Integer> getTimesNotHeardPerVolForInterval(float freq1, boolean upward) {
-        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
-                upward ? this.allResultsUpward : this.allResultsDownward;
+    public HashMap<Double, Integer> getTimesNotHeardPerVolForInterval(float freq, int direction) {
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap = this.getMapForDirection(direction);
         List<ConfidenceSingleTestResult> results;
         HashMap<Double, Integer> outMap= new HashMap<>();
         try {
-            results = resultMap.get(freq1);
+            results = resultMap.get(freq);
             for (ConfidenceSingleTestResult cstr : results) {
-                outMap.put(cstr.vol, cstr.getTimesIncorrect());
+                outMap.put(cstr.earcon.volume, cstr.getTimesIncorrect());
             }
         } catch (NullPointerException e) { if (! outMap.isEmpty()) throw e; }
         return outMap;
     }
 
     /**
-     * Note: assumes that frequencies tested upward were also tested downward, and vice versa
+     * Note: assumes that all directions tested the exact same frequencies
      *
      * @return An array of all frequencies present in these confidence test results
      */
@@ -117,25 +116,25 @@ public class ConfidenceTestResultsContainer {
      * @return True if there are no results stored in this container
      */
     public boolean isEmpty() {
-        return this.allResultsUpward.isEmpty() && this.allResultsDownward.isEmpty();
+        return this.allResultsUpward.isEmpty() && this.allResultsDownward.isEmpty() && this.allResultsFlat.isEmpty();
     }
 
     /**
-     * Returns an array containing all the volumes tested at the given frequency
+     * Returns an array containing all the volumes tested at the given frequency and direction
      *
      * @param freq The frequency whose tested volumes are to be found
+     * @param direction An integer representing the direction of the earcon being queried (Earcon.DIRECTION_*)
      * @return All volumes at which the given frequency was tested
      */
     @SuppressWarnings("ConstantConditions")
-    public double[] getTestedVolsForInterval(float freq1, boolean upward) {
-        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
-                upward ? this.allResultsUpward : this.allResultsDownward;
+    public double[] getTestedVolsForInterval(float freq, int direction) {
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap = this.getMapForDirection(direction);
 
         try {
-            List<ConfidenceSingleTestResult> resultList = resultMap.get(freq1);
+            List<ConfidenceSingleTestResult> resultList = resultMap.get(freq);
             double[] outArr = new double[resultList.size()];
             int i = 0;
-            for (ConfidenceSingleTestResult cstr : resultList) outArr[i++] = cstr.vol;
+            for (ConfidenceSingleTestResult cstr : resultList) outArr[i++] = cstr.earcon.volume;
             return outArr;
         } catch (NullPointerException e) {
             return new double[0];
@@ -143,81 +142,98 @@ public class ConfidenceTestResultsContainer {
     }
 
     /**
-     * @return A list containing all the frequency-volume pairs present in these confidence results
+     * @return A list containing all the Earcons present in these confidence results
      */
-    public List<Interval> getTestedIntervals() {
-        ArrayList<Interval> returnList = new ArrayList<>();
+    public List<Earcon> getTestedEarcons() {
+        ArrayList<Earcon> returnList = new ArrayList<>();
         for (List<ConfidenceSingleTestResult> lst : this.allResultsUpward.values()) {
             for (ConfidenceSingleTestResult cstr : lst) {
-                returnList.add(new Interval(cstr.freq1, cstr.freq2, cstr.vol));
+                returnList.add(cstr.earcon.clone());
             }
         }
         for (List<ConfidenceSingleTestResult> lst : this.allResultsDownward.values()) {
             for (ConfidenceSingleTestResult cstr : lst) {
-                returnList.add(new Interval(cstr.freq1, cstr.freq2, cstr.vol));
+                returnList.add(cstr.earcon.clone());
             }
         }
         return returnList;
     }
 
     /**
-     * Return the actual fraction of times that the tone was heard for the given frequency at the given volume in
-     * these confidence test results
+     * Return the actual fraction of times that the tone was heard for the given frequency and direction at the given
+     * volume in these confidence test results
      *
-     * @throws IllegalArgumentException if the given frequency and volume were not tested
+     * @throws IllegalArgumentException if the given frequency and volume were not tested or direction not recognized
      * @param freq The frequency whose results are to be queried
+     * @param direction An integer representing the direction of the earcon being queried (Earcon.DIRECTION_*)
      * @param vol The volume whose results are to be queried
      * @return The fraction (0 <= result <= 1) of times that the tone was heard for the given freq-vol pair
      */
-    public float getActualResultForInterval(float freq1, boolean upward, double vol) throws IllegalArgumentException {
-        ConfidenceSingleTestResult result = this.getResultForInterval(freq1, upward, vol);
-        if (result == null) throw new IllegalArgumentException("frequency-volume pair not present in results");
+    public float getActualResultForEarcon(Earcon earcon) throws IllegalArgumentException {
+        ConfidenceSingleTestResult result = this.getResultForEarcon(earcon);
+        if (result == null) throw new IllegalArgumentException("Earcon not present in confidence results");
         return result.getActual();
     }
 
-    public float getActualResultForInterval(Interval interval) {
-        return getActualResultForInterval(interval.freq1, interval.isUpward, interval.vol);
-    }
-
     /**
-     * Get and return the ConfidenceSingleTestResult (CSTR) object for the given freq and vol, or null if does not exist
+     * Get and return the ConfidenceSingleTestResult (CSTR) object for the given freq, vol, and direction or null if
+     * does not exist
      *
      * @param freq The frequency of the desired CSTR
+     * @param direction An integer representing the direction of the earcon in the desired CSTR (Earcon.DIRECTION_*)
      * @param vol The volume of the desired CSTR
      * @return The CSTR with the given frequency and volume, or null if none found
      */
-    private ConfidenceSingleTestResult getResultForInterval(float freq1, boolean upward, double vol) {
-        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap =
-                upward ? this.allResultsUpward : this.allResultsDownward;
+    private ConfidenceSingleTestResult getResultForEarcon(Earcon earcon) {
+        HashMap<Float, List<ConfidenceSingleTestResult>> resultMap = this.getMapForDirection(earcon.direction);
 
-        List<ConfidenceSingleTestResult> resultList = resultMap.get(freq1);
+        List<ConfidenceSingleTestResult> resultList = resultMap.get(earcon.frequency);
         if (resultList == null) return null;
         for (ConfidenceSingleTestResult cstr : resultList)
-            if (cstr.vol == vol && cstr.freq1 == freq1) return cstr;
-            else if (cstr.freq1 != freq1)
-                throw new AssertionError("Result with frequency "+cstr.freq1+" found in list for frequency "+freq1);
+            if (cstr.earcon.equals(earcon)) return cstr;
+            else if (cstr.earcon.frequency != earcon.frequency)
+                throw new AssertionError(
+                        "Result with frequency " + cstr.earcon.frequency +
+                        " found in list for frequency " + earcon.frequency);
         return null;
     }
 
-    private ConfidenceSingleTestResult getResultForInterval(Interval interval) {
-        return getResultForInterval(interval.freq1, interval.isUpward, interval.vol);
-    }
-
     /**
-     * Given a frequency, a volume, and an estimate for the probability that the listener will hear the tone, perform
+     * Given an Earcon object and a model estimate for the probability that the listener will hear the tone, perform
      * analysis on the accuracy of the estimate given these confidence test results
      *
-     * @param freq The frequency of the tone whose probability is being estimated
-     * @param vol The volume of the tone whose probability is being estimated
-     * @param estimate The estimate for the likelihood that the listener will hear a tone at the given freq and vol
+     * @param earcon An Earcon object storing the exact earcon to be analyzed. Must have been tested in this conf test
+     * @param estimate The estimate for the likelihood that the listener will hear the earcon (from the model)
      * @return A StatsAnalysisResultsContainer containing the results of the analysis
      * @throws IllegalArgumentException If the given frequency and volume were not tested in the confidence test
      */
-    public StatsAnalysisResultsContainer performAnalysis(Interval interval, float estimate)
+    public StatsAnalysisResultsContainer performAnalysis(Earcon earcon, float estimate)
                                                          throws IllegalArgumentException {
-        ConfidenceSingleTestResult result = this.getResultForInterval(interval);
+        ConfidenceSingleTestResult result = this.getResultForEarcon(earcon);
         if (result == null) throw new IllegalArgumentException("Interval not present in results");
         return new StatsAnalysisResultsContainer(result, estimate);
+    }
+
+    /**
+     * Given an integer indicating a direction (Earcon.DIRECTION_*), return the HashMap which stores results for
+     * trials in that same direction.
+     *
+     * @param direction An integer indicating an earcon direction (Earcon.DIRECTION_*)
+     * @return The HashMap which stores results for trials in the given direction
+     * @throws IllegalArgumentException If direction does not correspond to any known direction indicator in Earcon
+     */
+    public HashMap<Float, List<ConfidenceSingleTestResult>> getMapForDirection(int direction)
+            throws IllegalArgumentException {
+        switch (direction) {
+            case Earcon.DIRECTION_DOWN:
+                return this.allResultsDownward;
+            case Earcon.DIRECTION_UP:
+                return this.allResultsUpward;
+            case Earcon.DIRECTION_NONE:
+                return this.allResultsFlat;
+            default:
+                throw new IllegalArgumentException("Unrecognized value for direction: " + direction);
+        }
     }
 
     /**
@@ -225,13 +241,7 @@ public class ConfidenceTestResultsContainer {
      */
     public class StatsAnalysisResultsContainer {
 
-        public final float freq1; // the first frequency of the interval being analyzed
-
-        public final float freq2; // the second frequency of the interval being analyzed
-
-        public final boolean upward; // is the interval upward?
-
-        public final double vol;  // the volume of the interval being analyzed
+        public final Earcon earcon;
 
         public final float confProbEstimate;  // The probability estimate as determined by the confidence test
 
@@ -256,13 +266,10 @@ public class ConfidenceTestResultsContainer {
          */
         private StatsAnalysisResultsContainer(ConfidenceSingleTestResult confResult, float probEstimate) {
             // set constants
-            this.freq1 = confResult.freq1;
-            this.freq2 = confResult.freq2;
-            this.vol = confResult.vol;
+            this.earcon = confResult.earcon;
             this.confProbEstimate = confResult.getActual();
             this.probEstimate = probEstimate;
             this.alpha = 0.10f;
-            this.upward = confResult.upward;
 
             // check for statistical significance
             // Null Hypothesis : confProb == probEstimate
@@ -300,21 +307,15 @@ public class ConfidenceTestResultsContainer {
      */
     private class ConfidenceSingleTestResult {
 
-        final float freq1;
-        final float freq2;
-        final boolean upward;
-        final double vol;
+        final Earcon earcon;
 
         private int nCorrect;
         private int nIncorrect;
 
-        public ConfidenceSingleTestResult(Interval interval) {
+        public ConfidenceSingleTestResult(Earcon earcon) {
             this.nCorrect = 0;
             this.nIncorrect = 0;
-            this.freq1 = interval.freq1;
-            this.freq2 = interval.freq2;
-            this.vol = interval.vol;
-            this.upward = interval.isUpward;
+            this.earcon = earcon;
         }
 
         /**

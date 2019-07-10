@@ -4,7 +4,7 @@ package ca.usask.cs.tonesetandroid;
  * A class representing an "earcon" at a certain volume. It is up to the programmer to ensure that frequency and
  * direction match up with the .wav file with the given audioResourceID
  */
-public class Earcon {
+public class Earcon implements Cloneable {
 
     // to indicate the direction of the notes in the earcon
     public static final int DIRECTION_UP = 1;
@@ -65,5 +65,21 @@ public class Earcon {
 
     public float getFrequency() {
         return frequency;
+    }
+
+    @Override
+    public Earcon clone() {
+        try {
+            return (Earcon) super.clone();
+        } catch (CloneNotSupportedException e) {
+            return new Earcon(this.frequency, this.audioResourceID, this.volume, this.direction);
+        }
+    }
+
+    public boolean equals(Earcon other) {
+        return      this.direction == other.direction
+                &&  this.frequency == other.frequency
+                &&  this.volume == other.volume
+                &&  this.audioResourceID == other.audioResourceID;
     }
 }

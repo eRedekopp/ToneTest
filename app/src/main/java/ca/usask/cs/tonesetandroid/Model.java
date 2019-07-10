@@ -70,7 +70,7 @@ public class Model {
 
     /////////////// vars/values for confidence test ///////////////
     static final int CONF_NUMBER_OF_TRIALS_PER_INTERVAL = 3;
-    ArrayList<Interval> confidenceTestIntervals;  // freq-vol pairs to be tested in the next confidence test
+    ArrayList<Earcon> confidenceTestEarcons;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
     public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 4 octaves of A
@@ -100,7 +100,7 @@ public class Model {
         this.bottomVolEstimates = new ArrayList<>();
         this.currentVolumes = new ArrayList<>();
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
-        this.confidenceTestIntervals = new ArrayList<>();
+        this.confidenceTestEarcons = new ArrayList<>();
         this.analysisResults = new ArrayList<>();
         this.testIntervals = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
@@ -185,6 +185,7 @@ public class Model {
      * Populate model.confidenceTestIntervals with all freqvolpairs that will be tested in the next confidence test
      */
     public void configureConfidenceTestPairs() {
+        // todo
         ArrayList<Float> confFreqs = new ArrayList<>();
         for (float freq : CONF_FREQS) confFreqs.add(freq);
 
@@ -193,26 +194,26 @@ public class Model {
 
         // for each frequency, add a new fvp to confidenceTestIntervals with the frequency and a volume some percentage
         // of the way between completely inaudible and perfectly audible
-        float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
-        float jumpSize = 1.0f / CONF_FREQS.length;
-        for (Float freq : confFreqs) {
-            for (boolean b : new boolean[]{true, false}) {  // add both upward and downward for each
-                double volFloor = this.hearingTestResults.getVolFloorEstimateForInterval(freq, b);
-                double volCeiling = this.hearingTestResults.getVolCeilingEstimateForInterval(freq, b);
-                double testVol = volFloor + pct * (volCeiling - volFloor);
-                float freq2 = b ? freq * INTERVAL_FREQ_RATIO : freq / INTERVAL_FREQ_RATIO;
-                this.confidenceTestIntervals.add(new Interval(freq, freq2, testVol));
-                pct += jumpSize;
-            }
-        }
+//        float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
+//        float jumpSize = 1.0f / CONF_FREQS.length;
+//        for (Float freq : confFreqs) {
+//            for (boolean b : new boolean[]{true, false}) {  // add both upward and downward for each
+//                double volFloor = this.hearingTestResults.getVolFloorEstimateForInterval(freq, b);
+//                double volCeiling = this.hearingTestResults.getVolCeilingEstimateForInterval(freq, b);
+//                double testVol = volFloor + pct * (volCeiling - volFloor);
+//                float freq2 = b ? freq * INTERVAL_FREQ_RATIO : freq / INTERVAL_FREQ_RATIO;
+//                this.confidenceTestEarcons.add(new Interval(freq, freq2, testVol));
+//                pct += jumpSize;
+//            }
+//        }
 
-        // prepare list of all trials
-        ArrayList<Interval> allTrials = new ArrayList<>();
-        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_INTERVAL; i++) {
-            allTrials.addAll(this.confidenceTestIntervals);
-        }
-        Collections.shuffle(allTrials);
-        this.confidenceTestIntervals = allTrials;
+//        // prepare list of all trials
+//        ArrayList<Earcon> allTrials = new ArrayList<>();
+//        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_INTERVAL; i++) {
+//            allTrials.addAll(this.confidenceTestEarcons);
+//        }
+//        Collections.shuffle(allTrials);
+//        this.confidenceTestEarcons = allTrials;
     }
 
     /**
@@ -225,10 +226,10 @@ public class Model {
     public void analyzeConfidenceResults(float[] subset) throws IllegalStateException, IllegalArgumentException {
         if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
         this.analysisResults = new ArrayList<>();
-        for (Interval interval : this.confidenceTestResults.getTestedIntervals())
+        for (Earcon earcon : this.confidenceTestResults.getTestedEarcons())
             this.analysisResults.add(
                     this.confidenceTestResults.performAnalysis(
-                            interval, this.getProbabilityForInterval(interval, subset)));
+                            earcon, this.getProbabilityForEarcon(earcon, subset)));
     }
 
     /**
@@ -239,13 +240,19 @@ public class Model {
      * @return The probability of the given freq-vol pair being heard given the calibration results
      * @throws IllegalStateException If there are no calibration results stored in the model
      */
-    public float getProbabilityForInterval(Interval interval) throws IllegalStateException {
-        if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
-        return this.hearingTestResults.getProbOfCorrectAnswer(interval);
+    public float getProbabilityForEarcon(Earcon earcon) throws IllegalStateException {
+        return this.getProbabilityForEarcon(earcon, FREQUENCIES);
     }
 
-    public float getProbabilityForInterval(Interval interval, float[] subset) {
-        return this.hearingTestResults.getProbOfCorrectAnswer(interval.freq1, interval.isUpward, interval.vol, subset);
+    /**
+     * Same as other method except calculates probability as though only the frequencies in the given subset were tested
+     * @throws IllegalArgumentException if the given subset was not a subset of the tested frequencies
+     */
+    public float getProbabilityForEarcon(Earcon earcon, float[] subset)
+            throws IllegalStateException, IllegalArgumentException {
+        if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
+        return this.hearingTestResults.getProbOfCorrectAnswer(
+                earcon.frequency, earcon.direction, earcon.volume, subset);
     }
 
     /**
@@ -401,8 +408,8 @@ public class Model {
      * Accessor method to return the confidenceTest ArrayList
      * @return the confidence test array list
      */
-    public List<Interval> getConfidenceTestIntervals(){
-        return confidenceTestIntervals;
+    public List<Earcon> getConfidenceTestEarcons(){
+        return confidenceTestEarcons;
     }
 
     public void addSubscriber(ModelListener newSub) {

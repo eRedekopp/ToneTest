@@ -436,45 +436,48 @@ public class HearingTestController {
      * results in confidenceTestResults
      */
     private void mainConfTest() {
-        model.testThreadActive = true;
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // perform trials
-                    while (! model.confidenceTestIntervals.isEmpty()) {
-                        if (model.testPaused()) return;
-                        Interval trial = model.confidenceTestIntervals.get(0);
-                        model.confidenceTestIntervals.remove(0);
-                        model.startAudio();
-                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-                            @Override
-                            public void run() {   // set iModel to notHeard on main thread
-                                iModel.notHeard();
-                            }
-                        });
-                        Log.i("confTest", "Testing interval: " + trial.toString());
-                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
-                        model.stopAudio();
-                        model.confidenceTestResults.addResult(trial, iModel.heard);
-                        try {  // sleep from 1 to 3 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 1000));
-                        } catch (InterruptedException e) { return; }
-                    }
 
-                    // finish / cleanup
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() { // run on main thread
-                            model.audioTrackCleanup();
-                            model.setTestPhase(Model.TEST_PHASE_NULL);
-                        }
-                    });
-                } finally {
-                    model.testThreadActive = false;
-                }
-            }
-        }).start();
+        // todo
+
+//        model.testThreadActive = true;
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    // perform trials
+//                    while (! model.confidenceTestIntervals.isEmpty()) {
+//                        if (model.testPaused()) return;
+//                        Interval trial = model.confidenceTestIntervals.get(0);
+//                        model.confidenceTestIntervals.remove(0);
+//                        model.startAudio();
+//                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+//                            @Override
+//                            public void run() {   // set iModel to notHeard on main thread
+//                                iModel.notHeard();
+//                            }
+//                        });
+//                        Log.i("confTest", "Testing interval: " + trial.toString());
+//                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
+//                        model.stopAudio();
+//                        model.confidenceTestResults.addResult(trial, iModel.heard);
+//                        try {  // sleep from 1 to 3 seconds
+//                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+//                        } catch (InterruptedException e) { return; }
+//                    }
+//
+//                    // finish / cleanup
+//                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+//                        @Override
+//                        public void run() { // run on main thread
+//                            model.audioTrackCleanup();
+//                            model.setTestPhase(Model.TEST_PHASE_NULL);
+//                        }
+//                    });
+//                } finally {
+//                    model.testThreadActive = false;
+//                }
+//            }
+//        }).start();
     }
 
     ///////////////////////////////////// methods for auto test ///////////////////////////////////////////////////////
