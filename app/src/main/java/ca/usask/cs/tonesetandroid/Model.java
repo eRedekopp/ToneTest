@@ -30,8 +30,8 @@ public class Model {
     /////////////// vars/values for hearing test ///////////////
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
-                                                        // reduction phase of the hearing test before the volume is
-                                                        // considered "inaudible"
+    // reduction phase of the hearing test before the volume is
+    // considered "inaudible"
     static final int NUMBER_OF_VOLS_PER_FREQ = 3;   // number of volumes to test for each frequency
     static final int NUMBER_OF_TESTS_PER_VOL = 3;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
@@ -44,13 +44,13 @@ public class Model {
     ArrayList<FreqVolPair> bottomVolEstimates;  // The rough estimates for volumes which have P(heard) = 0
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
     HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
-                                                    // (for finding bottom estimates)
-    ArrayList<Earcon> testEarcons;  // all the earcon-vol combinations to be tested in the main part of the test
+    // (for finding bottom estimates)
+    ArrayList<Interval> testIntervals;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer hearingTestResults;   // final results of test
     private boolean testPaused = false; // has the user paused the test?
     boolean testThreadActive = false; // is a thread currently performing a hearing test?
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
-                                                                                        // Audiology
+    // Audiology
     static final float INTERVAL_FREQ_RATIO = 1.25f; // 5:4 ratio = major third
 
 
@@ -83,7 +83,7 @@ public class Model {
             {200, 1000}
     };
     public static final int[] CONF_SAMP_SIZES = {1, 3, 5, 7, 8, 9, 10}; // alternate values of NUMBER_OF_TESTS_PER_VOL
-                                                                        // to be tested while analyzing data
+    // to be tested while analyzing data
 
     public Model() {
         buf = new byte[2];
@@ -102,7 +102,7 @@ public class Model {
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
         this.confidenceTestIntervals = new ArrayList<>();
         this.analysisResults = new ArrayList<>();
-        this.testEarcons = new ArrayList<>();
+        this.testIntervals = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
         this.confResultsSaved = false;
@@ -153,40 +153,23 @@ public class Model {
     /**
      * Set currentVolumes to contain all frequencies and volumes to be tested during the main stage of the hearing test
      */
-    public void configureTestEarcons() {
-
-        float[] testFreqs = {262f, 523f, 1046f, 1568f, 3136f};
-
-        for (float freq : testFreqs) {
+    public void configureTestIntervals() {
+        for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
             double topVolEst = getVolForFreq(topVolEstimates, freq);
             for (double vol = bottomVolEst;
-                vol < topVolEst;
-                vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
+                 vol < topVolEst;
+                 vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
 
-                testEarcons.add(        // add upward
-                        new Earcon(freq, getWavRawIDForFreq(freq, Earcon.DIRECTION_UP), vol, Earcon.DIRECTION_UP));
-                testEarcons.add(        // add downward
-                        new Earcon(freq, getWavRawIDForFreq(freq, Earcon.DIRECTION_DOWN), vol, Earcon.DIRECTION_DOWN));
+                testIntervals.add(new Interval(freq, freq * INTERVAL_FREQ_RATIO, vol)); // add upward interval
+                testIntervals.add(new Interval(freq, freq / INTERVAL_FREQ_RATIO, vol)); // add downward interval
             }
         }
         // fill testIntervals with one item for each individual interval that will be played in the test
-        ArrayList<Earcon> allTests = new ArrayList<>();
-        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(this.testEarcons);
-        this.testEarcons = allTests;
-        Collections.shuffle(this.testEarcons);
-    }
-
-    /**
-     * Given a frequency and direction, get the R.raw id of the audio file associated with that frequency and direction
-     *
-     * @param freq The base frequency of the earcon wav file to be found (ie. freq of the first note)
-     * @param direction An int indiating the direction of the requested earcon (use int Earcon.DIRECTION_*)
-     * @return The integer ID of the R.raw audio file associated with the frequency and direction
-     */
-    public static int getWavRawIDForFreq(float freq, int direction) {
-        // todo
-        return -1;
+        ArrayList<Interval> allTests = new ArrayList<>();
+        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(this.testIntervals);
+        this.testIntervals = allTests;
+        Collections.shuffle(this.testIntervals);
     }
 
     public void resetConfidenceResults() {
@@ -520,9 +503,9 @@ public class Model {
      */
     public void printResultsToConsole() {
         Log.i("printResultsToConsole", String.format("Subject ID: %d\nCalibration Background Noise Type: %s",
-                                    this.subjectId,
-                                    this.hearingTestResults.getNoiseType() == null ? "N/A" :  // show noise type if
-                                        this.hearingTestResults.getNoiseType().toString()));  // applicable
+                this.subjectId,
+                this.hearingTestResults.getNoiseType() == null ? "N/A" :  // show noise type if
+                        this.hearingTestResults.getNoiseType().toString()));  // applicable
         if (hearingTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", hearingTestResults.toString());
     }

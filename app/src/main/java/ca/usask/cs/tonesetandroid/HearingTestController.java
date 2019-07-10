@@ -197,7 +197,7 @@ public class HearingTestController {
                         @Override
                         public void run() {
                             model.bottomVolEstimates = (ArrayList<FreqVolPair>) model.currentVolumes.clone();
-                            model.configureTestEarcons();
+                            model.configureTestIntervals();
                             model.setTestPhase(Model.TEST_PHASE_MAIN);
                             // show information for next segment of test
                             view.showInformationDialog(intervalInfo);
@@ -231,7 +231,7 @@ public class HearingTestController {
                 mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
                         model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
             Log.i("reducePhase", iModel.heard ? "Tone Heard" : "Tone not heard");   // print message indicating whether
-                                                                                    // tone was heard
+            // tone was heard
 
             try {
                 Thread.sleep((long) (Math.random() * 2000 + 1000));
@@ -363,17 +363,17 @@ public class HearingTestController {
             @Override
             public void run() {
                 try {
-                    while (!model.testEarcons.isEmpty()) {
+                    while (!model.testIntervals.isEmpty()) {
                         if (model.testPaused()) return;
-                        Log.d("mainTest", model.testEarcons.toString());
-                        Earcon trial = model.testEarcons.get(0);
-                        model.testEarcons.remove(0);
+                        Log.d("mainTest", model.testIntervals.toString());
+                        Interval trial = model.testIntervals.get(0);
+                        model.testIntervals.remove(0);
                         model.startAudio();
                         Log.i("mainTest", "Testing " + trial.toString());
                         iModel.resetAnswer();
-                        playEarcon(trial);
-                        boolean correct = (iModel.getAnswer() > 0 && trial.direction == Earcon.DIRECTION_UP)
-                                          || (iModel.getAnswer() < 0 && trial.direction == Earcon.DIRECTION_DOWN);
+                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
+                        boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)
+                                || (iModel.getAnswer() < 0 && ! trial.isUpward);
                         model.hearingTestResults.addResult(trial, correct);
                         Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly"); // log answer
 
@@ -592,10 +592,6 @@ public class HearingTestController {
 
     public void setNoiseController(BackgroundNoiseController noiseController) {
         this.noiseController = noiseController;
-    }
-
-    public void setContext(Context context) {
-        this.context = context;
     }
 
     /**
