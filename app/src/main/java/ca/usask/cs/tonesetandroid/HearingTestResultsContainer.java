@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-
 public class HearingTestResultsContainer {
 
     // Keyed by Interval.freq
@@ -226,11 +224,19 @@ public class HearingTestResultsContainer {
      * starting frequency and direction
      *
      * @param freq The frequency whose volume floor is to be estimated
-     * @param upward Is the interval upward?
+     * @param direction An int indicating the direction of the Earcon (Earcon.DIRECTION_*)
      * @return An estimate of the volume floor for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolFloorEstimateForInterval(float freq, boolean upward) {
+    public double getVolFloorEstimateForEarcon(float freq, int direction) {
+
+        if (direction == Earcon.DIRECTION_NONE)
+            return (getVolFloorEstimateForEarcon(freq, Earcon.DIRECTION_UP)       // return average of up and down if
+                    + getVolFloorEstimateForEarcon(freq, Earcon.DIRECTION_DOWN))  // no direction
+                    / 2;
+
+        boolean upward = direction == Earcon.DIRECTION_UP;
+
         HashMap<Float, HearingTestSingleIntervalResult> resultMap =
                 upward ? this.allResultsUpward : allResultsDownward;
 
@@ -254,11 +260,18 @@ public class HearingTestResultsContainer {
      * the given frequency
      *
      * @param freq The starting frequency of the interval whose volume ceiling is to be estimated
-     * @param upward Is the interval upward?
+     * @param direction An int indicating the direction of the Earcon (Earcon.DIRECTION_*)
      * @return An estimate of the volume ceiling for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolCeilingEstimateForInterval(float freq, boolean upward) {
+    public double getVolCeilingEstimateForEarcon(float freq, int direction) {
+
+        if (direction == Earcon.DIRECTION_NONE)
+            return (getVolCeilingEstimateForEarcon(freq, Earcon.DIRECTION_UP)      // return average of up and down if
+                    + getVolCeilingEstimateForEarcon(freq, Earcon.DIRECTION_DOWN)) // no direction
+                    / 2;
+
+        boolean upward = direction == Earcon.DIRECTION_UP;
         HashMap<Float, HearingTestSingleIntervalResult> resultMap =
                 upward ? this.allResultsUpward : allResultsDownward;
 

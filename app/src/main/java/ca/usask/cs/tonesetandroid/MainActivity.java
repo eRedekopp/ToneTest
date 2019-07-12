@@ -206,6 +206,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 //            }
 //        });
 
+        // todo set confidence interface up for earcon test
+
         // configure audio
         model.setAudioManager((AudioManager) this.getSystemService(Context.AUDIO_SERVICE));
         model.setUpLineOut();

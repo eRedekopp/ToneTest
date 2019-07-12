@@ -10,6 +10,7 @@ import android.os.Build;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -69,19 +70,11 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     /////////////// vars/values for confidence test ///////////////
-    static final int CONF_NUMBER_OF_TRIALS_PER_INTERVAL = 3;
+    static final int CONF_NUMBER_OF_TRIALS_PER_EARCON = 3;
     ArrayList<Earcon> confidenceTestEarcons;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
-    public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 4 octaves of A
-    public static final float[][] CONF_SUBSETS = {  // subsets of hearing test frequencies to test against conf results
-            FREQUENCIES,
-            {200, 1000, 4000},
-            {500, 1000, 2000},
-            {500, 2000},
-            {1000, 4000},
-            {200, 1000}
-    };
+
     public static final int[] CONF_SAMP_SIZES = {1, 3, 5, 7, 8, 9, 10}; // alternate values of NUMBER_OF_TESTS_PER_VOL
     // to be tested while analyzing data
 
@@ -184,40 +177,70 @@ public class Model {
     /**
      * Populate model.confidenceTestIntervals with all freqvolpairs that will be tested in the next confidence test
      */
+    @SuppressWarnings("ConstantConditions")
     public void configureConfidenceTestPairs() {
-        // todo
-        ArrayList<Float> confFreqs = new ArrayList<>();
-        for (float freq : CONF_FREQS) confFreqs.add(freq);
+
+       ///////////////////////////////////////////////////
+       ////// Earcon selection gets adjusted here ////////
+       ///////////////////////////////////////////////////
+
+        // select frequencies / build maps
+        Float[] confFreqs = {523f, 1046f, 2093f, 3136f};
+        ArrayList<Float> freqList = new ArrayList<>(Arrays.asList(confFreqs));
+        HashMap<Float, Integer> earconsUp   = new HashMap<>(),          // set resource IDs for each earcon
+                                earconsDown = new HashMap<>(),
+                                earconsFlat = new HashMap<>();
+        earconsUp.put(523f, R.raw.ec523hzmaritriadupshort);
+        earconsUp.put(1046f, R.raw.ec1046hzmaritriadupshort);
+        earconsUp.put(2093f, R.raw.ec2093hzmaritriadupshort);
+        earconsUp.put(3136f, R.raw.ec3136hzmaritriadupshort);
+        earconsDown.put(523f, R.raw.ec523hzmaritriaddownshort);
+        earconsDown.put(1046f, R.raw.ec1046hzmaritriaddownshort);
+        earconsDown.put(2093f, R.raw.ec2093hzmaritriaddownshort);
+        earconsDown.put(3136f, R.raw.ec3136hzmaritriaddownshort);
+        earconsFlat.put(523f, R.raw.ec523hzclavneg);
+        earconsFlat.put(1046f, R.raw.ec1046hzclavneg);
+        earconsFlat.put(2093f, R.raw.ec2093hzclavneg);
+        earconsFlat.put(3136f, R.raw.ec3136hzclavneg);
 
         // randomize the order of test frequencies
-        Collections.shuffle(confFreqs);
+        Collections.shuffle(freqList);
 
-        // for each frequency, add a new fvp to confidenceTestIntervals with the frequency and a volume some percentage
-        // of the way between completely inaudible and perfectly audible
-//        float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
-//        float jumpSize = 1.0f / CONF_FREQS.length;
-//        for (Float freq : confFreqs) {
-//            for (boolean b : new boolean[]{true, false}) {  // add both upward and downward for each
-//                double volFloor = this.hearingTestResults.getVolFloorEstimateForInterval(freq, b);
-//                double volCeiling = this.hearingTestResults.getVolCeilingEstimateForInterval(freq, b);
-//                double testVol = volFloor + pct * (volCeiling - volFloor);
-//                float freq2 = b ? freq * INTERVAL_FREQ_RATIO : freq / INTERVAL_FREQ_RATIO;
-//                this.confidenceTestEarcons.add(new Interval(freq, freq2, testVol));
-//                pct += jumpSize;
-//            }
-//        }
+        // for each frequency, add an upward, downward, and flat earcon at a volume some percentage of the way
+        // between estimates for "completely inaudible" and "completely audible" volumes.
+        float pct = 0;  // percentage of the way between volFloor and volCeiling at which trial should be conducted
+        float jumpSize = 1f / 4f;   // 4 = number of earcon frequencies tested
+        for (Float f : freqList) {
+            // upward
+            double volFloor   = this.hearingTestResults.getVolFloorEstimateForEarcon(f, Earcon.DIRECTION_UP);
+            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(f, Earcon.DIRECTION_UP);
+            double testVol = volFloor + pct * (volCeiling - volFloor);
+            this.confidenceTestEarcons.add(new Earcon(f, earconsUp.get(f), testVol, Earcon.DIRECTION_UP));
 
-//        // prepare list of all trials
-//        ArrayList<Earcon> allTrials = new ArrayList<>();
-//        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_INTERVAL; i++) {
-//            allTrials.addAll(this.confidenceTestEarcons);
-//        }
-//        Collections.shuffle(allTrials);
-//        this.confidenceTestEarcons = allTrials;
+            // downward
+            volFloor = this.hearingTestResults.getVolFloorEstimateForEarcon(f, Earcon.DIRECTION_DOWN);
+            volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(f, Earcon.DIRECTION_DOWN);
+            testVol = volFloor + pct * (volCeiling - volFloor);
+            this.confidenceTestEarcons.add(new Earcon(f, earconsDown.get(f), testVol, Earcon.DIRECTION_DOWN));
+
+            // flat
+            volFloor = this.hearingTestResults.getVolFloorEstimateForEarcon(f, Earcon.DIRECTION_NONE);
+            volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(f, Earcon.DIRECTION_NONE);
+            testVol = volFloor + pct * (volCeiling - volFloor);
+            this.confidenceTestEarcons.add(new Earcon(f, earconsFlat.get(f), testVol, Earcon.DIRECTION_NONE));
+
+            pct += jumpSize;
+        }
+
+        // populate list of all trials
+        ArrayList<Earcon> allTrials = new ArrayList<>();
+        for (int i = 0; i < CONF_NUMBER_OF_TRIALS_PER_EARCON; i++) allTrials.addAll(this.confidenceTestEarcons);
+        Collections.shuffle(allTrials);
+        this.confidenceTestEarcons = allTrials;
     }
 
     /**
-     * Populate this.analysisResults using estimates generated based on the given subset of the tested volumes
+     * Populate this.analysisResults using estimates generated based on the given subset of the tested freqs
      *
      * @param subset The subset of the tested frequencies to be used to generate estimates
      * @throws IllegalStateException If no confidence results are stored in the model
@@ -230,6 +253,15 @@ public class Model {
             this.analysisResults.add(
                     this.confidenceTestResults.performAnalysis(
                             earcon, this.getProbabilityForEarcon(earcon, subset)));
+    }
+
+    /**
+     * Populate this.analysisResults using estimates generated based on all frequencies tested in calibration test
+     *
+     * @throws IllegalStateException If no confidence results are stored in the model
+     */
+    public void analyzeConfidenceResults() throws IllegalStateException {
+        analyzeConfidenceResults(FREQUENCIES);
     }
 
     /**

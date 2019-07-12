@@ -119,6 +119,10 @@ public class HearingTestController {
     }
 
     private void playEarcon(Earcon earcon) {
+
+        Log.d("playEarcon", "this.context == null ? " + Boolean.toString(this.context == null));
+        // todo dies here
+
         InputStream rawPCM = this.context.getResources().openRawResource(earcon.audioResourceID);
         try {
             while (rawPCM.available() > 0) {
@@ -139,6 +143,9 @@ public class HearingTestController {
      * @author redekopp
      */
     public void hearingTest() {
+
+        // todo downward intervals count as "correct" if no answer given
+
         // Algorithm:
         //      1 Get estimates for volumes at which the listener will hear the tone 100% of the time for each frequency
         //          - Use RampTest because it tends to overshoot anyway
@@ -437,47 +444,45 @@ public class HearingTestController {
      */
     private void mainConfTest() {
 
-        // todo
+        model.testThreadActive = true;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    // perform trials
+                    while (! model.confidenceTestEarcons.isEmpty()) {
+                        if (model.testPaused()) return;
+                        Earcon trial = model.confidenceTestEarcons.get(0);
+                        model.confidenceTestEarcons.remove(0);
+                        model.startAudio();
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {   // set iModel to notHeard on main thread
+                                iModel.notHeard();
+                            }
+                        });
+                        Log.i("confTest", "Testing Earcon: " + trial.toString());
+                        playEarcon(trial);
+                        model.stopAudio();
+                        model.confidenceTestResults.addResult(trial, trial.direction == iModel.getAnswer());
+                        try {  // sleep from 1 to 3 seconds
+                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+                        } catch (InterruptedException e) { return; }
+                    }
 
-//        model.testThreadActive = true;
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    // perform trials
-//                    while (! model.confidenceTestIntervals.isEmpty()) {
-//                        if (model.testPaused()) return;
-//                        Interval trial = model.confidenceTestIntervals.get(0);
-//                        model.confidenceTestIntervals.remove(0);
-//                        model.startAudio();
-//                        new Handler(Looper.getMainLooper()).post(new Runnable() {
-//                            @Override
-//                            public void run() {   // set iModel to notHeard on main thread
-//                                iModel.notHeard();
-//                            }
-//                        });
-//                        Log.i("confTest", "Testing interval: " + trial.toString());
-//                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
-//                        model.stopAudio();
-//                        model.confidenceTestResults.addResult(trial, iModel.heard);
-//                        try {  // sleep from 1 to 3 seconds
-//                            Thread.sleep((long) (Math.random() * 2000 + 1000));
-//                        } catch (InterruptedException e) { return; }
-//                    }
-//
-//                    // finish / cleanup
-//                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-//                        @Override
-//                        public void run() { // run on main thread
-//                            model.audioTrackCleanup();
-//                            model.setTestPhase(Model.TEST_PHASE_NULL);
-//                        }
-//                    });
-//                } finally {
-//                    model.testThreadActive = false;
-//                }
-//            }
-//        }).start();
+                    // finish / cleanup
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
+                        @Override
+                        public void run() { // run on main thread
+                            model.audioTrackCleanup();
+                            model.setTestPhase(Model.TEST_PHASE_NULL);
+                        }
+                    });
+                } finally {
+                    model.testThreadActive = false;
+                }
+            }
+        }).start();
     }
 
     ///////////////////////////////////// methods for auto test ///////////////////////////////////////////////////////
@@ -570,11 +575,15 @@ public class HearingTestController {
     }
 
     public void handleUpClick() {
-        this.iModel.setAnswer(true);
+        this.iModel.setAnswer(Earcon.DIRECTION_UP);
     }
 
     public void handleDownClick() {
-        this.iModel.setAnswer(false);
+        this.iModel.setAnswer(Earcon.DIRECTION_DOWN);
+    }
+
+    public void handleFlatClick() {
+        this.iModel.setAnswer(Earcon.DIRECTION_NONE);
     }
 
     public void handleHeardClick() {

@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.support.annotation.NonNull;
+
 /**
  * A class representing an "earcon" at a certain volume. It is up to the programmer to ensure that frequency and
  * direction match up with the .wav file with the given audioResourceID
@@ -76,10 +78,26 @@ public class Earcon implements Cloneable {
         }
     }
 
+    @Override
+    @NonNull
+    public String toString() {
+        return String.format("Freq: %.1f, Volume: %.1f, Direction: %s",
+                this.frequency, this.volume, this.getDirectionAsString());
+    }
+
     public boolean equals(Earcon other) {
         return      this.direction == other.direction
                 &&  this.frequency == other.frequency
                 &&  this.volume == other.volume
                 &&  this.audioResourceID == other.audioResourceID;
+    }
+
+    public String getDirectionAsString() {
+        switch (direction) {
+            case DIRECTION_DOWN: return "down";
+            case DIRECTION_UP: return "up";
+            case DIRECTION_NONE: return "flat";
+            default: throw new IllegalStateException("Earcon has unexpected direction : " + direction);
+        }
     }
 }

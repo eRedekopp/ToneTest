@@ -11,11 +11,9 @@ public class HearingTestInteractionModel {
 
     boolean heard; // Has the tone been heard?
 
-    private int answer = ANSWER_NONE;
+    private static final int ANSWER_NULL = -100;
 
-    private static final int ANSWER_UP = 1;     // indicate how the user answered
-    private static final int ANSWER_DOWN = -1;
-    private static final int ANSWER_NONE = 0;
+    private int answer = ANSWER_NULL;
 
     private ArrayList<ModelListener> subscribers;
 
@@ -43,24 +41,25 @@ public class HearingTestInteractionModel {
         notifySubscribers();
     }
 
-    public void setAnswer(boolean answeredUp) {
-        if (answeredUp) this.answer = ANSWER_UP;
-        else this.answer = ANSWER_DOWN;
+    public void setAnswer(int directionAnswered) {
+        this.answer = directionAnswered;
     }
 
     public void resetAnswer() {
-        this.answer = ANSWER_NONE;
+        this.answer = ANSWER_NULL;
     }
 
     /**
-     * @return > 0 if answered up, 0 if no answer, < 0 if answered down
+     * @return An integer indicating the direction that the user answered (Earcon.DIRECTION_*), or
+     * HearingTestInteractionModel.ANSWER_NULL if user did not answer (ANSWER_NULL guaranteed to not be equal to an
+     * Earcon direction)
      */
     public int getAnswer() {
         return this.answer;
     }
 
     public boolean answered() {
-        return this.answer != ANSWER_NONE;
+        return this.answer != ANSWER_NULL;
     }
 
     /**
