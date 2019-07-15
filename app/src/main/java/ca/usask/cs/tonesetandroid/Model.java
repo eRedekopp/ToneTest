@@ -70,7 +70,7 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     /////////////// vars/values for confidence test ///////////////
-    static final int CONF_NUMBER_OF_TRIALS_PER_EARCON = 3;
+    static final int CONF_NUMBER_OF_TRIALS_PER_EARCON = 2;
     ArrayList<Earcon> confidenceTestEarcons;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
@@ -183,8 +183,6 @@ public class Model {
        ///////////////////////////////////////////////////
        ////// Earcon selection gets adjusted here ////////
        ///////////////////////////////////////////////////
-
-        // todo adjust sample rates
 
         // select frequencies / build maps
         Float[] confFreqs = {523f, 1046f, 2093f, 3136f};

@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     Button  calibButton,
             upButton,
             downButton,
+            flatButton,
             heardButton,
             saveCalibButton,
             saveConfButton,
@@ -97,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         calibButton =       findViewById(R.id.calibButton);
         downButton =        findViewById(R.id.downButton);
         upButton =          findViewById(R.id.upButton);
+        flatButton =        findViewById(R.id.flatButton);
         heardButton =       findViewById(R.id.heardButton);
         saveCalibButton =   findViewById(R.id.saveCalibButton);
         saveConfButton =    findViewById(R.id.saveConfButton);
@@ -130,6 +132,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void onClick(View v) {
                 controller.handleDownClick();
+            }
+        });
+        flatButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                controller.handleFlatClick();
             }
         });
         heardButton.setOnClickListener(new View.OnClickListener() {
@@ -209,8 +217,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 //            }
 //        });
 
-        // todo set confidence interface up for earcon test
-
         // configure audio
         model.setAudioManager((AudioManager) this.getSystemService(Context.AUDIO_SERVICE));
         model.setUpLineOut();
@@ -234,6 +240,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     upButton.setEnabled(false);
                     downButton.setVisibility(View.GONE);
                     downButton.setEnabled(false);
+                    flatButton.setVisibility(View.GONE);
+                    flatButton.setEnabled(false);
                 } else {
                     heardButton.setVisibility(View.GONE);
                     heardButton.setEnabled(false);
@@ -241,6 +249,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     upButton.setEnabled(model.testing() && ! model.testPaused());
                     downButton.setVisibility(View.VISIBLE);
                     downButton.setEnabled(model.testing() && ! model.testPaused());
+                    flatButton.setVisibility(View.VISIBLE);
+                    flatButton.setEnabled(model.testing() && ! model.testPaused()
+                                        && model.getTestPhase() == Model.TEST_PHASE_CONF);
                 }
 
                 calibButton.setEnabled(!model.testing());

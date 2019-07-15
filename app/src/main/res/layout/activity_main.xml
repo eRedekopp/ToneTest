@@ -20,14 +20,14 @@
 
     <Button
         android:id="@+id/downButton"
-        android:layout_width="130dp"
+        android:layout_width="85dp"
         android:layout_height="60dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="36dp"
         android:layout_marginEnd="68dp"
         android:soundEffectsEnabled="false"
         android:text="Down ↓"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toEndOf="@+id/upButton"
         app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
 
@@ -93,14 +93,12 @@
 
     <Button
         android:id="@+id/upButton"
-        android:layout_width="130dp"
+        android:layout_width="85dp"
         android:layout_height="60dp"
         android:layout_marginStart="68dp"
-        android:layout_marginTop="24dp"
-        android:text="Up ↑"
+        android:layout_marginTop="36dp"
         android:soundEffectsEnabled="false"
-        app:layout_constraintEnd_toStartOf="@+id/downButton"
-        app:layout_constraintHorizontal_bias="0.5"
+        android:text="Up ↑"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
 
@@ -109,13 +107,25 @@
         android:layout_width="275dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="296dp"
         android:layout_marginEnd="8dp"
-        android:text="Heard Tone"
         android:soundEffectsEnabled="false"
+        android:text="Heard Tone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/confidenceButton"
         tools:visibility="visible" />
+
+    <Button
+        android:id="@+id/flatButton"
+        android:layout_width="85dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="36dp"
+        android:layout_marginEnd="8dp"
+        android:text="Flat"
+        app:layout_constraintEnd_toStartOf="@+id/downButton"
+        app:layout_constraintStart_toEndOf="@+id/upButton"
+        app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
 
 </android.support.constraint.ConstraintLayout>

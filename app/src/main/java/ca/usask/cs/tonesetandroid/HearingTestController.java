@@ -51,6 +51,11 @@ public class HearingTestController {
             "Please press the \"Up\" button if the second tone was higher than the first tone, press the \"Down\" " +
             "button if the second tone was lower than the first tone, or do nothing if you couldn't tell";
 
+    private static final String earconInfo =
+            "In this test, notification sounds will be played at various volumes at random times. Please press the " +
+            "\"Up\" button if the notification moved upward, \"Down\" if the notification moved downward, and " +
+            "\"Flat\" if the pitch did not change";
+
     /**
      * Checks if a test phase is supposed to be started or resumed, then starts a test on a new thread if it is
      */
@@ -119,6 +124,8 @@ public class HearingTestController {
     }
 
     private void playEarcon(Earcon earcon) {
+
+        // todo make sure this plays at same volume as sine
 
         InputStream rawPCM = this.context.getResources().openRawResource(earcon.audioResourceID);
         try {
@@ -426,7 +433,7 @@ public class HearingTestController {
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_CONF);
                             noiseController.playNoise(model.confidenceTestResults.getNoiseType());
-                            view.showInformationDialog(mainInfo);
+                            view.showInformationDialog(earconInfo);
                         }
                     });
                 } finally { model.testThreadActive = false; }
@@ -439,6 +446,8 @@ public class HearingTestController {
      * results in confidenceTestResults
      */
     private void mainConfTest() {
+
+        // todo give more time for user to enter response
 
         model.testThreadActive = true;
         new Thread(new Runnable() {
@@ -461,8 +470,10 @@ public class HearingTestController {
                         playEarcon(trial);
                         model.stopAudio();
                         model.confidenceTestResults.addResult(trial, trial.direction == iModel.getAnswer());
-                        try {  // sleep from 1 to 3 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+                        Log.i("confTest", trial.direction == iModel.getAnswer() ? "Answered Correctly"
+                                                                                : "Answered Incorrectly");
+                        try {  // sleep from 2 to 4 seconds
+                            Thread.sleep((long) (Math.random() * 2000 + 2000));
                         } catch (InterruptedException e) { return; }
                     }
 
