@@ -120,9 +120,6 @@ public class HearingTestController {
 
     private void playEarcon(Earcon earcon) {
 
-        Log.d("playEarcon", "this.context == null ? " + Boolean.toString(this.context == null));
-        // todo dies here (updated context stuff - test if it worked)
-
         InputStream rawPCM = this.context.getResources().openRawResource(earcon.audioResourceID);
         try {
             while (rawPCM.available() > 0) {

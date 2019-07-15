@@ -60,7 +60,7 @@ public class FileNameController {
             if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
             HearingTestResultsContainer results = model.getHearingTestResults();
-            out.write(String.format("ParticipantID %d NoiseType %s",
+            out.write(String.format("ParticipantID %d NoiseType %s\n",
                       model.getSubjectId(), results.getNoiseType().toString()));
             out.write("Freq1(Hz),Direction,Volume,nCorr,nIncorr\n");
             for (HearingTestResultsContainer.HearingTestSingleIntervalResult htsr : results.getAllResults()) {
@@ -375,66 +375,65 @@ public class FileNameController {
      * @param model The model to be initialized from the file
      */
     public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
-//        File file = new File(filePath);
-//        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
-//
-//        Scanner scanner;
-//        try {
-//            scanner = new Scanner(file);
-//        } catch (FileNotFoundException e) {
-//            Log.e("initializeModel", "Error: file not found");
-//            e.printStackTrace();
-//            return;
-//        }
-//
-//        HearingTestResultsContainer results = new HearingTestResultsContainer();
-//
-//        // parse test information
-//        scanner.useDelimiter(Pattern.compile("\\s"));
-//
-//        scanner.next(); scanner.next();  // skip participant id (already entered in InitActivity)
-//        scanner.next();  // skip noise type label
-//        String noiseType = scanner.next();
-//        int noiseVol = scanner.nextInt();
-//        results.setNoiseType(new BackgroundNoiseType(noiseType, noiseVol));
-//
-//        scanner.nextLine();  // clear rest of line
-//        scanner.nextLine();  // skip header
-//
-//        scanner.useDelimiter(",");
-//
-//        try {
-//            while (scanner.hasNext()) {
-//                double nextFreq = scanner.nextDouble();
-//                String nextDir  = scanner.next();
-//                double nextVol  = scanner.nextDouble();
-//                int nextCorr    = scanner.nextInt();
-//                int nextIncorr  = scanner.nextInt();
-//                for (int i = 0; i < nextCorr; i++)
-//                    results.addResult(new Interval(
-//                            (float) nextFreq,
-//                            nextDir.equals("Up") ? (float) nextFreq * Model.INTERVAL_FREQ_RATIO
-//                                                 : (float) nextFreq / Model.INTERVAL_FREQ_RATIO,
-//                            nextVol),
-//                            true);
-//                for (int i = 0; i < nextIncorr; i++)
-//                    results.addResult(new Interval(
-//                            (float) nextFreq,
-//                            nextDir.equals("Up") ? (float) nextFreq * Model.INTERVAL_FREQ_RATIO
-//                                                 : (float) nextFreq / Model.INTERVAL_FREQ_RATIO,
-//                            nextVol),
-//                            false);
-//                if (scanner.hasNextLine()) scanner.nextLine();
-//            }
-//            model.hearingTestResults = results;
-//        } catch (NoSuchElementException e) {
-//            Log.e("InitializeModel", "Error reading file: EOF reached before input finished");
-//            e.printStackTrace();
-//        } catch (RuntimeException e) {
-//            Log.e("InitializeModel", "Unknown error while reading file");
-//            e.printStackTrace();
-//        } finally { scanner.close(); }
-        Log.e("initializeModel", "File input not yet supported");
-        // todo make this work
+
+        File file = new File(filePath);
+        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
+
+        Scanner scanner;
+        try {
+            scanner = new Scanner(file);
+        } catch (FileNotFoundException e) {
+            Log.e("initializeModel", "Error: file not found");
+            e.printStackTrace();
+            return;
+        }
+
+        HearingTestResultsContainer results = new HearingTestResultsContainer();
+
+        // parse test information
+        scanner.useDelimiter(Pattern.compile("\\s"));
+
+        scanner.next(); scanner.next();  // skip participant id (already entered in InitActivity)
+        scanner.next();  // skip noise type label
+        String noiseType = scanner.next();
+        int noiseVol = scanner.nextInt();
+        results.setNoiseType(new BackgroundNoiseType(noiseType, noiseVol));
+
+        scanner.nextLine();  // clear rest of line
+        scanner.nextLine();  // skip header
+
+        scanner.useDelimiter(",");
+
+        try {
+            while (scanner.hasNext()) {
+                double nextFreq = scanner.nextDouble();
+                String nextDir  = scanner.next();
+                double nextVol  = scanner.nextDouble();
+                int nextCorr    = scanner.nextInt();
+                int nextIncorr  = scanner.nextInt();
+                for (int i = 0; i < nextCorr; i++)
+                    results.addResult(new Interval(
+                            (float) nextFreq,
+                            nextDir.equals("Up") ? (float) nextFreq * Model.INTERVAL_FREQ_RATIO
+                                                 : (float) nextFreq / Model.INTERVAL_FREQ_RATIO,
+                            nextVol),
+                            true);
+                for (int i = 0; i < nextIncorr; i++)
+                    results.addResult(new Interval(
+                            (float) nextFreq,
+                            nextDir.equals("Up") ? (float) nextFreq * Model.INTERVAL_FREQ_RATIO
+                                                 : (float) nextFreq / Model.INTERVAL_FREQ_RATIO,
+                            nextVol),
+                            false);
+                if (scanner.hasNextLine()) scanner.nextLine();
+            }
+            model.hearingTestResults = results;
+        } catch (NoSuchElementException e) {
+            Log.e("InitializeModel", "Error reading file: EOF reached before input finished");
+            e.printStackTrace();
+        } catch (RuntimeException e) {
+            Log.e("InitializeModel", "Unknown error while reading file");
+            e.printStackTrace();
+        } finally { scanner.close(); }
     }
 }

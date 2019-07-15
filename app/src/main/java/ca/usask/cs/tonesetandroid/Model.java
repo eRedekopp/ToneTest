@@ -31,8 +31,8 @@ public class Model {
     /////////////// vars/values for hearing test ///////////////
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
-    // reduction phase of the hearing test before the volume is
-    // considered "inaudible"
+                                                        // reduction phase of the hearing test before the volume is
+                                                        // considered "inaudible"
     static final int NUMBER_OF_VOLS_PER_FREQ = 4;   // number of volumes to test for each frequency
     static final int NUMBER_OF_TESTS_PER_VOL = 4;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
@@ -183,6 +183,8 @@ public class Model {
        ///////////////////////////////////////////////////
        ////// Earcon selection gets adjusted here ////////
        ///////////////////////////////////////////////////
+
+        // todo adjust sample rates
 
         // select frequencies / build maps
         Float[] confFreqs = {523f, 1046f, 2093f, 3136f};
