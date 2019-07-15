@@ -45,7 +45,6 @@ public class FileNameController {
      * A method to write the results of the calibration test currently stored in the model to a file
      *
      * @param context The context of the calling thread (ie. MainActivity.this)
-     * @param noiseType A string representing the type of background noise in which the calibration was run
      * @throws IllegalStateException If there are no calibration test results stored in model
      */
     @SuppressWarnings("ConstantConditions")
