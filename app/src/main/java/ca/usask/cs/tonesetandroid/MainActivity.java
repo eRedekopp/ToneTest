@@ -38,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     HearingTestInteractionModel iModel;
     HearingTestController controller;
     FileNameController fileController;
+    BackgroundNoiseController noiseController;
 
     private int dialogSelectedItem;  // for selecting background noise configurations
     private int dialogNoiseID;
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.setController(newController);
         this.setModel(newModel);
         this.setIModel(newIModel);
+        this.setNoiseController(newNoiseController);
         this.model.addSubscriber(this);
         this.iModel.addSubscriber(this);
         this.controller.setModel(newModel);
@@ -88,7 +90,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.controller.setView(this);
         this.fileController.setModel(this.model);
         this.controller.setNoiseController(newNoiseController);
-        newNoiseController.setModel(this.model);
+        this.controller.setContext(this);
+        this.noiseController.setModel(this.model);
 
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
@@ -266,6 +269,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     public void setFileController(FileNameController fileController) {
         this.fileController = fileController;
+    }
+
+    public void setNoiseController(BackgroundNoiseController noiseController) {
+        this.noiseController = noiseController;
     }
 
     /**

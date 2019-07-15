@@ -121,7 +121,7 @@ public class HearingTestController {
     private void playEarcon(Earcon earcon) {
 
         Log.d("playEarcon", "this.context == null ? " + Boolean.toString(this.context == null));
-        // todo dies here
+        // todo dies here (updated context stuff - test if it worked)
 
         InputStream rawPCM = this.context.getResources().openRawResource(earcon.audioResourceID);
         try {
@@ -143,8 +143,6 @@ public class HearingTestController {
      * @author redekopp
      */
     public void hearingTest() {
-
-        // todo downward intervals count as "correct" if no answer given
 
         // Algorithm:
         //      1 Get estimates for volumes at which the listener will hear the tone 100% of the time for each frequency
@@ -379,10 +377,11 @@ public class HearingTestController {
                         Log.i("mainTest", "Testing " + trial.toString());
                         iModel.resetAnswer();
                         playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
-                        boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)
-                                || (iModel.getAnswer() < 0 && ! trial.isUpward);
+                        boolean correct = (iModel.getAnswer() == Earcon.DIRECTION_UP && trial.isUpward)
+                                       || (iModel.getAnswer() == Earcon.DIRECTION_DOWN && ! trial.isUpward);
                         model.hearingTestResults.addResult(trial, correct);
-                        Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly"); // log answer
+
+                        Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly");
 
                         model.stopAudio();
                         try {               // sleep for for random length 1-3 seconds
@@ -421,7 +420,7 @@ public class HearingTestController {
                     // configure model for test
                     model.configureAudio();
                     model.configureConfidenceTestPairs();
-
+                    model.setConfResultsSaved(false);
 
                     // show info dialog
                     model.setTestPaused(true);
@@ -604,6 +603,10 @@ public class HearingTestController {
 
     public void setNoiseController(BackgroundNoiseController noiseController) {
         this.noiseController = noiseController;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
     }
 
     /**
