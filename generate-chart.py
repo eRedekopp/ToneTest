@@ -1,8 +1,6 @@
 """
 A command line tool that takes a list of pathnames containing calibration data from tonesetandroid and generates
 a frequency response graph and sigmoid graphs for all files. Files must all have same participant ID
-
-NOTE: this version is intended to work with tonesetandroid version 1: the single pure-tone test
 """
 
 import sys
@@ -53,14 +51,15 @@ def generate_sig_graph(freq_results):
     noise_type = freq_results[1]
     pathname = freq_results[2][0:-4] # pathname minus '.csv'
     freq_results = freq_results[3].copy()
-    del freq_results[200]  # remove line for 200Hz because it looks awful
+    # del freq_results[200]  # remove line for 200Hz because it looks awful
 
     line_color_args = ["ro-", "yo-", "bo-", "go-", "mo-", "co-", "ko-"]  # arrange data
     freq_list = []
     x_data = []
     y_data = []
-    for freq in list(freq_results):
+    for freq in sorted(list(freq_results)):
         pairs = freq_results[freq]
+        pairs = sorted(pairs, key=lambda x : x[0])
         freq_list.append(freq)
         new_x_list = []
         new_y_list = []
@@ -89,12 +88,13 @@ def generate_sig_graph(freq_results):
 
 
 """
-Generate and save a graph containing the lowest volume with P(heard) >= 0.9 for each frequency in result, for each
-result in freq_results_list
+Generate and save a graph containing the lowest volume with P(heard) >= <some percentage> for each frequency in result,
+for each result in freq_results_list
 """
 def generate_res_graph(freq_results_list):
     x_data = []
     y_data = []
+    pct_lst = [0.5, 0.7, 0.8]
     noise_type_lst = []
     first_sub_id = freq_results_list[0][0]
     line_color_args = ["ro-", "bo-", "go-", "mo-", "yo-", "co-", "ko-"]
@@ -103,35 +103,36 @@ def generate_res_graph(freq_results_list):
         if freq_results[0] != first_sub_id:     # make sure all have same subject ID
             raise AssertionError
 
-        noise_type = freq_results[1]            # parse freq_results
-        freq_results = freq_results[3].copy()
-        if 200 in freq_results.keys():
-            del freq_results[200]  # remove point for 200Hz because it looks awful
+        for pct in pct_lst:
+            noise_type = freq_results[1]            # parse freq_results
+            freq_results_dict = freq_results[3].copy()
+            # if 200 in freq_results_dict.keys():
+            #     del freq_results_dict[200]  # remove point for 200Hz because it looks awful
 
-        min_vols = []                               # find minimum volume with P(heard) >= 0.8 for each frequency
-        for freq in sorted(freq_results.keys()):    # and update lists with data
-            min_vol = 100000000
-            fvp_list = freq_results[freq]
-            for fvp in fvp_list:
-                if fvp[1] >= 0.8 and fvp[0] < min_vol:
-                    min_vol = fvp[0]
-            if min_vol == 100000000:  # do not plot if no 80% volume found
-                continue
-            else:
-                min_vols.append((freq, min_vol))
-        x_data.append([tup[0] for tup in min_vols])
-        y_data.append([tup[1] for tup in min_vols])
-        noise_type_lst.append(noise_type)
+            min_vols = []                               # find minimum volume with P(heard) >= 0.8 for each frequency
+            for freq in sorted(freq_results_dict.keys()):    # and update lists with data
+                min_vol = 100000000
+                fvp_list = freq_results_dict[freq]
+                for fvp in fvp_list:
+                    if fvp[1] >= pct and fvp[0] < min_vol:
+                        min_vol = fvp[0]
+                if min_vol == 100000000:  # do not plot if no 80% volume found
+                    continue
+                else:
+                    min_vols.append((freq, min_vol))
+            x_data.append([tup[0] for tup in min_vols])
+            y_data.append([tup[1] for tup in min_vols])
+            noise_type_lst.append(noise_type + " " + str(pct * 100) + "%")
 
-    max_x = max([max(lst) for lst in x_data])   # aesthetics
-    max_y = max([max(lst) for lst in y_data])
+    max_x = max([max(lst) for lst in x_data if len(lst) > 0])   # aesthetics
+    max_y = max([max(lst) for lst in y_data if len(lst) > 0])
     x_ticks = np.arange(0, max_x + 100, 100)
     y_ticks = np.arange(0, max_y + 10, 10)
     plt.xticks(x_ticks)
     plt.yticks(y_ticks)
     plt.figure(figsize=(12, 8))
     plt.xlabel("Frequency (Hz)")
-    plt.ylabel("80% Volume")
+    plt.ylabel("Volume")
     plt.title("Participant " + str(first_sub_id) + " Frequency Response")
 
     for i in range(len(x_data)):                # plot line for each noise type
