@@ -3,12 +3,14 @@ package ca.usask.cs.tonesetandroid;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 import android.util.Log;
 
 import com.paramsen.noise.Noise;
 import com.paramsen.noise.NoiseOptimized;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -77,19 +79,26 @@ public class HearingTestController {
      * @param duration_ms The duration of the sine wave in milliseconds
      */
     private void playSine(float freq, double vol, int duration_ms) {
-        model.enforceMaxVolume();
-        model.startAudio();
-        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
-            if (iModel.heard) break;
+        AudioDataStats ads = new AudioDataStats();   // todo delet this
+        try {
+            model.enforceMaxVolume();
+            model.startAudio();
+            for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+                if (iModel.heard) break;
 
-            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
-            double angle = 2 * i / (period) * Math.PI;
-            short a = (short) (Math.sin(angle) * vol);
-            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
-            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
-            model.lineOut.write(model.buf, 0, 2);
+                float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
+                double angle = 2 * i / (period) * Math.PI;
+                short a = (short) (Math.sin(angle) * vol);
+                model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+                model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+                model.lineOut.write(model.buf, 0, 2);
+//                ads.addResult(a);  // todo delet this
+            }
+//            System.out.printf("Sine test: Mean: %.2f, AbsMean: %.2f, Max: %d, Min: %d, nSamples: %d\n",  // todo delet
+//                    ads.getMean(), ads.getAbsMean(), ads.getMax(), ads.getMin(), ads.getNumSamples());
+        } finally {
+            model.stopAudio();
         }
-        model.stopAudio();
     }
 
     /**
@@ -101,43 +110,95 @@ public class HearingTestController {
      * @param duration_ms The duration of both tones combined
      */
     private void playInterval(float freq1, float freq2, double vol, int duration_ms) {
-        model.enforceMaxVolume();
         model.startAudio();
-        duration_ms /= 2;  // halve tone duration so entire interval lasts duration_ms milliseconds
-        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
-            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq1;
-            double angle = 2 * i / (period) * Math.PI;
-            short a = (short) (Math.sin(angle) * vol);
-            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
-            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
-            model.lineOut.write(model.buf, 0, 2);
-        }
-        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
-            if (iModel.answered()) return;
-            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq2;
-            double angle = 2 * i / (period) * Math.PI;
-            short a = (short) (Math.sin(angle) * vol);
-            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
-            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
-            model.lineOut.write(model.buf, 0, 2);
+        try {
+            model.enforceMaxVolume();
+            duration_ms /= 2;  // halve tone duration so entire interval lasts duration_ms milliseconds
+            for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+                float period = (float) Model.OUTPUT_SAMPLE_RATE / freq1;
+                double angle = 2 * i / (period) * Math.PI;
+                short a = (short) (Math.sin(angle) * vol);
+                model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+                model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+                model.lineOut.write(model.buf, 0, 2);
+            }
+            for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+                if (iModel.answered()) return;
+                float period = (float) Model.OUTPUT_SAMPLE_RATE / freq2;
+                double angle = 2 * i / (period) * Math.PI;
+                short a = (short) (Math.sin(angle) * vol);
+                model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+                model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+                model.lineOut.write(model.buf, 0, 2);
+            }
+        } finally {
+            model.stopAudio();
         }
     }
 
     private void playEarcon(Earcon earcon) {
 
         // todo make sure this plays at same volume as sine
-
-        InputStream rawPCM = this.context.getResources().openRawResource(earcon.audioResourceID);
+        model.startAudio();
         try {
-            while (rawPCM.available() > 0) {
-                rawPCM.read(model.buf, 0, 2);
-                model.lineOut.write(model.buf, 0, 2);
+            InputStream rawPCM = this.context.getResources().openRawResource(earcon.audioResourceID);
+
+            AudioDataStats ads = new AudioDataStats();  // todo delet this
+
+            try {
+                while (rawPCM.available() > 0) {
+                    rawPCM.read(model.buf, 0, 2);       // read data from stream
+
+                    byte b = model.buf[0];              // convert to big-endian
+                    model.buf[0] = model.buf[1];
+                    model.buf[1] = b;
+
+                    short sample = ByteBuffer.wrap(model.buf).getShort();           // convert to short
+                    double amplitude = (double) sample / (double) Short.MIN_VALUE;
+                    sample = (short) (amplitude * earcon.volume);                   // convert to same vol scale as
+                                                                                    // sines
+
+//                    ads.addResult(sample);      // todo delet this
+
+                    model.lineOut.write(new short[]{sample}, 0, 1);                 // write sample to line out
+
+                }
+            } catch (IOException e) {
+                Log.e("playEarcon", "Error playing earcon file");
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            Log.e("playEarcon", "Error playing earcon file");
-            e.printStackTrace();
+
+//            System.out.printf("Earcon test: Mean: %.2f, AbsMean: %.2f, Max: %d, Min: %d, nSamples: %d\n", // todo
+//                    ads.getMean(), ads.getAbsMean(), ads.getMax(), ads.getMin(), ads.getNumSamples());    // delet
+
+        } finally {
+            model.stopAudio();
         }
     }
+
+//    /**
+//     * For testing: Play a an earcon and a sine wave of the same volume
+//     */
+//    public void testVolume() {
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                Log.d("testVolume", "Playing sine");
+//                model.startAudio();
+//                playSine(1046, 200, 800);
+//                model.stopAudio();
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                Log.d("testVolume", "Playing earcon");
+//                model.startAudio();
+//                playEarcon(new Earcon(1046, R.raw.ec1046hzmaritriadupshort, 200, Earcon.DIRECTION_UP));
+//                model.stopAudio();
+//            }
+//        }).start();
+//    }
 
     /////////////////////////////////////// Methods for hearing test //////////////////////////////////////////////////
 

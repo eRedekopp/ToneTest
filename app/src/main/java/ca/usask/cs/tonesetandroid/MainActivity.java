@@ -335,6 +335,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             }
         model.printResultsToConsole();
         this.modelChanged();
+//        controller.testVolume();
     }
 
     @Override
