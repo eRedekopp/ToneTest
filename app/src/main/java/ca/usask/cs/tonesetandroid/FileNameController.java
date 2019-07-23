@@ -429,6 +429,9 @@ public class FileNameController {
                             nextVol),
                             false);
                 if (scanner.hasNextLine()) scanner.nextLine();
+
+                // disallow duplicate saves
+                model.setResultsSaved(true);
             }
             model.hearingTestResults = results;
         } catch (NoSuchElementException e) {
