@@ -403,6 +403,9 @@ public class FileNameController {
         // parse test information
         scanner.useDelimiter(",");
 
+        // disallow double-saving
+        model.setResultsSaved(true);
+
         try {
             while (scanner.hasNext()) {
                 double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();

@@ -162,8 +162,8 @@ public class Model {
     public void configureTestPairs() {
         for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
-            double topVolEst = getVolForFreq(topVolEstimates, freq);
-            for (double vol = bottomVolEst;
+            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.3;  // Bump up by 30% because ramp stage gives
+            for (double vol = bottomVolEst;                                 // low estimates
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
                 testPairs.add(new FreqVolPair(freq, vol));
