@@ -428,6 +428,7 @@ public class FileNameController {
                 if (scanner.hasNextLine()) scanner.nextLine();
             }
             model.hearingTestResults = results;
+            model.setResultsSaved(true);   // disallow duplicate confidence saves
         } catch (NoSuchElementException e) {
             Log.e("InitializeModel", "Error reading file: EOF reached before input finished");
             e.printStackTrace();

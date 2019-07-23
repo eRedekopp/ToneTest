@@ -149,8 +149,8 @@ public class Model {
     public void configureTestIntervals() {
         for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
-            double topVolEst = getVolForFreq(topVolEstimates, freq);
-            for (double vol = bottomVolEst;
+            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.3;  // boost top estimate because ramp test
+            for (double vol = bottomVolEst;                                 // underestimates
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
 
