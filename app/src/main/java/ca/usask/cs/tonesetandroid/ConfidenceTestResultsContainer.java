@@ -234,8 +234,6 @@ public class ConfidenceTestResultsContainer {
          *                          results) for the frequency and volume tested in confResult
          */
         private StatsAnalysisResultsContainer(ConfidenceSingleTestResult confResult, float probEstimate) {
-            // todo : check that this actually works. Redo with normal approximation?
-
             // set constants
             this.freq = confResult.freq;
             this.vol = confResult.vol;

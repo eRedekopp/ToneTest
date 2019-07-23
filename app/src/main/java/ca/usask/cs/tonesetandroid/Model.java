@@ -394,7 +394,7 @@ public class Model {
             audioManager.setStreamVolume( // pin volume to max if not already done
                     AudioManager.STREAM_MUSIC,
                     maxVol,
-                    AudioManager.FLAG_PLAY_SOUND); // todo this also adjusts bg noise volume
+                    AudioManager.FLAG_PLAY_SOUND);
     }
 
     /**
