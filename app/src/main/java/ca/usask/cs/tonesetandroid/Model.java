@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Contains information about the current/most recent tests as well as an interface for generating
@@ -32,8 +33,8 @@ public class Model {
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
                                                         // considered "inaudible"
-    static final int NUMBER_OF_VOLS_PER_FREQ = 3;   // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 3;  // number of times to repeat each freq-vol combination in the test
+    static final int NUMBER_OF_VOLS_PER_FREQ = 5;   // number of volumes to test for each frequency
+    static final int NUMBER_OF_TESTS_PER_VOL = 5;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
     static final int TEST_PHASE_REDUCE = 1;
     static final int TEST_PHASE_MAIN = 2;
@@ -69,7 +70,7 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     /////////////// vars/values for confidence test ///////////////
-    static final int CONF_NUMBER_OF_TRIALS_PER_INTERVAL = 3;
+    static final int CONF_NUMBER_OF_TRIALS_PER_INTERVAL = 20;
     ArrayList<Interval> confidenceTestIntervals;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
@@ -196,15 +197,20 @@ public class Model {
         float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
         float jumpSize = 1.0f / CONF_FREQS.length;
         for (Float freq : confFreqs) {
-            for (boolean b : new boolean[]{true, false}) {  // add both upward and downward for each
-                double volFloor = this.hearingTestResults.getVolFloorEstimateForInterval(freq, b);
-                double volCeiling = this.hearingTestResults.getVolCeilingEstimateForInterval(freq, b);
-                double testVol = volFloor + pct * (volCeiling - volFloor);
-                float freq2 = b ? freq * INTERVAL_FREQ_RATIO : freq / INTERVAL_FREQ_RATIO;
-                this.confidenceTestIntervals.add(new Interval(freq, freq2, testVol));
-                pct += jumpSize;
-            }
+            boolean upward = new Random().nextBoolean();  // randomly either add upward or downward interval
+            double volFloor = this.hearingTestResults.getVolFloorEstimateForInterval(freq, upward);
+            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForInterval(freq, upward);
+            double testVol = volFloor + pct * (volCeiling - volFloor);
+            float freq2 = upward ? freq * INTERVAL_FREQ_RATIO : freq / INTERVAL_FREQ_RATIO;
+            this.confidenceTestIntervals.add(new Interval(freq, freq2, testVol));
+            pct += jumpSize;
         }
+
+        // display chosen intervals to console
+        Log.i("configureConfidenceTest", "Test Intervals: ");
+        for (Interval interval : this.confidenceTestIntervals)
+            Log.i("configureConfidenceTest", String.format("%s Probability %.1f",
+                    interval.toString(), this.hearingTestResults.getProbOfCorrectAnswer(interval)));
 
         // prepare list of all trials
         ArrayList<Interval> allTrials = new ArrayList<>();

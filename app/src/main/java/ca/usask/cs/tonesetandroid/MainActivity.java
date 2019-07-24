@@ -350,7 +350,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 setDialogNoiseID();
-                Log.d("mainActivity", "noise type ID set as " + dialogNoiseID);
                 dialogInterface.cancel();
                 getBackgroundNoiseAndBeginTest_2(isCalib);
             }
@@ -367,7 +366,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         if (this.dialogNoiseID == BackgroundNoiseType.NOISE_TYPE_NONE) {    // set volume to 0 and continue if no noise
             this.setDialogSelectedItem(0);
             this.setDialogVolume();
-            Log.d("mainActivity", "noise volume set as " + dialogNoiseID);
             getBackgroundNoiseAndBeginTest_3(isCalib);
         } else {                                                            // else get volume from user
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
