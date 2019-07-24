@@ -353,17 +353,19 @@ public class HearingTestController {
                         Log.i("mainTest", "Testing " + trial.toString());
                         iModel.resetAnswer();
                         playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
-                        boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)
-                                          || (iModel.getAnswer() < 0 && ! trial.isUpward);
-                        model.hearingTestResults.addResult(trial, correct);
-                        Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly"); // log answer
 
                         model.stopAudio();
-                        try {               // sleep for for random length 1-3 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+                        try {               // sleep for for random length 2-4 seconds
+                            Thread.sleep((long) (Math.random() * 2000 + 2000));
                         } catch (InterruptedException e) {
                             return;
                         }
+
+                        // check answer after pause
+                        boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)
+                                || (iModel.getAnswer() < 0 && ! trial.isUpward);
+                        model.hearingTestResults.addResult(trial, correct);
+                        Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly"); // log answer
                     }
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
@@ -437,10 +439,13 @@ public class HearingTestController {
                         Log.i("confTest", "Testing interval: " + trial.toString());
                         playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
                         model.stopAudio();
-                        model.confidenceTestResults.addResult(trial, iModel.heard);
-                        try {  // sleep from 1 to 3 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+                        try {  // sleep from 2 to 4 seconds
+                            Thread.sleep((long) (Math.random() * 2000 + 2000));
                         } catch (InterruptedException e) { return; }
+
+                        boolean correct = trial.isUpward && iModel.getAnswer() > 0
+                                          || ! trial.isUpward && iModel.getAnswer() < 0;
+                        model.confidenceTestResults.addResult(trial, correct);
                     }
 
                     // finish / cleanup

@@ -60,7 +60,7 @@ public class FileNameController {
             if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
             HearingTestResultsContainer results = model.getHearingTestResults();
-            out.write(String.format("ParticipantID %d NoiseType %s",
+            out.write(String.format("ParticipantID %d NoiseType %s\n",
                       model.getSubjectId(), results.getNoiseType().toString()));
             out.write("Freq1(Hz),Direction,Volume,nCorr,nIncorr\n");
             for (HearingTestResultsContainer.HearingTestSingleIntervalResult htsr : results.getAllResults()) {
