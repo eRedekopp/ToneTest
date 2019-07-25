@@ -200,14 +200,19 @@ public class HearingTestController {
 
             if (model.testPaused()) return; // check if test paused before each tone
 
-            Log.i("reducePhase", "Testing " + fvp.toString());
-
             // only test frequencies whose bottom ends hasn't already been estimated
             if (model.timesNotHeardPerFreq.get(fvp.getFreq()) >= Model.TIMES_NOT_HEARD_BEFORE_STOP) continue;
+
+            Log.i("reducePhase", "Testing " + fvp.toString());
 
             // play the sine, update the map if not heard
             iModel.notHeard();
             this.playSine(fvp.getFreq(), fvp.getVol(), TONE_DURATION_MS);
+
+            try {
+                Thread.sleep(1000);     // user gets 1 second after tone finishes to press "heard"
+            } catch (InterruptedException e) { return; }
+
             if (! iModel.heard)
                 mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
                         model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
@@ -215,7 +220,7 @@ public class HearingTestController {
                                                                                     // tone was heard
 
             try {
-                Thread.sleep((long) (Math.random() * 2000 + 1000));
+                Thread.sleep((long) (Math.random() * 2000)); // wait an additional 0-2 seconds
             } catch (InterruptedException e) { return; }
         }
     }
@@ -265,7 +270,7 @@ public class HearingTestController {
                             break;
                         }
 
-                        rateOfRamp = 1.01;
+                        rateOfRamp = 1.018;
                         // redo the ramp up test, this time starting at 1/10th the volume previously required to hear the
                         // tone and ramping up at a slower rate
                         rampUp(rateOfRamp, freq, heardVol / 10.0);
@@ -353,19 +358,24 @@ public class HearingTestController {
                         Log.i("mainTest", "Testing " + trial.toString());
                         iModel.resetAnswer();
                         playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
-
                         model.stopAudio();
-                        try {               // sleep for for random length 2-4 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 2000));
+
+                        try {               // user gets 1.5 seconds to enter answer
+                            Thread.sleep((long) (1500));
                         } catch (InterruptedException e) {
                             return;
                         }
 
-                        // check answer after pause
-                        boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)
+                        boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)  // record answer
                                 || (iModel.getAnswer() < 0 && ! trial.isUpward);
                         model.hearingTestResults.addResult(trial, correct);
-                        Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly"); // log answer
+                        Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly");
+
+                        try {               // sleep for for random length 0-2 seconds
+                            Thread.sleep((long) (Math.random() * 2000));
+                        } catch (InterruptedException e) {
+                            return;
+                        }
                     }
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
@@ -439,13 +449,10 @@ public class HearingTestController {
                         Log.i("confTest", "Testing interval: " + trial.toString());
                         playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
                         model.stopAudio();
-                        try {  // sleep from 2 to 4 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 2000));
+                        model.confidenceTestResults.addResult(trial, iModel.heard);
+                        try {  // sleep from 1 to 3 seconds
+                            Thread.sleep((long) (Math.random() * 2000 + 1000));
                         } catch (InterruptedException e) { return; }
-
-                        boolean correct = trial.isUpward && iModel.getAnswer() > 0
-                                          || ! trial.isUpward && iModel.getAnswer() < 0;
-                        model.confidenceTestResults.addResult(trial, correct);
                     }
 
                     // finish / cleanup
