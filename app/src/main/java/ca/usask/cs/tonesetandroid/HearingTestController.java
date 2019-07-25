@@ -354,9 +354,14 @@ public class HearingTestController {
                         Log.d("mainTest", model.testIntervals.toString());
                         Interval trial = model.testIntervals.get(0);
                         model.testIntervals.remove(0);
-                        model.startAudio();
                         Log.i("mainTest", "Testing " + trial.toString());
-                        iModel.resetAnswer();
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {   // reset iModel on main thread
+                                iModel.resetAnswer();
+                            }
+                        });
+                        model.startAudio();
                         playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
                         model.stopAudio();
 
@@ -367,7 +372,7 @@ public class HearingTestController {
                         }
 
                         boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)  // record answer
-                                || (iModel.getAnswer() < 0 && ! trial.isUpward);
+                                       || (iModel.getAnswer() < 0 && ! trial.isUpward);
                         model.hearingTestResults.addResult(trial, correct);
                         Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly");
 
@@ -439,20 +444,29 @@ public class HearingTestController {
                         if (model.testPaused()) return;
                         Interval trial = model.confidenceTestIntervals.get(0);
                         model.confidenceTestIntervals.remove(0);
-                        model.startAudio();
                         new Handler(Looper.getMainLooper()).post(new Runnable() {
                             @Override
                             public void run() {   // set iModel to notHeard on main thread
-                                iModel.notHeard();
+                                iModel.resetAnswer();
                             }
                         });
+                        model.startAudio();
                         Log.i("confTest", "Testing interval: " + trial.toString());
                         playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
                         model.stopAudio();
-                        model.confidenceTestResults.addResult(trial, iModel.heard);
-                        try {  // sleep from 1 to 3 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+                        try {  // user gets 1.5 seconds to enter response
+                            Thread.sleep((long) (1500));
                         } catch (InterruptedException e) { return; }
+
+                        boolean correct =   (iModel.getAnswer() > 0 && trial.isUpward)
+                                         || (iModel.getAnswer() < 0 && ! trial.isUpward);
+                        model.confidenceTestResults.addResult(trial, correct);
+                        Log.i("confTest", "Answered " + (correct ? "correctly" : "incorrectly"));
+
+                        try {  // wait 0-2 seconds before playing next interval
+                            Thread.sleep((long) (Math.random() * 2000));
+                        } catch (InterruptedException e) { return; }
+
                     }
 
                     // finish / cleanup

@@ -157,7 +157,7 @@ public class Model {
     public void configureTestIntervals() {
         for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
-            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.3;  // boost by 30% because ramp test
+            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.2;  // boost by 20% because ramp test
             for (double vol = bottomVolEst;                                 // underestimates
                 vol < topVolEst;
                 vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
@@ -196,8 +196,15 @@ public class Model {
         // of the way between completely inaudible and perfectly audible
         float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
         float jumpSize = 1.0f / CONF_FREQS.length;
+
+        ArrayList<Boolean> upList = new ArrayList<>();  // add equal number of upward and downward intervals
+        for (int i = 0; i < CONF_FREQS.length / 2; i++) upList.add(true);
+        while (upList.size() < CONF_FREQS.length) upList.add(false);
+        Collections.shuffle(upList);
+
         for (Float freq : confFreqs) {
-            boolean upward = new Random().nextBoolean();  // randomly either add upward or downward interval
+            boolean upward = upList.get(0);  // choose either upward or downward
+            upList.remove(0);
             double volFloor = this.hearingTestResults.getVolFloorEstimateForInterval(freq, upward);
             double volCeiling = this.hearingTestResults.getVolCeilingEstimateForInterval(freq, upward);
             double testVol = volFloor + pct * (volCeiling - volFloor);
@@ -209,7 +216,7 @@ public class Model {
         // display chosen intervals to console
         Log.i("configureConfidenceTest", "Test Intervals: ");
         for (Interval interval : this.confidenceTestIntervals)
-            Log.i("configureConfidenceTest", String.format("%s Probability %.1f",
+            Log.i("configureConfidenceTest", String.format("%s Probability %.3f",
                     interval.toString(), this.hearingTestResults.getProbOfCorrectAnswer(interval)));
 
         // prepare list of all trials

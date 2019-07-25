@@ -49,6 +49,7 @@ public class FileNameController {
      */
     @SuppressWarnings("ConstantConditions")
     public void handleSaveCalibClick(Context context) throws IllegalStateException {
+        // todo edit this to save order so that subsets are made properly after loading calibration
         if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
 
         if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());

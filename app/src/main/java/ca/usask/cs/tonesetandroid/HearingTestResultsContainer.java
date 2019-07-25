@@ -2,6 +2,7 @@ package ca.usask.cs.tonesetandroid;
 
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,10 +77,14 @@ public class HearingTestResultsContainer {
 
         // find the probabilities of each of these frequencies
         float probAbove = resultMap.get(freqAbove).getProbOfHearing(vol);
-        float probBelow = resultMap.get(freqAbove).getProbOfHearing(vol);
+        float probBelow = resultMap.get(freqBelow).getProbOfHearing(vol);
 
         // how far of the way between freqBelow and freqAbove is fvp.freq?
         float pctBetween = (freq1 - freqBelow) / (freqAbove - freqBelow);
+
+        Log.d("getProbOfCorrect", String.format("freq1 = %.1f, upward = %b, freqAbove = %.1f, freqBelow = %.1f, " +
+                "probBelow = %.3f, probAbove = %.3f, pctBetween = %.3f", freq1, upward, freqAbove, freqBelow,
+                probBelow, probAbove, pctBetween));
 
         // estimate this probability linearly between the results above and below
         return probBelow + pctBetween * (probAbove - probBelow);
