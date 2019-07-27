@@ -207,7 +207,6 @@ public class FileNameController {
 
             if (! fout.createNewFile()) {
                 Log.e("HandleConfSaveClick", "Unable to create confidence file");
-                Log.d("HandleConfSaveClick", "fout.exists() = " + fout.exists());
                 return;
             }
 
@@ -215,22 +214,22 @@ public class FileNameController {
 
             HearingTestResultsContainer results = model.getHearingTestResults();
 
-            // write header
-            out.write(String.format("ParticipantID: %d NoiseType %s\n", model.getSubjectId(),
-                                    model.confidenceTestResults.getNoiseType().toString()));
+            // write background noise info
+            out.write(String.format("ParticipantID %d BackgroundNoise %s%n",
+                    model.getSubjectId(), results.getBackgroundNoise()));
 
-            // write calibration results used for this confidence test
-            out.write("Calibration test results:\n" + results.toString() + '\n');
+            // write calibration info
+            out.write(String.format("Calibration:%n%s%n", results.toString()));
 
             // test using different sample sizes
             for (int n : Model.CONF_SAMP_SIZES) {
                 try {  // change hearing test results to new sample size
                     model.hearingTestResults = results.getSubsetResults(n);
-                } catch (IllegalArgumentException e) {
-                    continue;  // do nothing if invalid size
+                } catch (IllegalArgumentException e) {  // skip if n is invalid
+                    continue;
                 }
 
-                out.write("### Sample Size = " + n + " ###\n");
+                out.write(String.format("### Sample Size = %d ###%n", n));
 
                 // test using different subsets of calibration frequencies
                 for (float[] subset : Model.CONF_SUBSETS) {
@@ -241,15 +240,17 @@ public class FileNameController {
                     // write header/info for current subset
                     out.write("Calibration Freqs: " + Arrays.toString(subset));
                     out.newLine();
-                    out.write("Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent\n");
+                    out.write(String.format("Freq1(Hz),Direction,Volume,confProb,modelProb,alpha,beta,critLow," +
+                            "critHigh,actual,sigDifferent%n"));
 
                     // write results for each freq-vol pair in subset
                     // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
                     for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
                         out.write(String.format(
-                                "%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
-                                result.freq, result.vol, result.confProbEstimate, result.probEstimate,
-                                result.alpha, result.beta, result.critLow, result.critHigh, result.estimatesSigDifferent
+                                "%.2f,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,%n",
+                                result.freq1, result.upward ? "Up" : "Down", result.vol, result.confProbEstimate,
+                                result.probEstimate, result.alpha, result.beta, result.critLow, result.critHigh,
+                                result.estimatesSigDifferent
                         ));
                     }
                     out.newLine();
@@ -281,6 +282,7 @@ public class FileNameController {
                 e.printStackTrace();
             }
         }
+
     }
 
     /**

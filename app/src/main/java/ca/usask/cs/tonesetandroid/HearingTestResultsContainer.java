@@ -112,6 +112,46 @@ public class HearingTestResultsContainer {
     }
 
     /**
+     * Get the probability that a user will correctly distinguish the direction of an interval
+     *
+     * @param freq1 The first frequency of the interval
+     * @param freq2 The second frequency of the interval
+     * @param vol The volume of the interval
+     * @return P(user distinguished correctly)
+     */
+    public float getProbOfCorrectAnswer(float freq1, float freq2, double vol) {
+        return getProbOfCorrectAnswer(freq1, freq2, vol, Model.FREQUENCIES);
+    }
+
+    public float getProbOfCorrectAnswer(Interval interval) {
+        return getProbOfCorrectAnswer(interval.freq1, interval.freq2, interval.vol);
+    }
+
+    /**
+     * Given the starting note of the interval, its direction, its volume, and a subset of the tested frequencies,
+     * determine the probability that the user will correctly hear the direction of the interval based only on the
+     * given subset of frequencies
+     *
+     * @param freq1 The starting frequency of the interval
+     * @param upward Is the interval upward?
+     * @param vol The volume of the tones in the interval
+     * @param subset A subset of the tested volumes, to be used to generate the estimate
+     * @return An estimate of the probability that the user will correctly hear the direction of the interval
+     * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
+     */
+    public float getProbOfCorrectAnswer(float freq1, float freq2, double vol, float[] subset)
+            throws IllegalArgumentException {
+
+        // return lowest probability of freq1 and freq2
+        return Math.min(getProbOfHearingFVP(freq1, vol, subset), getProbOfHearingFVP(freq2, vol, subset));
+    }
+
+    public float getProbOfCorrectAnswer(Interval interval, float[] subset) {
+        return getProbOfCorrectAnswer(interval.freq1, interval.freq2, interval.vol, subset);
+    }
+
+
+    /**
      * Returns a mapping of volumes to the number of times each volume was heard in the test for the given frequency
      *
      * @param freq The frequency whose volume results are to be returned

@@ -78,8 +78,9 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     // vars for confidence test
-    static final int CONF_NUMBER_OF_TRIALS_PER_FVP = 20;
-    ArrayList<FreqVolPair> confidenceTestPairs;  // freq-vol pairs to be tested in the next confidence test
+    static final int CONF_NUMBER_OF_TRIALS_PER_INTERVAL = 20;
+    static final float INTERVAL_FREQ_RATIO = 1.25f; // 5:4 ratio = major third
+    ArrayList<Interval> confidenceTestIntervals;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
     public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 4 octaves of A
@@ -108,7 +109,7 @@ public class Model {
         this.bottomVolEstimates = new ArrayList<>();
         this.currentVolumes = new ArrayList<>();
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
-        this.confidenceTestPairs = new ArrayList<>();
+        this.confidenceTestIntervals = new ArrayList<>();
         this.analysisResults = new ArrayList<>();
         this.testPairs = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
@@ -181,35 +182,52 @@ public class Model {
     }
 
     /**
-     * Populate model.confidenceTestPairs with all freqvolpairs that will be tested in the next confidence test
+     * Populate model.confidenceTestIntervals with all freqvolpairs that will be tested in the next confidence test
      */
-    public void configureConfidenceTestPairs() {
-
+    public void configureconfidenceTestIntervals() {
         ArrayList<Float> confFreqs = new ArrayList<>();
         for (float freq : CONF_FREQS) confFreqs.add(freq);
 
         // randomize the order of test frequencies
         Collections.shuffle(confFreqs);
 
-        // for each frequency, add a new fvp to confidenceTestPairs with the frequency and a volume some percentage
+        // for each frequency, add a new fvp to confidenceTestIntervals with the frequency and a volume some percentage
         // of the way between completely inaudible and perfectly audible
         float pct = 0;  // the percentage of the way between the lowest and highest tested vol that this test will be
         float jumpSize = 1.0f / CONF_FREQS.length;
+
+        ArrayList<Boolean> upList = new ArrayList<>();  // add equal number of upward and downward intervals
+        for (int i = 0; i < CONF_FREQS.length / 2; i++) upList.add(true);
+        while (upList.size() < CONF_FREQS.length) upList.add(false);
+        Collections.shuffle(upList);
+
         for (Float freq : confFreqs) {
-            double volFloor = this.hearingTestResults.getVolFloorEstimateForFreq(freq);
-            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForFreq(freq);
+            boolean upward = upList.get(0);  // choose either upward or downward
+            upList.remove(0);
+            float freq2 = upward ? freq * INTERVAL_FREQ_RATIO : freq / INTERVAL_FREQ_RATIO;
+            float avgFreq = 0.5f * (freq + freq2);
+            double volFloor = this.hearingTestResults.getVolFloorEstimateForFreq(avgFreq);
+            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForFreq(avgFreq);
             double testVol = volFloor + pct * (volCeiling - volFloor);
-            this.confidenceTestPairs.add(new FreqVolPair(freq, testVol));
+            this.confidenceTestIntervals.add(new Interval(freq, freq2, testVol));
             pct += jumpSize;
         }
 
+        // display chosen intervals to console
+        Log.i("configureConfidenceTest", "Test Intervals: ");
+        for (Interval interval : this.confidenceTestIntervals)
+            Log.i("configureConfidenceTest", String.format("%s Probability %.3f",
+                    interval.toString(), this.hearingTestResults.getProbOfCorrectAnswer(interval)));
+
         // prepare list of all trials
-        ArrayList<FreqVolPair> allTrials = new ArrayList<>();
-        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_FVP; i++) {
-            allTrials.addAll(this.confidenceTestPairs);
+        ArrayList<Interval> allTrials = new ArrayList<>();
+        for (int i = 0; i < Model.CONF_NUMBER_OF_TRIALS_PER_INTERVAL; i++) {
+            allTrials.addAll(this.confidenceTestIntervals);
         }
         Collections.shuffle(allTrials);
-        this.confidenceTestPairs = allTrials;
+        this.confidenceTestIntervals = allTrials;
+
+
     }
 
     /**
@@ -222,10 +240,22 @@ public class Model {
     public void analyzeConfidenceResults(float[] subset) throws IllegalStateException, IllegalArgumentException {
         if (! this.hasConfResults()) throw new IllegalStateException("No confidence results stored");
         this.analysisResults = new ArrayList<>();
-        for (FreqVolPair fvp : this.confidenceTestResults.getTestedFVPs())
+        for (Interval interval : this.confidenceTestResults.getTestedIntervals())
             this.analysisResults.add(
-                    this.confidenceTestResults.performAnalysis(fvp, this.getProbabilityFVP(fvp, subset)));
+                    this.confidenceTestResults.performAnalysis(
+                            interval, this.getProbabilityForInterval(interval, subset)));
+
     }
+
+    public float getProbabilityForInterval(Interval interval) throws IllegalStateException {
+        if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
+        return this.hearingTestResults.getProbOfCorrectAnswer(interval);
+    }
+
+    public float getProbabilityForInterval(Interval interval, float[] subset) {
+        return this.hearingTestResults.getProbOfCorrectAnswer(interval, subset);
+    }
+
 
     /**
      * Find the probability of hearing the given frequency-volume pair given the calibration results
@@ -401,8 +431,8 @@ public class Model {
      * Accessor method to return the confidenceTest ArrayList
      * @return the confidence test array list
      */
-    public ArrayList<FreqVolPair> getConfidenceTestPairs(){
-        return confidenceTestPairs;
+    public ArrayList<Interval> getconfidenceTestIntervals(){
+        return confidenceTestIntervals;
     }
 
     public void addSubscriber(ModelListener newSub) {

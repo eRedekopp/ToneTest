@@ -77,6 +77,38 @@ public class HearingTestController {
         model.stopAudio();
     }
 
+    /**
+     * Play two sine waves consecutively
+     *
+     * @param freq1 The frequency of the first sine
+     * @param freq2 The frequency of the second sine
+     * @param vol The volume of the sine waves
+     * @param duration_ms The duration of both tones combined
+     */
+    private void playInterval(float freq1, float freq2, double vol, int duration_ms) {
+        model.enforceMaxVolume();
+        model.startAudio();
+        duration_ms /= 2;  // halve tone duration so entire interval lasts duration_ms milliseconds
+        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq1;
+            double angle = 2 * i / (period) * Math.PI;
+            short a = (short) (Math.sin(angle) * vol);
+            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+            model.lineOut.write(model.buf, 0, 2);
+        }
+        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
+            if (iModel.answered()) return;
+            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq2;
+            double angle = 2 * i / (period) * Math.PI;
+            short a = (short) (Math.sin(angle) * vol);
+            model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+            model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+            model.lineOut.write(model.buf, 0, 2);
+        }
+    }
+
+
     /////////////////////////////////////// Methods for hearing test //////////////////////////////////////////////////
 
     /**
@@ -336,7 +368,7 @@ public class HearingTestController {
     /////////////////////////////////// methods for confidence test ///////////////////////////////////////////////////
 
     /**
-     * Perform a full confidence test
+     * Begin a confidence test
      */
     public void confidenceTest() {
         model.testThreadActive = true;
@@ -348,7 +380,8 @@ public class HearingTestController {
 
                     // configure model for test
                     model.configureAudio();
-                    model.configureConfidenceTestPairs();
+                    model.configureconfidenceTestIntervals();
+
 
                     // show info dialog
                     model.setTestPaused(true);
@@ -365,6 +398,10 @@ public class HearingTestController {
         }).start();
     }
 
+    /**
+     * The actual legs of the confidence test - test all remaining confidence trials stored in model and store
+     * results in confidenceTestResults
+     */
     private void mainConfTest() {
         model.testThreadActive = true;
         new Thread(new Runnable() {
@@ -372,24 +409,33 @@ public class HearingTestController {
             public void run() {
                 try {
                     // perform trials
-                    while (! model.confidenceTestPairs.isEmpty()) {
+                    while (! model.confidenceTestIntervals.isEmpty()) {
                         if (model.testPaused()) return;
-                        FreqVolPair trial = model.confidenceTestPairs.get(0);
-                        model.confidenceTestPairs.remove(0);
-                        model.startAudio();
+                        Interval trial = model.confidenceTestIntervals.get(0);
+                        model.confidenceTestIntervals.remove(0);
                         new Handler(Looper.getMainLooper()).post(new Runnable() {
                             @Override
                             public void run() {   // set iModel to notHeard on main thread
-                                iModel.notHeard();
+                                iModel.resetAnswer();
                             }
                         });
-                        Log.i("confTest", "Testing freq : " + trial.getFreq() + " | vol : " + trial.getVol());
-                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
+                        model.startAudio();
+                        Log.i("confTest", "Testing interval: " + trial.toString());
+                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
                         model.stopAudio();
-                        model.confidenceTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
-                        try {  // sleep from 1 to 3 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 1000));
+                        try {  // user gets 1.5 seconds to enter response
+                            Thread.sleep((long) (1500));
                         } catch (InterruptedException e) { return; }
+
+                        boolean correct =   (iModel.getAnswer() > 0 && trial.isUpward)
+                                || (iModel.getAnswer() < 0 && ! trial.isUpward);
+                        model.confidenceTestResults.addResult(trial, correct);
+                        Log.i("confTest", "Answered " + (correct ? "correctly" : "incorrectly"));
+
+                        try {  // wait 0-2 seconds before playing next interval
+                            Thread.sleep((long) (Math.random() * 2000));
+                        } catch (InterruptedException e) { return; }
+
                     }
 
                     // finish / cleanup
@@ -406,6 +452,7 @@ public class HearingTestController {
             }
         }).start();
     }
+
 
     ///////////////////////////////////// methods for auto test ///////////////////////////////////////////////////////
 
