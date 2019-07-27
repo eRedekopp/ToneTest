@@ -79,7 +79,6 @@ public class HearingTestController {
      * @param duration_ms The duration of the sine wave in milliseconds
      */
     private void playSine(float freq, double vol, int duration_ms) {
-        AudioDataStats ads = new AudioDataStats();   // todo delet this
         try {
             model.enforceMaxVolume();
             model.startAudio();
@@ -92,10 +91,8 @@ public class HearingTestController {
                 model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
                 model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
                 model.lineOut.write(model.buf, 0, 2);
-//                ads.addResult(a);  // todo delet this
             }
-//            System.out.printf("Sine test: Mean: %.2f, AbsMean: %.2f, Max: %d, Min: %d, nSamples: %d\n",  // todo delet
-//                    ads.getMean(), ads.getAbsMean(), ads.getMax(), ads.getMin(), ads.getNumSamples());
+
         } finally {
             model.stopAudio();
         }
@@ -138,12 +135,9 @@ public class HearingTestController {
 
     private void playEarcon(Earcon earcon) {
 
-        // todo make sure this plays at same volume as sine
         model.startAudio();
         try {
             InputStream rawPCM = this.context.getResources().openRawResource(earcon.audioResourceID);
-
-            AudioDataStats ads = new AudioDataStats();  // todo delet this
 
             try {
                 while (rawPCM.available() > 0) {
@@ -157,9 +151,6 @@ public class HearingTestController {
                     double amplitude = (double) sample / (double) Short.MIN_VALUE;
                     sample = (short) (amplitude * earcon.volume);                   // convert to same vol scale as
                                                                                     // sines
-
-//                    ads.addResult(sample);      // todo delet this
-
                     model.lineOut.write(new short[]{sample}, 0, 1);                 // write sample to line out
 
                 }
@@ -167,9 +158,6 @@ public class HearingTestController {
                 Log.e("playEarcon", "Error playing earcon file");
                 e.printStackTrace();
             }
-
-//            System.out.printf("Earcon test: Mean: %.2f, AbsMean: %.2f, Max: %d, Min: %d, nSamples: %d\n", // todo
-//                    ads.getMean(), ads.getAbsMean(), ads.getMax(), ads.getMin(), ads.getNumSamples());    // delet
 
         } finally {
             model.stopAudio();
@@ -530,11 +518,16 @@ public class HearingTestController {
                         Log.i("confTest", "Testing Earcon: " + trial.toString());
                         playEarcon(trial);
                         model.stopAudio();
+
+                        try {  // User gets 1.5 seconds to enter response
+                            Thread.sleep((long) (Math.random() * 2000 + 2000));
+                        } catch (InterruptedException e) { return; }
+
                         model.confidenceTestResults.addResult(trial, trial.direction == iModel.getAnswer());
                         Log.i("confTest", trial.direction == iModel.getAnswer() ? "Answered Correctly"
                                                                                 : "Answered Incorrectly");
-                        try {  // sleep from 2 to 4 seconds
-                            Thread.sleep((long) (Math.random() * 2000 + 2000));
+                        try {  // sleep from 0 to 2 seconds
+                            Thread.sleep((long) (Math.random() * 2000));
                         } catch (InterruptedException e) { return; }
                     }
 
