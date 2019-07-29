@@ -92,8 +92,8 @@ public class Model {
             {1000, 4000},
             {200, 1000}
     };
-    public static final int[] CONF_SAMP_SIZES = {1, 3, 5, 7, 8, 9, 10}; // alternate values of NUMBER_OF_TESTS_PER_VOL
-                                                                        // to be tested while analyzing data
+    public static final int[] CONF_SAMP_SIZES = {1, 3, 5, 6, 7, 8, 9, 10};  // alt values of NUMBER_OF_TESTS_PER_VOL
+                                                                            // to be tested while analyzing data
 
     public Model() {
         buf = new byte[2];

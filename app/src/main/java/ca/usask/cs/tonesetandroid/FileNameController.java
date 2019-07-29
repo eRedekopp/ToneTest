@@ -240,17 +240,19 @@ public class FileNameController {
                     // write header/info for current subset
                     out.write("Calibration Freqs: " + Arrays.toString(subset));
                     out.newLine();
-                    out.write(String.format("Freq1(Hz),Direction,Volume,confProb,modelProb,alpha,beta,critLow," +
-                            "critHigh,actual,sigDifferent%n"));
+                    out.write(String.format("Freq1(Hz),Direction,Volume,confProb,modelProb,f1Prob,f2Prob,alpha,beta," +
+                                            "critLow,critHigh,actual,sigDifferent%n"));
 
                     // write results for each freq-vol pair in subset
                     // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
                     for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
+                        float f1prob = model.hearingTestResults.getProbOfHearingFVP(result.freq1, result.vol, subset);
+                        float f2prob = model.hearingTestResults.getProbOfHearingFVP(result.freq2, result.vol, subset);
                         out.write(String.format(
-                                "%.2f,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,%n",
-                                result.freq1, result.upward ? "Up" : "Down", result.vol, result.confProbEstimate,
-                                result.probEstimate, result.alpha, result.beta, result.critLow, result.critHigh,
-                                result.estimatesSigDifferent
+                        "%.2f,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,%n",
+                        result.freq1, result.upward ? "Up" : "Down", result.vol, result.confProbEstimate,
+                        result.probEstimate, f1prob, f2prob,result.alpha, result.beta, result.critLow, result.critHigh,
+                        result.estimatesSigDifferent
                         ));
                     }
                     out.newLine();
