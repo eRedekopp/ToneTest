@@ -184,7 +184,7 @@ public class Model {
     /**
      * Populate model.confidenceTestIntervals with all freqvolpairs that will be tested in the next confidence test
      */
-    public void configureconfidenceTestIntervals() {
+    public void configureConfidenceTestIntervals() {
         ArrayList<Float> confFreqs = new ArrayList<>();
         for (float freq : CONF_FREQS) confFreqs.add(freq);
 

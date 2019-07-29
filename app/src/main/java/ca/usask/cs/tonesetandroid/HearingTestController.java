@@ -385,7 +385,7 @@ public class HearingTestController {
 
                     // configure model for test
                     model.configureAudio();
-                    model.configureconfidenceTestIntervals();
+                    model.configureConfidenceTestIntervals();
 
 
                     // show info dialog
