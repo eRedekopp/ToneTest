@@ -44,7 +44,7 @@ public class Model {
                                                         // reduction phase of the hearing test before the volume is
                                                         // considered "inaudible"
     static final int NUMBER_OF_VOLS_PER_FREQ = 6;   // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 10;  // number of times to repeat each freq-vol combination in the test
+    static final int NUMBER_OF_TESTS_PER_VOL = 6;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
     static final int TEST_PHASE_REDUCE = 1;
     static final int TEST_PHASE_MAIN = 2;
@@ -163,7 +163,7 @@ public class Model {
     public void configureTestPairs() {
         for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
-            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.3;  // Bump up by 30% because ramp stage gives
+            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.2;  // Bump up by 20% because ramp stage gives
             for (double vol = bottomVolEst;                                 // low estimates
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {

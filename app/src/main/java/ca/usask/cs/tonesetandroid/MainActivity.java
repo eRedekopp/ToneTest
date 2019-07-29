@@ -43,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     Button  calibButton,
             heardButton,
+            upButton,
+            downButton,
             saveCalibButton,
             saveConfButton,
             confidenceButton,
@@ -106,6 +108,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
         heardButton =       findViewById(R.id.heardButton);
+        upButton =          findViewById(R.id.upButton);
+        downButton =        findViewById(R.id.downButton);
         saveCalibButton =   findViewById(R.id.saveCalibButton);
         saveConfButton =    findViewById(R.id.saveConfButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
@@ -131,6 +135,18 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void onClick(View v) {
                 controller.handleHeardClick();
+            }
+        });
+        upButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controller.handleUpClick();
+            }
+        });
+        downButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controller.handleDownClick();
             }
         });
         saveCalibButton.setOnClickListener(new View.OnClickListener() {
@@ -218,8 +234,24 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         new Handler(Looper.getMainLooper()).post(new Runnable() {  // always run on UI thread
             @Override
             public void run() {
+                // choose which test button to use depending on which test phase we are in
+                if (model.getTestPhase() != Model.TEST_PHASE_CONF) {
+                    heardButton.setVisibility(View.VISIBLE);
+                    heardButton.setEnabled(model.testing() && ! model.testPaused());
+                    upButton.setVisibility(View.GONE);
+                    upButton.setEnabled(false);
+                    downButton.setVisibility(View.GONE);
+                    downButton.setEnabled(false);
+                } else {
+                    heardButton.setVisibility(View.GONE);
+                    heardButton.setEnabled(false);
+                    upButton.setVisibility(View.VISIBLE);
+                    upButton.setEnabled(model.testing() && ! model.testPaused());
+                    downButton.setVisibility(View.VISIBLE);
+                    downButton.setEnabled(model.testing() && ! model.testPaused());
+                }
+
                 calibButton.setEnabled(!model.testing());
-                heardButton.setEnabled(model.testing() && ! model.testPaused() );
                 confidenceButton.setEnabled(model.hasResults() && !model.testing());
                 saveCalibButton.setEnabled(model.hasResults() && !model.testing() && !model.resultsSaved());
                 saveConfButton.setEnabled(model.hasConfResults() && !model.testing() && !model.confResultsSaved());
@@ -229,6 +261,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 controller.checkForHearingTestResume(); // resume hearing test if necessary
             }
         });
+
     }
 
     public void setModel(Model model) {

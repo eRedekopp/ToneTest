@@ -40,6 +40,11 @@ public class HearingTestController {
             "In this test, tones of various frequencies and volumes will be played at random times. Please press the " +
             "\"Heard Tone\" button each time that you hear a tone";
 
+    private static final String intervalInfo =
+            "In this test, pairs of tones will be played one after the other. Please press the \"Up\" button if the "  +
+            "second tone was higher than the first tone, press the \"Down\" button if the second tone was lower than " +
+            "the first tone, or do nothing if you aren't sure.";
+
     /**
      * Checks if a test phase is supposed to be started or resumed, then starts a test on a new thread if it is
      */
@@ -390,7 +395,7 @@ public class HearingTestController {
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_CONF);
                             noiseController.playNoise(model.confidenceTestResults.getNoiseType());
-                            view.showInformationDialog(mainInfo);
+                            view.showInformationDialog(intervalInfo);
                         }
                     });
                 } finally { model.testThreadActive = false; }
@@ -552,6 +557,14 @@ public class HearingTestController {
 
     public void handleHeardClick() {
         this.iModel.toneHeard();
+    }
+
+    public void handleUpClick() {
+        this.iModel.setAnswer(true);
+    }
+
+    public void handleDownClick() {
+        this.iModel.setAnswer(false);
     }
 
     public void setModel(Model model) {
