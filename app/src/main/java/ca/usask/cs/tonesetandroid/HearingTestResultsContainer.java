@@ -142,11 +142,11 @@ public class HearingTestResultsContainer {
     public float getProbOfCorrectAnswer(float freq1, float freq2, double vol, float[] subset)
             throws IllegalArgumentException {
 
-        // return lowest probability of freq1 and freq2
-        return Math.min(getProbOfHearingFVP(freq1, vol, subset), getProbOfHearingFVP(freq2, vol, subset));
+        // return average probability between both frequencies
+        return (getProbOfHearingFVP(freq1, vol, subset) + getProbOfHearingFVP(freq2, vol, subset)) / 2;
     }
 
-    public float getProbOfCorrectAnswer(Interval interval, float[] subset) {
+    public float getProbOfCorrectAnswer(Interval interval, float[] subset) throws IllegalArgumentException {
         return getProbOfCorrectAnswer(interval.freq1, interval.freq2, interval.vol, subset);
     }
 
