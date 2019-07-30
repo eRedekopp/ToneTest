@@ -60,6 +60,9 @@ public class FileNameController {
             fout = getDestinationFileCalib();
             if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
+            out.write(String.format("ParticipantID %d BackgroundNoise %s\n", model.getSubjectId(),
+                                    model.hearingTestResults.getBackgroundNoise().toString()));
+            out.write("Freq(Hz),Volume,nHeard,nNotHeard\n");
             HearingTestResultsContainer results = model.getHearingTestResults();
             out.write(String.format("ParticipantID %d NoiseType %s%n",
                       model.getSubjectId(), results.getNoiseType().toString()));
@@ -219,7 +222,7 @@ public class FileNameController {
 
             // write background noise info
             out.write(String.format("ParticipantID %d BackgroundNoise %s%n",
-                                    model.getSubjectId(), results.getNoiseType()));
+                    model.getSubjectId(), results.getBackgroundNoise()));
 
             // write calibration info
             out.write(String.format("Calibration:%n%s%n", results.toString()));
@@ -243,17 +246,19 @@ public class FileNameController {
                     // write header/info for current subset
                     out.write("Calibration Freqs: " + Arrays.toString(subset));
                     out.newLine();
-                    out.write(String.format("Freq1(Hz),Direction,Volume,confProb,modelProb,alpha,beta,critLow," +
-                            "critHigh,actual,sigDifferent%n"));
+                    out.write(String.format("Freq1(Hz),Direction,Volume,confProb,modelProb,f1Prob,f2Prob,alpha,beta," +
+                                            "critLow,critHigh,actual,sigDifferent%n"));
 
                     // write results for each freq-vol pair in subset
                     // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
                     for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
+                        float f1prob = model.hearingTestResults.getProbOfHearingFVP(result.freq1, result.vol, subset);
+                        float f2prob = model.hearingTestResults.getProbOfHearingFVP(result.freq2, result.vol, subset);
                         out.write(String.format(
-                                "%.2f,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,%n",
-                                result.freq1, result.upward ? "Up" : "Down", result.vol, result.confProbEstimate,
-                                result.probEstimate, result.alpha, result.beta, result.critLow, result.critHigh,
-                                result.estimatesSigDifferent
+                        "%.2f,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,%n",
+                        result.freq1, result.upward ? "Up" : "Down", result.vol, result.confProbEstimate,
+                        result.probEstimate, f1prob, f2prob,result.alpha, result.beta, result.critLow, result.critHigh,
+                        result.estimatesSigDifferent
                         ));
                     }
                     out.newLine();
@@ -285,6 +290,7 @@ public class FileNameController {
                 e.printStackTrace();
             }
         }
+
     }
 
     /**
@@ -394,19 +400,21 @@ public class FileNameController {
 
         HearingTestResultsContainer results = new HearingTestResultsContainer();
 
+        scanner.useDelimiter(Pattern.compile("\\s"));
+        scanner.next(); scanner.next();     // skip subject id
+        scanner.next();                     // skip noise type label
+        String noiseType = scanner.next();
+        int volume = scanner.nextInt();
+        results.setBackgroundNoise(new BackgroundNoiseType(noiseType, volume));
+
+        scanner.nextLine();                 // skip rest of line
+        scanner.nextLine();                 // skip header
+
         // parse test information
         scanner.useDelimiter(Pattern.compile("\\s"));
 
-        scanner.next(); scanner.next();  // skip participant id (already entered in InitActivity)
-        scanner.next();  // skip noise type label
-        String noiseType = scanner.next();
-        int noiseVol = scanner.nextInt();
-        results.setNoiseType(new BackgroundNoiseType(noiseType, noiseVol));
-
-        scanner.nextLine();  // clear rest of line
-        scanner.nextLine();  // skip header
-
-        scanner.useDelimiter(",");
+        // disallow double-saving
+        model.setResultsSaved(true);
 
         try {
             while (scanner.hasNext()) {

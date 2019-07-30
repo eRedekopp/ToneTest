@@ -214,7 +214,7 @@ public class ConfidenceTestResultsContainer {
      * @throws IllegalArgumentException If the given frequency and volume were not tested in the confidence test
      */
     public StatsAnalysisResultsContainer performAnalysis(Interval interval, float estimate)
-                                                         throws IllegalArgumentException {
+            throws IllegalArgumentException {
         ConfidenceSingleTestResult result = this.getResultForInterval(interval);
         if (result == null) throw new IllegalArgumentException("Interval not present in results");
         return new StatsAnalysisResultsContainer(result, estimate);

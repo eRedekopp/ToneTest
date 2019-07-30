@@ -32,9 +32,9 @@ public class Model {
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
-                                                        // considered "inaudible"
-    static final int NUMBER_OF_VOLS_PER_FREQ = 5;   // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 5;  // number of times to repeat each freq-vol combination in the test
+                                                       // considered "inaudible"
+    static final int NUMBER_OF_VOLS_PER_FREQ = 6;   // number of volumes to test for each frequency
+    static final int NUMBER_OF_TESTS_PER_VOL = 6;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
     static final int TEST_PHASE_REDUCE = 1;
     static final int TEST_PHASE_MAIN = 2;
@@ -69,9 +69,10 @@ public class Model {
     private boolean resultsSaved = false;       // have hearing test results been saved since the model was initialized?
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
-    /////////////// vars/values for confidence test ///////////////
+    // vars for confidence test
     static final int CONF_NUMBER_OF_TRIALS_PER_INTERVAL = 20;
-    ArrayList<Interval> confidenceTestIntervals;  // freq-vol pairs to be tested in the next confidence test
+    static final float INTERVAL_FREQ_RATIO = 1.25f; // 5:4 ratio = major third
+    ArrayList<Interval> confidenceTestIntervals;   // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
     public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 4 octaves of A
@@ -83,8 +84,8 @@ public class Model {
             {1000, 4000},
             {200, 1000}
     };
-    public static final int[] CONF_SAMP_SIZES = {1, 3, 5, 7, 8, 9, 10}; // alternate values of NUMBER_OF_TESTS_PER_VOL
-                                                                        // to be tested while analyzing data
+    public static final int[] CONF_SAMP_SIZES = {1, 3, 5, 6, 7, 8, 9, 10};  // alt values of NUMBER_OF_TESTS_PER_VOL
+                                                                            // to be tested while analyzing data
 
     public Model() {
         buf = new byte[2];
@@ -108,11 +109,7 @@ public class Model {
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
         this.confResultsSaved = false;
         this.testThreadActive = false;
-        this.setTestPhase(TEST_PHASE_NULL);
-        if (this.hearingTestResults == null) {
-            this.hearingTestResults = new HearingTestResultsContainer();
-            this.resultsSaved = false;
-        }
+        this.testPhase = TEST_PHASE_NULL;
     }
 
     /**
@@ -157,13 +154,11 @@ public class Model {
     public void configureTestIntervals() {
         for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
-            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.2;  // boost by 20% because ramp test
-            for (double vol = bottomVolEst;                                 // underestimates
-                vol < topVolEst;
-                vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
-
-                testIntervals.add(new Interval(freq, freq * INTERVAL_FREQ_RATIO, vol)); // add upward interval
-                testIntervals.add(new Interval(freq, freq / INTERVAL_FREQ_RATIO, vol)); // add downward interval
+            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.2;  // Bump up by 20% because ramp stage gives
+            for (double vol = bottomVolEst;                                 // low estimates
+                 vol < topVolEst;
+                 vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
+                testPairs.add(new FreqVolPair(freq, vol));
             }
         }
         // fill testIntervals with one item for each individual interval that will be played in the test
@@ -182,10 +177,15 @@ public class Model {
         this.resultsSaved = false;
     }
 
+    public void resetConfidenceResults() {
+        this.confResultsSaved = false;
+        this.confidenceTestResults = new ConfidenceTestResultsContainer();
+    }
+
     /**
      * Populate model.confidenceTestIntervals with all freqvolpairs that will be tested in the next confidence test
      */
-    public void configureConfidenceTestPairs() {
+    public void configureConfidenceTestIntervals() {
         ArrayList<Float> confFreqs = new ArrayList<>();
         for (float freq : CONF_FREQS) confFreqs.add(freq);
 
@@ -205,10 +205,11 @@ public class Model {
         for (Float freq : confFreqs) {
             boolean upward = upList.get(0);  // choose either upward or downward
             upList.remove(0);
-            double volFloor = this.hearingTestResults.getVolFloorEstimateForInterval(freq, upward);
-            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForInterval(freq, upward);
-            double testVol = volFloor + pct * (volCeiling - volFloor);
             float freq2 = upward ? freq * INTERVAL_FREQ_RATIO : freq / INTERVAL_FREQ_RATIO;
+            float avgFreq = 0.5f * (freq + freq2);
+            double volFloor = this.hearingTestResults.getVolFloorEstimateForFreq(avgFreq);
+            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForFreq(avgFreq);
+            double testVol = volFloor + pct * (volCeiling - volFloor);
             this.confidenceTestIntervals.add(new Interval(freq, freq2, testVol));
             pct += jumpSize;
         }
@@ -226,6 +227,8 @@ public class Model {
         }
         Collections.shuffle(allTrials);
         this.confidenceTestIntervals = allTrials;
+
+
     }
 
     /**
@@ -242,7 +245,18 @@ public class Model {
             this.analysisResults.add(
                     this.confidenceTestResults.performAnalysis(
                             interval, this.getProbabilityForInterval(interval, subset)));
+
     }
+
+    public float getProbabilityForInterval(Interval interval) throws IllegalStateException {
+        if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
+        return this.hearingTestResults.getProbOfCorrectAnswer(interval);
+    }
+
+    public float getProbabilityForInterval(Interval interval, float[] subset) {
+        return this.hearingTestResults.getProbOfCorrectAnswer(interval, subset);
+    }
+
 
     /**
      * Find the probability of hearing the given frequency-volume pair given the calibration results
@@ -414,7 +428,7 @@ public class Model {
      * Accessor method to return the confidenceTest ArrayList
      * @return the confidence test array list
      */
-    public List<Interval> getConfidenceTestIntervals(){
+    public ArrayList<Interval> getconfidenceTestIntervals(){
         return confidenceTestIntervals;
     }
 
@@ -458,8 +472,12 @@ public class Model {
 
     public void stopAudio() {
         this.audioPlaying = false;
-        this.lineOut.pause();
-        this.lineOut.flush();
+        try {
+            this.lineOut.pause();
+            this.lineOut.flush();
+        } catch (IllegalStateException e) {
+            this.setUpLineOut();
+        }
     }
 
     public void startAudio() {
@@ -515,10 +533,10 @@ public class Model {
      * Print the contents of hearingTestResults to the console (for testing)
      */
     public void printResultsToConsole() {
-        Log.i("printResultsToConsole", String.format("Subject ID: %d\nCalibration Background Noise Type: %s",
-                                    this.subjectId,
-                                    this.hearingTestResults.getNoiseType() == null ? "N/A" :  // show noise type if
-                                        this.hearingTestResults.getNoiseType().toString()));  // applicable
+        Log.i("printResultsToConsole", String.format("Subject ID: %d\nCalibration Noise Type: %s",
+                                        this.subjectId,
+                                        this.hearingTestResults.getBackgroundNoise() == null ? "N/A" :  // show bg noise
+                                            this.hearingTestResults.getBackgroundNoise().toString()));  // if applicable
         if (hearingTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", hearingTestResults.toString());
     }

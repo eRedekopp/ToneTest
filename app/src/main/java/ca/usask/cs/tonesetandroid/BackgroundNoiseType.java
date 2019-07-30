@@ -2,8 +2,9 @@ package ca.usask.cs.tonesetandroid;
 
 import android.support.annotation.NonNull;
 
-public class BackgroundNoiseType {
+import java.util.ArrayList;
 
+public class BackgroundNoiseType {
 
     // Array indices correspond to ID int (eg. NOISE_TYPE_NONE = 0 -> "No Noise" = NOISE_TYPE_STRINGS[0])
     public static final String[] NOISE_TYPE_STRINGS = {"No Noise", "White Noise", "Crowd Noise"};  // for UI
@@ -58,5 +59,4 @@ public class BackgroundNoiseType {
         builder.append(volume);
         return builder.toString();
     }
-
 }

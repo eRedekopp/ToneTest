@@ -21,7 +21,16 @@ public class HearingTestController {
 
     /*
     * Note: Tests should only be started with the hearingTest or confidenceTest methods, and resumed from pause with
-    * the checkForHearingTestResume method
+    * the checkForHearingTestResume method.
+    *
+    * The main hearing test consists of 3 phases: ramp-up, reduce, and main.
+    *   Ramp up: tones start quiet and slowly get louder until user indicates that they heard the tone
+    *
+    *   Reduce:  starting from the volumes selected in the ramp-up phase, play short tones of all tested
+    *            frequencies quieter and quieter until the user stops indicating that they heard the tone.
+    *
+    *   Main:    select volumes for each frequency tested, then play tones at each selected frequency-volume pair
+    *            several times each, and record the results in the model
     */
 
     Model model;
@@ -33,12 +42,17 @@ public class HearingTestController {
     private static final int TONE_DURATION_MS = 1500;
 
     private static final String rampInfo =
-            "In this test, tones will play quietly and slowly get louder. Please press the \"Heard " +
-            "Tone\" button as soon as the tone becomes audible";
+            "In this phase of the test, tones will play quietly and slowly get louder. Please press the \"Heard " +
+            "Tone\" button as soon as the tone becomes loud enough to hear";
 
     private static final String mainInfo =
-            "In this test, tones of various frequencies and volumes will be played at random times. Please press the " +
-            "\"Heard Tone\" button each time that you hear a tone";
+            "In this phase of the test, tones of various frequencies and volumes will be played at random times. " +
+            "Please press the \"Heard Tone\" button each time that you hear a tone";
+
+    private static final String confInfo =
+            "In this test, pairs of tones will be played in sequence at random times. Please press the \"Up\" button " +
+            "if the second tone was higher than the first tone, press the \"Down\" button if the second tone was " +
+            "lower than the first tone, or do nothing if you aren't sure.";
 
     private static final String intervalInfo =
             "In this test, two tones will be played in sequence at various frequencies and volumes at random times. " +
@@ -112,10 +126,11 @@ public class HearingTestController {
         }
     }
 
+
     /////////////////////////////////////// Methods for hearing test //////////////////////////////////////////////////
 
     /**
-     * Begin a hearing test. Model must have a background noise set before calling this method
+     * Begin a hearing test. model.hearingTestResults must have a background noise type saved before calling this method
      *
      * @author redekopp
      */
@@ -129,8 +144,7 @@ public class HearingTestController {
         //      4 Test all frequency-volume combinations selected in step 3 and store the results
         //          - Referred to elsewhere as "main test"
 
-        // To allow the user to pause the test, the hearing test is broken up into 3 phases. The appropriate
-        // phase is selected in checkForHearingTestResume
+        // To allow the user to pause the test,
 
         model.testThreadActive = true;
 
@@ -149,7 +163,7 @@ public class HearingTestController {
                         @Override
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_RAMP);
-                            noiseController.playNoise(model.hearingTestResults.getNoiseType());
+                            noiseController.playNoise(model.hearingTestResults.getBackgroundNoise());
                             view.showInformationDialog(rampInfo);
                         }
                     });
@@ -169,23 +183,19 @@ public class HearingTestController {
             @Override
             public void run() {
                 try {
+                    // run this phase
                     while (model.continueTest() && ! model.testPaused()) {
                         model.reduceCurrentVolumes();
                         testCurrentVolumes();
                     }
-                    model.setTestPaused(true);
-                    new Handler(Looper.getMainLooper()).post(new Runnable() {
-                        @Override
-                        public void run() {
-                            model.bottomVolEstimates = (ArrayList<FreqVolPair>) model.currentVolumes.clone();
-                            model.configureTestIntervals();
-                            model.setTestPhase(Model.TEST_PHASE_MAIN);
-                            // show information for next segment of test
-                            view.showInformationDialog(intervalInfo);
-                        }
-                    });
-                    // after getting bottom estimates, prepare for next phase of test
-                } finally { model.testThreadActive = false; }
+                    // prepare for next phase
+                    model.bottomVolEstimates = (ArrayList<FreqVolPair>) model.currentVolumes.clone();
+                    model.configureTestPairs();
+                    model.setTestPhase(Model.TEST_PHASE_MAIN);
+                } finally {
+                    model.testThreadActive = false;
+                    model.notifySubscribers();  // begin next phase
+                }
             }
         }).start();
     }
@@ -365,19 +375,9 @@ public class HearingTestController {
                         playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
                         model.stopAudio();
 
-                        try {               // user gets 1.5 seconds to enter answer
-                            Thread.sleep((long) (1500));
-                        } catch (InterruptedException e) {
-                            return;
-                        }
-
-                        boolean correct = (iModel.getAnswer() > 0 && trial.isUpward)  // record answer
-                                       || (iModel.getAnswer() < 0 && ! trial.isUpward);
-                        model.hearingTestResults.addResult(trial, correct);
-                        Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly");
-
-                        try {               // sleep for for random length 0-2 seconds
-                            Thread.sleep((long) (Math.random() * 2000));
+                        model.stopAudio();
+                        try {                    // sleep for for random length 1-3 seconds
+                            Thread.sleep((long) (Math.random() * 2000 + 1000));
                         } catch (InterruptedException e) {
                             return;
                         }
@@ -411,7 +411,7 @@ public class HearingTestController {
 
                     // configure model for test
                     model.configureAudio();
-                    model.configureConfidenceTestPairs();
+                    model.configureConfidenceTestIntervals();
 
 
                     // show info dialog
@@ -421,7 +421,7 @@ public class HearingTestController {
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_CONF);
                             noiseController.playNoise(model.confidenceTestResults.getNoiseType());
-                            view.showInformationDialog(mainInfo);
+                            view.showInformationDialog(confInfo);
                         }
                     });
                 } finally { model.testThreadActive = false; }
@@ -459,7 +459,7 @@ public class HearingTestController {
                         } catch (InterruptedException e) { return; }
 
                         boolean correct =   (iModel.getAnswer() > 0 && trial.isUpward)
-                                         || (iModel.getAnswer() < 0 && ! trial.isUpward);
+                                || (iModel.getAnswer() < 0 && ! trial.isUpward);
                         model.confidenceTestResults.addResult(trial, correct);
                         Log.i("confTest", "Answered " + (correct ? "correctly" : "incorrectly"));
 
@@ -483,6 +483,7 @@ public class HearingTestController {
             }
         }).start();
     }
+
 
     ///////////////////////////////////// methods for auto test ///////////////////////////////////////////////////////
 
@@ -562,14 +563,14 @@ public class HearingTestController {
     //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////
 
     public void handleCalibClick() {
-        if (this.model.hearingTestResults.getNoiseType() == null)
-            throw new IllegalStateException("Background noise must be configured before beginning calibration");
+        if (this.model.hearingTestResults.getBackgroundNoise() == null)
+            throw new IllegalStateException("Background Noise must be configured before beginning test");
         this.hearingTest();
     }
 
     public void handleConfClick() {
         if (this.model.confidenceTestResults.getNoiseType() == null)
-            throw new IllegalStateException("Background noise must be configured before beginning confidence test");
+            throw new IllegalStateException("Background noise must be configured before beginning test");
         this.confidenceTest();
     }
 
@@ -583,6 +584,14 @@ public class HearingTestController {
 
     public void handleHeardClick() {
         this.iModel.toneHeard();
+    }
+
+    public void handleUpClick() {
+        this.iModel.setAnswer(true);
+    }
+
+    public void handleDownClick() {
+        this.iModel.setAnswer(false);
     }
 
     public void setModel(Model model) {

@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -38,6 +40,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     HearingTestInteractionModel iModel;
     HearingTestController controller;
     FileNameController fileController;
+    BackgroundNoiseController noiseController;
 
     private int dialogSelectedItem;  // for selecting background noise configurations
     private int dialogNoiseID;
@@ -47,12 +50,30 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             upButton,
             downButton,
             heardButton,
+            upButton,
+            downButton,
             saveCalibButton,
             saveConfButton,
             confidenceButton,
             resetButton,
             pauseButton /*,
             autoButton*/;
+
+    private int dialogSelectedItem;  // for noise type selection
+    private int dialogNoiseID;
+    private int dialogVolume;
+
+    private void setDialogNoiseID() {
+        this.dialogNoiseID = this.dialogSelectedItem;
+    }
+
+    private void setDialogVolume() {
+        this.dialogVolume = this.dialogSelectedItem;
+    }
+
+    private void setDialogSelectedItem(int dialogSelectedItem) {
+        this.dialogSelectedItem = dialogSelectedItem;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +102,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.setController(newController);
         this.setModel(newModel);
         this.setIModel(newIModel);
+        this.setNoiseController(newNoiseController);
         this.model.addSubscriber(this);
         this.iModel.addSubscriber(this);
         this.controller.setModel(newModel);
@@ -88,13 +110,15 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.controller.setView(this);
         this.fileController.setModel(this.model);
         this.controller.setNoiseController(newNoiseController);
-        newNoiseController.setModel(this.model);
+        this.noiseController.setModel(this.model);
 
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
         downButton =        findViewById(R.id.downButton);
         upButton =          findViewById(R.id.upButton);
         heardButton =       findViewById(R.id.heardButton);
+        upButton =          findViewById(R.id.upButton);
+        downButton =        findViewById(R.id.downButton);
         saveCalibButton =   findViewById(R.id.saveCalibButton);
         saveConfButton =    findViewById(R.id.saveConfButton);
         confidenceButton =  findViewById(R.id.confidenceButton);
@@ -105,7 +129,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                model.resetHearingTestResults();
                 model.reset();
                 getBackgroundNoiseAndBeginTest(true);
             }
@@ -115,6 +138,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             public void onClick(View v) {
                 model.resetConfidenceResults();
                 getBackgroundNoiseAndBeginTest(false);
+            }
+        });
+        heardButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                controller.handleHeardClick();
             }
         });
         upButton.setOnClickListener(new View.OnClickListener() {
@@ -127,12 +156,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void onClick(View v) {
                 controller.handleDownClick();
-            }
-        });
-        heardButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                controller.handleHeardClick();
             }
         });
         saveCalibButton.setOnClickListener(new View.OnClickListener() {
@@ -176,6 +199,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
+                        model.stopAudio();
                         goToInit();
                     }
                 });
@@ -222,15 +246,15 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void run() {
                 // choose which test button to use depending on which test phase we are in
-                if (model.getTestPhase() == Model.TEST_PHASE_RAMP || model.getTestPhase() == Model.TEST_PHASE_REDUCE) {
+                if (model.getTestPhase() != Model.TEST_PHASE_CONF) {
                     heardButton.setVisibility(View.VISIBLE);
-                    heardButton.setEnabled(true);
-                    upButton.setVisibility(View.GONE);
+                    heardButton.setEnabled(model.testing() && ! model.testPaused());
+                    upButton.setVisibility(View.INVISIBLE);
                     upButton.setEnabled(false);
-                    downButton.setVisibility(View.GONE);
+                    downButton.setVisibility(View.INVISIBLE);
                     downButton.setEnabled(false);
                 } else {
-                    heardButton.setVisibility(View.GONE);
+                    heardButton.setVisibility(View.INVISIBLE);
                     heardButton.setEnabled(false);
                     upButton.setVisibility(View.VISIBLE);
                     upButton.setEnabled(model.testing() && ! model.testPaused());
@@ -244,10 +268,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 saveConfButton.setEnabled(model.hasConfResults() && !model.testing() && !model.confResultsSaved());
                 resetButton.setEnabled(!model.testing() || model.testPaused());
                 pauseButton.setEnabled(model.testing());
+                pauseButton.setText(model.testPaused() ? "Resume" : "Pause");
 
                 controller.checkForHearingTestResume(); // resume hearing test if necessary
             }
         });
+
     }
 
     public void setModel(Model model) {
@@ -264,6 +290,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     public void setFileController(FileNameController fileController) {
         this.fileController = fileController;
+    }
+
+    public void setNoiseController(BackgroundNoiseController noiseController) {
+        this.noiseController = noiseController;
     }
 
     /**
@@ -350,6 +380,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 setDialogNoiseID();
+                Log.d("mainActivity", "noise type ID set as " + dialogNoiseID);
                 dialogInterface.cancel();
                 getBackgroundNoiseAndBeginTest_2(isCalib);
             }
@@ -395,15 +426,16 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                         setDialogSelectedItem(oldDialogSelectedItem);
                         dialogInterface.cancel();
                         showErrorDialog("Volume out of range: please enter a value from 0 to 100",
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        dialogInterface.cancel();
-                                        getBackgroundNoiseAndBeginTest_2(isCalib);
-                                    }
-                                });
+                                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.cancel();
+                                getBackgroundNoiseAndBeginTest_2(isCalib);
+                            }
+                        });
                     } else {
                         setDialogVolume();
+                        Log.d("mainActivity", "noise volume set as " + dialogVolume);
                         dialogInterface.cancel();
                         getBackgroundNoiseAndBeginTest_3(isCalib);
                     }
@@ -427,7 +459,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 dialogInterface.cancel();
                 BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
                 if (isCalib) {
-                    model.hearingTestResults.setNoiseType(noiseType);
+                    model.hearingTestResults.setBackgroundNoise(noiseType);
                     controller.handleCalibClick();
                 }
                 else {
@@ -438,7 +470,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         });
         builder.show();
     }
-
 
     /**
      * Show a dialog with title "Error" and the given message
@@ -460,7 +491,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             }
         });
     }
-
 
     /**
      * Show a dialog with the title "Information" and the given message

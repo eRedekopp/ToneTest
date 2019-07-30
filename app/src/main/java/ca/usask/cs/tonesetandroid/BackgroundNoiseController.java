@@ -9,7 +9,6 @@ import android.media.MediaPlayer;
 
 import java.util.Random;
 
-
 public class BackgroundNoiseController {
 
     private Model model;
@@ -77,9 +76,9 @@ public class BackgroundNoiseController {
                 public void run() {
                     AudioAttributes audioAttributes =
                             new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
-                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
+                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
                     mediaPlayer = MediaPlayer.create(context, R.raw.crowdnoise, audioAttributes,
-                            AudioManager.AUDIO_SESSION_ID_GENERATE);
+                                  AudioManager.AUDIO_SESSION_ID_GENERATE);
                     if (mediaPlayer == null)
                         throw new RuntimeException("Error creating MediaPlayer");
                     else mediaPlayer.setLooping(true);
@@ -141,5 +140,4 @@ public class BackgroundNoiseController {
     private static int convertVolToInternal(int externalVol) {
         return (int) Math.round((double) MAX_VOL * ((double) externalVol / 100.0));
     }
-
 }

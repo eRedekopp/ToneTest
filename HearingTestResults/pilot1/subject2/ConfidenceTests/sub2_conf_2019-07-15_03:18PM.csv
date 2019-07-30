@@ -1,0 +1,340 @@
+ParticipantID: 2 NoiseType Crowd 10
+Calibration test results:
+Frequency: 2000.0
+Volume 6.56: P(heard) = 0.1000
+Volume 7.60: P(heard) = 0.1000
+Volume 8.65: P(heard) = 0.1000
+Volume 9.69: P(heard) = 0.0000
+Volume 10.73: P(heard) = 0.3000
+Volume 11.77: P(heard) = 0.1000
+Frequency: 200.0
+Volume 1.45: P(heard) = 0.0000
+Volume 1.58: P(heard) = 0.2000
+Volume 1.72: P(heard) = 0.5000
+Volume 1.86: P(heard) = 0.0000
+Volume 1.99: P(heard) = 0.1000
+Volume 2.13: P(heard) = 0.1000
+Frequency: 1000.0
+Volume 11.97: P(heard) = 0.2000
+Volume 14.85: P(heard) = 0.2000
+Volume 17.72: P(heard) = 0.2000
+Volume 20.60: P(heard) = 0.1000
+Volume 23.48: P(heard) = 0.0000
+Volume 26.35: P(heard) = 0.0000
+Frequency: 4000.0
+Volume 1.48: P(heard) = 0.3000
+Volume 1.62: P(heard) = 0.4000
+Volume 1.76: P(heard) = 0.0000
+Volume 1.90: P(heard) = 0.0000
+Volume 2.04: P(heard) = 0.1000
+Volume 2.18: P(heard) = 0.1000
+Frequency: 500.0
+Volume 51.15: P(heard) = 0.2000
+Volume 59.28: P(heard) = 0.6000
+Volume 67.40: P(heard) = 0.5000
+Volume 75.53: P(heard) = 0.5000
+Volume 83.66: P(heard) = 0.7000
+Volume 91.78: P(heard) = 0.7000
+Volume 99.91: P(heard) = 0.6000
+
+### Sample Size = 1 ###
+Calibration Freqs: [200.0, 500.0, 1000.0, 2000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.00,0.10,0.00,0,0,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [200.0, 1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.01,0.10,0.00,0,0,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [500.0, 1000.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.00,0.10,0.00,0,0,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [500.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.00,0.10,0.00,0,0,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.01,0.10,0.00,0,0,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [200.0, 1000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.01,0.10,0.00,0,0,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+### Sample Size = 3 ###
+Calibration Freqs: [200.0, 500.0, 1000.0, 2000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.08,0.10,0.75,0,3,false,
+880.00,35.23,0.20,0.08,0.10,0.40,0,3,false,
+1760.00,14.88,0.25,0.25,0.10,0.81,2,7,false,
+220.00,6.89,0.15,0.02,0.10,0.14,0,1,false,
+
+Calibration Freqs: [200.0, 1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.00,0.10,0.00,0,0,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [500.0, 1000.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.33,0.10,0.13,3,9,false,
+880.00,35.23,0.20,0.08,0.10,0.40,0,3,false,
+1760.00,14.88,0.25,0.25,0.10,0.81,2,7,false,
+220.00,6.89,0.15,0.33,0.10,0.35,3,9,false,
+
+Calibration Freqs: [500.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.33,0.10,0.13,3,9,false,
+880.00,35.23,0.20,0.33,0.10,0.59,3,9,false,
+1760.00,14.88,0.25,0.33,0.10,0.76,3,9,false,
+220.00,6.89,0.15,0.33,0.10,0.35,3,9,false,
+
+Calibration Freqs: [1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.00,0.10,0.00,0,0,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [200.0, 1000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.00,0.10,0.00,0,0,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+### Sample Size = 5 ###
+Calibration Freqs: [200.0, 500.0, 1000.0, 2000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.05,0.10,0.56,0,2,false,
+880.00,35.23,0.20,0.05,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.20,0.10,0.76,1,6,false,
+220.00,6.89,0.15,0.01,0.10,0.00,0,0,false,
+
+Calibration Freqs: [200.0, 1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.15,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [500.0, 1000.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.20,0.10,0.61,1,6,false,
+880.00,35.23,0.20,0.05,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.20,0.10,0.76,1,6,false,
+220.00,6.89,0.15,0.20,0.10,0.80,1,6,false,
+
+Calibration Freqs: [500.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.20,0.10,0.61,1,6,false,
+880.00,35.23,0.20,0.20,0.10,0.84,1,6,false,
+1760.00,14.88,0.25,0.20,0.10,0.76,1,6,false,
+220.00,6.89,0.15,0.20,0.10,0.80,1,6,false,
+
+Calibration Freqs: [1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.15,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [200.0, 1000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.20,0.10,0.76,1,6,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+### Sample Size = 7 ###
+Calibration Freqs: [200.0, 500.0, 1000.0, 2000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.03,0.10,0.27,0,1,false,
+880.00,35.23,0.20,0.07,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.14,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.15,0.10,0.76,1,5,false,
+
+Calibration Freqs: [200.0, 1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.02,0.10,0.06,0,1,false,
+1760.00,14.88,0.25,0.11,0.10,0.41,0,4,false,
+220.00,6.89,0.15,0.14,0.10,0.65,1,4,false,
+
+Calibration Freqs: [500.0, 1000.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.14,0.10,0.60,1,5,false,
+880.00,35.23,0.20,0.07,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.14,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.29,0.10,0.35,3,8,false,
+
+Calibration Freqs: [500.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.14,0.10,0.60,1,5,false,
+880.00,35.23,0.20,0.25,0.10,0.76,2,7,false,
+1760.00,14.88,0.25,0.17,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.29,0.10,0.35,3,8,false,
+
+Calibration Freqs: [1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.11,0.10,0.41,0,4,false,
+220.00,6.89,0.15,0.00,0.10,0.00,0,0,false,
+
+Calibration Freqs: [200.0, 1000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.00,0.10,0.00,0,0,false,
+880.00,35.23,0.20,0.02,0.10,0.06,0,1,false,
+1760.00,14.88,0.25,0.14,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.14,0.10,0.65,1,4,false,
+
+### Sample Size = 8 ###
+Calibration Freqs: [200.0, 500.0, 1000.0, 2000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.12,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.06,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.16,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.13,0.10,0.79,0,4,false,
+
+Calibration Freqs: [200.0, 1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.12,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.02,0.10,0.06,0,1,false,
+1760.00,14.88,0.25,0.22,0.10,0.81,2,7,false,
+220.00,6.89,0.15,0.12,0.10,0.79,0,4,false,
+
+Calibration Freqs: [500.0, 1000.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.12,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.06,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.16,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.25,0.10,0.59,2,7,false,
+
+Calibration Freqs: [500.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.12,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.22,0.10,0.76,2,7,false,
+1760.00,14.88,0.25,0.15,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.25,0.10,0.59,2,7,false,
+
+Calibration Freqs: [1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.12,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.22,0.10,0.81,2,7,false,
+220.00,6.89,0.15,0.12,0.10,0.79,0,4,false,
+
+Calibration Freqs: [200.0, 1000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.12,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.02,0.10,0.06,0,1,false,
+1760.00,14.88,0.25,0.25,0.10,0.81,2,7,false,
+220.00,6.89,0.15,0.12,0.10,0.79,0,4,false,
+
+### Sample Size = 9 ###
+Calibration Freqs: [200.0, 500.0, 1000.0, 2000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.11,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.05,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.14,0.10,0.41,0,4,false,
+220.00,6.89,0.15,0.12,0.10,0.79,0,4,false,
+
+Calibration Freqs: [200.0, 1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.13,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.02,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.19,0.10,0.76,1,6,false,
+220.00,6.89,0.15,0.11,0.10,0.79,0,4,false,
+
+Calibration Freqs: [500.0, 1000.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.11,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.05,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.14,0.10,0.41,0,4,false,
+220.00,6.89,0.15,0.22,0.10,0.59,2,7,false,
+
+Calibration Freqs: [500.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.11,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.19,0.10,0.84,1,6,false,
+1760.00,14.88,0.25,0.13,0.10,0.41,0,4,false,
+220.00,6.89,0.15,0.22,0.10,0.59,2,7,false,
+
+Calibration Freqs: [1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.13,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.19,0.10,0.76,1,6,false,
+220.00,6.89,0.15,0.22,0.10,0.59,2,7,false,
+
+Calibration Freqs: [200.0, 1000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.22,0.10,0.32,2,7,false,
+880.00,35.23,0.20,0.02,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.22,0.10,0.81,2,7,false,
+220.00,6.89,0.15,0.11,0.10,0.79,0,4,false,
+
+### Sample Size = 10 ###
+Calibration Freqs: [200.0, 500.0, 1000.0, 2000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.10,0.10,0.75,0,3,false,
+880.00,35.23,0.20,0.05,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.12,0.10,0.41,0,4,false,
+220.00,6.89,0.15,0.11,0.10,0.79,0,4,false,
+
+Calibration Freqs: [200.0, 1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.12,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.02,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.17,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.10,0.10,0.61,0,3,false,
+
+Calibration Freqs: [500.0, 1000.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.10,0.10,0.75,0,3,false,
+880.00,35.23,0.20,0.05,0.10,0.19,0,2,false,
+1760.00,14.88,0.25,0.12,0.10,0.41,0,4,false,
+220.00,6.89,0.15,0.20,0.10,0.80,1,6,false,
+
+Calibration Freqs: [500.0, 2000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.10,0.10,0.75,0,3,false,
+880.00,35.23,0.20,0.17,0.10,0.74,1,5,false,
+1760.00,14.88,0.25,0.12,0.10,0.41,0,4,false,
+220.00,6.89,0.15,0.20,0.10,0.80,1,6,false,
+
+Calibration Freqs: [1000.0, 4000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.12,0.10,0.84,0,4,false,
+880.00,35.23,0.20,0.00,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.17,0.10,0.59,1,5,false,
+220.00,6.89,0.15,0.20,0.10,0.80,1,6,false,
+
+Calibration Freqs: [200.0, 1000.0]
+Frequency(Hz),Volume,confProb,modelProb,alpha,beta,critLow,critHigh,sigDifferent
+3520.00,3.77,0.10,0.20,0.10,0.61,1,6,false,
+880.00,35.23,0.20,0.02,0.10,0.00,0,0,false,
+1760.00,14.88,0.25,0.20,0.10,0.76,1,6,false,
+220.00,6.89,0.15,0.10,0.10,0.61,0,3,false,
+

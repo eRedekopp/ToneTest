@@ -13,12 +13,10 @@ import java.util.ListIterator;
 
 public class HearingTestResultsContainer {
 
-    // Keyed by Interval.freq1
-    public HashMap<Float, HearingTestSingleIntervalResult> allResultsUpward;   // for upward intervals
+    // each frequency tested mapped to its corresponding SingleFreqResult
+    private HashMap<Float, HearingTestSingleFreqResult> allResults;
 
-    public HashMap<Float, HearingTestSingleIntervalResult> allResultsDownward; // for downward intervals
-
-    private BackgroundNoiseType noiseType;
+    private BackgroundNoiseType backgroundNoise;
 
     public HearingTestResultsContainer() {
         allResultsUpward = new HashMap<>();
@@ -139,11 +137,47 @@ public class HearingTestResultsContainer {
     }
 
     /**
-     * Given a starting frequency and a direction, return a mapping of volumes at which that interval was tested to the
-     * number of times the user answered correctly at that volume
+     * Get the probability that a user will correctly distinguish the direction of an interval
      *
-     * Note: getTimesCorrPerVolForInterval().keySet() doesn't necessarily contain all tested volumes. If never answered
-     * correctly, a volume will not be present
+     * @param freq1 The first frequency of the interval
+     * @param freq2 The second frequency of the interval
+     * @param vol The volume of the interval
+     * @return P(user distinguished correctly)
+     */
+    public float getProbOfCorrectAnswer(float freq1, float freq2, double vol) {
+        return getProbOfCorrectAnswer(freq1, freq2, vol, Model.FREQUENCIES);
+    }
+
+    public float getProbOfCorrectAnswer(Interval interval) {
+        return getProbOfCorrectAnswer(interval.freq1, interval.freq2, interval.vol);
+    }
+
+    /**
+     * Given the starting note of the interval, its direction, its volume, and a subset of the tested frequencies,
+     * determine the probability that the user will correctly hear the direction of the interval based only on the
+     * given subset of frequencies
+     *
+     * @param freq1 The starting frequency of the interval
+     * @param upward Is the interval upward?
+     * @param vol The volume of the tones in the interval
+     * @param subset A subset of the tested volumes, to be used to generate the estimate
+     * @return An estimate of the probability that the user will correctly hear the direction of the interval
+     * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
+     */
+    public float getProbOfCorrectAnswer(float freq1, float freq2, double vol, float[] subset)
+            throws IllegalArgumentException {
+
+        // return average probability between both frequencies
+        return (getProbOfHearingFVP(freq1, vol, subset) + getProbOfHearingFVP(freq2, vol, subset)) / 2;
+    }
+
+    public float getProbOfCorrectAnswer(Interval interval, float[] subset) throws IllegalArgumentException {
+        return getProbOfCorrectAnswer(interval.freq1, interval.freq2, interval.vol, subset);
+    }
+
+
+    /**
+     * Returns a mapping of volumes to the number of times each volume was heard in the test for the given frequency
      *
      * @param freq1 The starting frequency of the interval
      * @param upward Is the interval upward?
@@ -313,11 +347,9 @@ public class HearingTestResultsContainer {
             throw new IllegalArgumentException(
                     "n = " + n + " is larger than the actual sample size = " + this.getNumOfTrials());
         HearingTestResultsContainer newContainer = new HearingTestResultsContainer();
-        for (HearingTestSingleIntervalResult htsr : this.allResultsUpward.values())
-            newContainer.allResultsUpward.put(htsr.freq1, htsr.getSubsetResult(n));
-        for (HearingTestSingleIntervalResult htsr : this.allResultsDownward.values())
-            newContainer.allResultsDownward.put(htsr.freq1, htsr.getSubsetResult(n));
-        newContainer.setNoiseType(this.noiseType);
+        for (HearingTestSingleFreqResult htsr : this.allResults.values())
+            newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));
+        newContainer.setBackgroundNoise(this.backgroundNoise);
         return newContainer;
     }
 
@@ -337,12 +369,12 @@ public class HearingTestResultsContainer {
         return aResult.getNumSamples(aVol);
     }
 
-    public BackgroundNoiseType getNoiseType() {
-        return noiseType;
+    public BackgroundNoiseType getBackgroundNoise() {
+        return backgroundNoise;
     }
 
-    public void setNoiseType(BackgroundNoiseType noiseType) {
-        this.noiseType = noiseType;
+    public void setBackgroundNoise(BackgroundNoiseType backgroundNoise) {
+        this.backgroundNoise = backgroundNoise;
     }
 
     @Override
