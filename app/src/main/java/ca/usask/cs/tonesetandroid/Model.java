@@ -33,8 +33,8 @@ public class Model {
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
                                                         // considered "inaudible"
-    static final int NUMBER_OF_VOLS_PER_FREQ = 4;   // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 4;  // number of times to repeat each freq-vol combination in the test
+    static final int NUMBER_OF_VOLS_PER_FREQ = 6;   // number of volumes to test for each frequency
+    static final int NUMBER_OF_TESTS_PER_VOL = 6;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
     static final int TEST_PHASE_REDUCE = 1;
     static final int TEST_PHASE_MAIN = 2;
@@ -70,7 +70,7 @@ public class Model {
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     /////////////// vars/values for confidence test ///////////////
-    static final int CONF_NUMBER_OF_TRIALS_PER_EARCON = 2;
+    static final int CONF_NUMBER_OF_TRIALS_PER_EARCON = 20;
     ArrayList<Earcon> confidenceTestEarcons;  // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
