@@ -38,11 +38,13 @@ public class Model {
 
     private AudioManager audioManager;
 
+    // todo reset sample sizes
+
     // vars/values for hearing test
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
-                                                        // considered "inaudible"
+                                                       // considered "inaudible"
     static final int NUMBER_OF_VOLS_PER_FREQ = 6;   // number of volumes to test for each frequency
     static final int NUMBER_OF_TESTS_PER_VOL = 6;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
@@ -80,7 +82,7 @@ public class Model {
     // vars for confidence test
     static final int CONF_NUMBER_OF_TRIALS_PER_INTERVAL = 20;
     static final float INTERVAL_FREQ_RATIO = 1.25f; // 5:4 ratio = major third
-    ArrayList<Interval> confidenceTestIntervals;  // freq-vol pairs to be tested in the next confidence test
+    ArrayList<Interval> confidenceTestIntervals;   // freq-vol pairs to be tested in the next confidence test
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
     public static final float[] CONF_FREQS  = {220, 880, 1760, 3520}; // 4 octaves of A

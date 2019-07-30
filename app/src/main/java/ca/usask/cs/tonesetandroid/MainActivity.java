@@ -12,6 +12,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -238,12 +239,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 if (model.getTestPhase() != Model.TEST_PHASE_CONF) {
                     heardButton.setVisibility(View.VISIBLE);
                     heardButton.setEnabled(model.testing() && ! model.testPaused());
-                    upButton.setVisibility(View.GONE);
+                    upButton.setVisibility(View.INVISIBLE);
                     upButton.setEnabled(false);
-                    downButton.setVisibility(View.GONE);
+                    downButton.setVisibility(View.INVISIBLE);
                     downButton.setEnabled(false);
                 } else {
-                    heardButton.setVisibility(View.GONE);
+                    heardButton.setVisibility(View.INVISIBLE);
                     heardButton.setEnabled(false);
                     upButton.setVisibility(View.VISIBLE);
                     upButton.setEnabled(model.testing() && ! model.testPaused());
@@ -257,6 +258,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 saveConfButton.setEnabled(model.hasConfResults() && !model.testing() && !model.confResultsSaved());
                 resetButton.setEnabled(!model.testing() || model.testPaused());
                 pauseButton.setEnabled(model.testing());
+                pauseButton.setText(model.testPaused() ? "Resume" : "Pause");
 
                 controller.checkForHearingTestResume(); // resume hearing test if necessary
             }
