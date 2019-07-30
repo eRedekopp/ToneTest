@@ -38,8 +38,6 @@ public class Model {
 
     private AudioManager audioManager;
 
-    // todo reset sample sizes
-
     // vars/values for hearing test
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
