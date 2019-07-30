@@ -13,17 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-
-/*
- * Test timing (worst case):
- *      Calib. time in minutes = (#freqs * #vol/freq * #trial/vol * #seconds/trial + 40s * #freqs) / 60seconds/minute
- *                          21 =    5    *     6     *     10     *       3.5      +     200       / 60
- *
- *      Conf. time in minutes  = #freqs * #vol/freq * #trial/vol * #seconds/trial / 60seconds/minute
- *                          5  =   4    *     1     *     20     *        3.5     / 60
- *
- * 2 calibrations + 2 confidence tests/calibration (one in each type of bg. noise) = approx 60 minutes
- */
+import java.util.Random;
 
 /**
  * Contains information about the current/most recent tests as well as an interface for generating
@@ -38,7 +28,7 @@ public class Model {
 
     private AudioManager audioManager;
 
-    // vars/values for hearing test
+    /////////////// vars/values for hearing test ///////////////
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
@@ -56,23 +46,25 @@ public class Model {
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
     HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
                                                     // (for finding bottom estimates)
-    ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
+    ArrayList<Interval> testIntervals;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer hearingTestResults;   // final results of test
     private boolean testPaused = false; // has the user paused the test?
     boolean testThreadActive = false; // is a thread currently performing a hearing test?
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
                                                                                         // Audiology
+    static final float INTERVAL_FREQ_RATIO = 1.25f; // 5:4 ratio = major third
 
-    // Vars/values for audio
+
+    /////////////// Vars/values for audio ///////////////
     AudioTrack lineOut;
-    public static final int OUTPUT_SAMPLE_RATE  = 44100; // output samples at 44.1 kHz always
+    public static final int OUTPUT_SAMPLE_RATE  = 44100;  // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     public int duration_ms; // how long to play each tone in a test
     double volume;          // amplitude multiplier
     byte[] buf;
     private boolean audioPlaying;
 
-    // Vars for file io
+    /////////////// Vars for file io ///////////////
     private int subjectId = -1;     // -1 indicates not set
     private boolean resultsSaved = false;       // have hearing test results been saved since the model was initialized?
     private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
@@ -102,7 +94,8 @@ public class Model {
     }
 
     /**
-     * Resets this model to its just-initialized state
+     * Resets this model to its just-initialized state. Only resets hearingTestResults if it is null - reset those
+     * with this.resetHearingTestResults
      */
     public void reset() {
         this.topVolEstimates = new ArrayList<>();
@@ -111,11 +104,9 @@ public class Model {
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
         this.confidenceTestIntervals = new ArrayList<>();
         this.analysisResults = new ArrayList<>();
-        this.testPairs = new ArrayList<>();
+        this.testIntervals = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
-        this.hearingTestResults = new HearingTestResultsContainer();
-        this.resultsSaved = false;
         this.confResultsSaved = false;
         this.testThreadActive = false;
         this.testPhase = TEST_PHASE_NULL;
@@ -160,7 +151,7 @@ public class Model {
     /**
      * Set currentVolumes to contain all frequencies and volumes to be tested during the main stage of the hearing test
      */
-    public void configureTestPairs() {
+    public void configureTestIntervals() {
         for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
             double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.2;  // Bump up by 20% because ramp stage gives
@@ -170,10 +161,20 @@ public class Model {
                 testPairs.add(new FreqVolPair(freq, vol));
             }
         }
-        // fill CurrentVolumes with one freqvolpair for each individual tone that will be played in the test
-        this.currentVolumes = new ArrayList<>();
-        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) this.currentVolumes.addAll(this.testPairs);
-        Collections.shuffle(this.currentVolumes);
+        // fill testIntervals with one item for each individual interval that will be played in the test
+        ArrayList<Interval> allTests = new ArrayList<>();
+        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(this.testIntervals);
+        this.testIntervals = allTests;
+        Collections.shuffle(this.testIntervals);
+    }
+
+    public void resetConfidenceResults() {
+        this.confidenceTestResults = new ConfidenceTestResultsContainer();
+    }
+
+    public void resetHearingTestResults() {
+        this.hearingTestResults = new HearingTestResultsContainer();
+        this.resultsSaved = false;
     }
 
     public void resetConfidenceResults() {
@@ -265,17 +266,13 @@ public class Model {
      * @return The probability of the given freq-vol pair being heard given the calibration results
      * @throws IllegalStateException If there are no calibration results stored in the model
      */
-    public float getProbabilityFVP(float freq, double vol) throws IllegalStateException {
+    public float getProbabilityForInterval(Interval interval) throws IllegalStateException {
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
-        return this.hearingTestResults.getProbOfHearingFVP(freq, vol);
+        return this.hearingTestResults.getProbOfCorrectAnswer(interval);
     }
 
-    public float getProbabilityFVP(FreqVolPair fvp) throws IllegalStateException {
-        return this.getProbabilityFVP(fvp.getFreq(), fvp.getVol());
-    }
-
-    public float getProbabilityFVP(FreqVolPair fvp, float[] subset) {
-        return this.hearingTestResults.getProbOfHearingFVP(fvp.getFreq(), fvp.getVol(), subset);
+    public float getProbabilityForInterval(Interval interval, float[] subset) {
+        return this.hearingTestResults.getProbOfCorrectAnswer(interval.freq1, interval.isUpward, interval.vol, subset);
     }
 
     /**

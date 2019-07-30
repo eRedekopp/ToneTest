@@ -49,8 +49,9 @@ public class FileNameController {
      */
     @SuppressWarnings("ConstantConditions")
     public void handleSaveCalibClick(Context context) throws IllegalStateException {
+        // todo edit this to save order so that subsets are made properly after loading calibration
         if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
-        
+
         if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());
 
         BufferedWriter out = null;
@@ -63,23 +64,28 @@ public class FileNameController {
                                     model.hearingTestResults.getBackgroundNoise().toString()));
             out.write("Freq(Hz),Volume,nHeard,nNotHeard\n");
             HearingTestResultsContainer results = model.getHearingTestResults();
-            for (float freq : results.getTestedFreqs()) {
-                HashMap<Double, Integer> timesHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
-                HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
-                Collection<Double> volumes = results.getTestedVolumesForFreq(freq);
-                for (Double vol : volumes) {
-                    int nHeard, nNotHeard;
+            out.write(String.format("ParticipantID %d NoiseType %s%n",
+                      model.getSubjectId(), results.getNoiseType().toString()));
+            out.write(String.format("Freq1(Hz),Direction,Volume,nCorr,nIncorr%n"));
+            for (HearingTestResultsContainer.HearingTestSingleIntervalResult htsr : results.getAllResults()) {
+                for (Double vol : htsr.getVolumes()) {
+                    int timesCorr, timesIncorr;
                     try {
-                        nHeard = timesHeardPerVol.get(vol);
+                        timesCorr = htsr.getTimesCorrPerVol().get(vol);
                     } catch (NullPointerException e) {
-                        nHeard = 0;
+                        timesCorr = 0;
                     }
                     try {
-                        nNotHeard = timesNotHeardPerVol.get(vol);
+                        timesIncorr = htsr.getTimesIncorrPerVol().get(vol);
                     } catch (NullPointerException e) {
-                        nNotHeard = 0;
+                        timesIncorr = 0;
                     }
-                    out.write(String.format("%.1f,%.2f,%d,%d,\n", freq, vol, nHeard, nNotHeard));
+                    out.write(String.format("%.1f,%s,%.2f,%d,%d,%n",
+                                htsr.freq1,
+                                htsr.isUpward ? "Up" : "Down",
+                                vol,
+                                timesCorr,
+                                timesIncorr));
                 }
             }
         } catch (FileNotFoundException e) {
@@ -382,8 +388,8 @@ public class FileNameController {
     public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
         File file = new File(filePath);
         if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
-        Scanner scanner;
 
+        Scanner scanner;
         try {
             scanner = new Scanner(file);
         } catch (FileNotFoundException e) {
@@ -405,19 +411,36 @@ public class FileNameController {
         scanner.nextLine();                 // skip header
 
         // parse test information
-        scanner.useDelimiter(",");
+        scanner.useDelimiter(Pattern.compile("\\s"));
 
         // disallow double-saving
         model.setResultsSaved(true);
 
         try {
             while (scanner.hasNext()) {
-                double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
-                int nextHeard = scanner.nextInt();
-                int nextNotHeard = scanner.nextInt();
-                for (int i = 0; i < nextHeard; i++) results.addResult((float) nextFreq, nextVol, true);
-                for (int i = 0; i < nextNotHeard; i++) results.addResult((float) nextFreq, nextVol, false);
+                double nextFreq = scanner.nextDouble();
+                String nextDir  = scanner.next();
+                double nextVol  = scanner.nextDouble();
+                int nextCorr    = scanner.nextInt();
+                int nextIncorr  = scanner.nextInt();
+                for (int i = 0; i < nextCorr; i++)
+                    results.addResult(new Interval(
+                            (float) nextFreq,
+                            nextDir.equals("Up") ? (float) nextFreq * Model.INTERVAL_FREQ_RATIO
+                                                 : (float) nextFreq / Model.INTERVAL_FREQ_RATIO,
+                            nextVol),
+                            true);
+                for (int i = 0; i < nextIncorr; i++)
+                    results.addResult(new Interval(
+                            (float) nextFreq,
+                            nextDir.equals("Up") ? (float) nextFreq * Model.INTERVAL_FREQ_RATIO
+                                                 : (float) nextFreq / Model.INTERVAL_FREQ_RATIO,
+                            nextVol),
+                            false);
                 if (scanner.hasNextLine()) scanner.nextLine();
+
+                // disallow duplicate saves
+                model.setResultsSaved(true);
             }
             model.hearingTestResults = results;
         } catch (NoSuchElementException e) {

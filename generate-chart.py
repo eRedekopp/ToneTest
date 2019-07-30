@@ -5,7 +5,6 @@ a frequency response graph and sigmoid graphs for all files. Files must all have
 
 import sys
 import matplotlib.pyplot as plt
-import numpy as np
 
 
 """
@@ -30,12 +29,9 @@ def read_csv(abs_path):
         freq_results = {}  # map frequencies to tuple = (vol, P(heard))
         for line in f.readlines():
             line = line.split(',')
-            freq = float(line[0])
-            vol = float(line[1])
-            n_heard = int(line[2])
-            n_not_heard = int(line[3])
-            total = n_heard + n_not_heard
-            p = float(n_heard) / float(total)
+            freq = line[0]
+            vol = line[1]
+            p = float(line[2]) / float(line[2] + line[3])
             if freq in list(freq_results):
                 freq_results[freq].append((vol, p))
             else:
@@ -69,13 +65,10 @@ def generate_sig_graph(freq_results):
         x_data.append(new_x_list)
         y_data.append(new_y_list)
 
-    max_x = float(max([max(lst) for lst in x_data]))        # aesthetics
-    x_ticks = np.arange(0, max_x, 100)
-    y_ticks = np.arange(0, 1.1, 0.1)
-    plt.xticks(x_ticks)
-    plt.yticks(y_ticks)
-    plt.figure(figsize=(12, 6))
-    plt.xlabel("Volume")
+    for i in range(len(x_data)):        # plot
+        plt.plot(x_data[i], y_data[i], line_color_args[i], label=str(freq_list[i]) + " Hz")
+
+    plt.xlabel("Volume")                # beautify
     plt.ylabel("P(heard)")
     plt.title("Participant " + str(sub_id) + " " + noise_type + " Calibration")
 

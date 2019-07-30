@@ -54,6 +54,11 @@ public class HearingTestController {
             "if the second tone was higher than the first tone, press the \"Down\" button if the second tone was " +
             "lower than the first tone, or do nothing if you aren't sure.";
 
+    private static final String intervalInfo =
+            "In this test, two tones will be played in sequence at various frequencies and volumes at random times. " +
+            "Please press the \"Up\" button if the second tone was higher than the first tone, press the \"Down\" " +
+            "button if the second tone was lower than the first tone, or do nothing if you couldn't tell";
+
     /**
      * Checks if a test phase is supposed to be started or resumed, then starts a test on a new thread if it is
      */
@@ -75,10 +80,9 @@ public class HearingTestController {
      * @param duration_ms The duration of the sine wave in milliseconds
      */
     private void playSine(float freq, double vol, int duration_ms) {
-        long count = 0;
         model.enforceMaxVolume();
         model.startAudio();
-        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++, count++) {
+        for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
             if (iModel.heard) break;
 
             float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
@@ -130,7 +134,6 @@ public class HearingTestController {
      *
      * @author redekopp
      */
-    @SuppressWarnings("unchecked")
     public void hearingTest() {
         // Algorithm:
         //      1 Get estimates for volumes at which the listener will hear the tone 100% of the time for each frequency
@@ -155,6 +158,7 @@ public class HearingTestController {
 
                     // show information for ramp segment of test
                     model.setTestPaused(true);
+
                     mainHandler.post(new Runnable() {
                         @Override
                         public void run() {
@@ -168,6 +172,10 @@ public class HearingTestController {
         }).start();
     }
 
+    /**
+     * Perform the reduction phase of the calibration test: get bottom volume estimates by reducing volumes and asking
+     * user whether they can hear them until no tones are audible.
+     */
     @SuppressWarnings("unchecked")
     private void reducePhase() {
         model.testThreadActive = true;
@@ -210,11 +218,19 @@ public class HearingTestController {
             // play the sine, update the map if not heard
             iModel.notHeard();
             this.playSine(fvp.getFreq(), fvp.getVol(), TONE_DURATION_MS);
+
+            try {
+                Thread.sleep(1000);     // user gets 1 second after tone finishes to press "heard"
+            } catch (InterruptedException e) { return; }
+
             if (! iModel.heard)
                 mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
                         model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
+            Log.i("reducePhase", iModel.heard ? "Tone Heard" : "Tone not heard");   // print message indicating whether
+                                                                                    // tone was heard
+
             try {
-                Thread.sleep((long) (Math.random() * 2000 + 1000));
+                Thread.sleep((long) (Math.random() * 2000)); // wait an additional 0-2 seconds
             } catch (InterruptedException e) { return; }
         }
     }
@@ -252,8 +268,7 @@ public class HearingTestController {
                         Log.i("rampUpTest", "Testing frequency " + freq);
 
                         double rateOfRamp = 1.05;
-                        rampUp(rateOfRamp, freq, 0.1);  // play a tone for 50ms, then ramp up by 1.05 times until the tone
-                        // is heard starting at a volume of 0.1
+                        rampUp(rateOfRamp, freq, 0.1);
 
                         heardVol = model.volume; // record the volume when user paused
 
@@ -265,10 +280,12 @@ public class HearingTestController {
                             break;
                         }
 
-                        rateOfRamp = 1.01;
+                        rateOfRamp = 1.018;
                         // redo the ramp up test, this time starting at 1/10th the volume previously required to hear the
                         // tone and ramping up at a slower rate
                         rampUp(rateOfRamp, freq, heardVol / 10.0);
+
+                        if (model.testPaused()) return; // check if user paused test before adding result
 
                         FreqVolPair results = new FreqVolPair(freq, model.volume);
                         model.topVolEstimates.add(results); //add the frequency volume pair to list of top estimates
@@ -314,7 +331,7 @@ public class HearingTestController {
         model.startAudio();
 
         for (model.volume = startingVol; model.volume < 32767; model.volume *= rateOfRamp) {
-            if (! model.audioPlaying()) return;
+            if (! model.audioPlaying() || model.testPaused()) return;
 
             if (iModel.heard) {
                 iModel.notHeard();//reset the iModel for the next ramp
@@ -334,7 +351,7 @@ public class HearingTestController {
     }
 
     /**
-     * Perform the "main" hearing test: test all frequencies in testPairs and save results in model
+     * Perform the "main" hearing test: test all frequencies in testIntervals and save results in model
      */
     private void mainTest() {
         model.testThreadActive = true;
@@ -342,16 +359,21 @@ public class HearingTestController {
             @Override
             public void run() {
                 try {
-                    while (!model.currentVolumes.isEmpty()) {
+                    while (!model.testIntervals.isEmpty()) {
                         if (model.testPaused()) return;
-
-                        FreqVolPair trial = model.currentVolumes.get(0);
-                        model.currentVolumes.remove(0);
-                        model.startAudio();
+                        Log.d("mainTest", model.testIntervals.toString());
+                        Interval trial = model.testIntervals.get(0);
+                        model.testIntervals.remove(0);
                         Log.i("mainTest", "Testing " + trial.toString());
-                        iModel.notHeard();
-                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
-                        model.hearingTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+                        new Handler(Looper.getMainLooper()).post(new Runnable() {
+                            @Override
+                            public void run() {   // reset iModel on main thread
+                                iModel.resetAnswer();
+                            }
+                        });
+                        model.startAudio();
+                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
+                        model.stopAudio();
 
                         model.stopAudio();
                         try {                    // sleep for for random length 1-3 seconds
@@ -523,13 +545,6 @@ public class HearingTestController {
             float realPart = fftResult[i * 2];
             float imagPart = fftResult[i * 2 + 1];
 
-/* Not using this anymore but keeping the comment here for now
-
-// Power Spectral Density in dB= 20 * log10(sqrt(re^2 + im^2)) using first N/2 complex numbers of FFT output
-// from StackOverflow user Ernest Barkowski
-// https://stackoverflow.com/questions/6620544/fast-fourier-transform-fft-input-and-output-to-analyse-the-frequency-of-audio
-*/
-
 // Power Spectral Density in dB = magnitude(fftResult) ^ 2
 // From StackOverflow user Jason R
 // https://dsp.stackexchange.com/questions/4691/what-is-the-difference-between-psd-and-squared-magnitude-of-frequency-spectrum?lq=1
@@ -545,7 +560,7 @@ public class HearingTestController {
         return freqBins;
     }
 
-    //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////////
+    //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////
 
     public void handleCalibClick() {
         if (this.model.hearingTestResults.getBackgroundNoise() == null)
@@ -557,6 +572,14 @@ public class HearingTestController {
         if (this.model.confidenceTestResults.getNoiseType() == null)
             throw new IllegalStateException("Background noise must be configured before beginning test");
         this.confidenceTest();
+    }
+
+    public void handleUpClick() {
+        this.iModel.setAnswer(true);
+    }
+
+    public void handleDownClick() {
+        this.iModel.setAnswer(false);
     }
 
     public void handleHeardClick() {
@@ -613,6 +636,14 @@ public class HearingTestController {
         return sum / (float) arr.length;
     }
 
+    /**
+     * Replace the value associated with the given key in the map with the given new value, or just associate the key
+     * with the value if not already present.
+     *
+     * @param map A HashMap
+     * @param key A valid key for that hashmap (not necessarily present in map)
+     * @param newValue The new value with which to associate the key
+     */
     public void mapReplace(HashMap<Float, Integer> map, Float key, Integer newValue) {
         map.remove(key);
         map.put(key, newValue);

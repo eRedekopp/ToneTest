@@ -42,7 +42,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     FileNameController fileController;
     BackgroundNoiseController noiseController;
 
+    private int dialogSelectedItem;  // for selecting background noise configurations
+    private int dialogNoiseID;
+    private int dialogVolume;
+
     Button  calibButton,
+            upButton,
+            downButton,
             heardButton,
             upButton,
             downButton,
@@ -108,6 +114,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
+        downButton =        findViewById(R.id.downButton);
+        upButton =          findViewById(R.id.upButton);
         heardButton =       findViewById(R.id.heardButton);
         upButton =          findViewById(R.id.upButton);
         downButton =        findViewById(R.id.downButton);
@@ -158,8 +166,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     model.setResultsSaved(true);
                 } catch (IllegalStateException e) {
                     showErrorDialog("No results currently stored");
+                    e.printStackTrace();
                 } catch (RuntimeException e) {
                     showErrorDialog("Unable to create target file");
+                    e.printStackTrace();
                 }
             }
         });
@@ -508,5 +518,17 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             }
         });
         infoBuilder.show();
+    }
+
+    public void setDialogSelectedItem(int dialogSelectedItem) {
+        this.dialogSelectedItem = dialogSelectedItem;
+    }
+
+    public void setDialogNoiseID() {
+        this.dialogNoiseID = this.dialogSelectedItem;
+    }
+
+    public void setDialogVolume() {
+        this.dialogVolume = this.dialogSelectedItem;
     }
 }
