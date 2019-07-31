@@ -390,9 +390,10 @@ public class HearingTestController {
                         iModel.notHeard();
                         playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
                         model.hearingTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+                        model.stopAudio();
+                        Log.i("mainTest", "Tone " + (iModel.heard ? "heard" : "not heard"));
 
-                        model.stopAudio();  // sleep for for random length 1-3 seconds
-                        try {
+                        try {               // sleep for for random length 1-3 seconds
                             Thread.sleep((long) (Math.random() * 2000 + 1000));
                         } catch (InterruptedException e) {
                             return;
@@ -452,10 +453,6 @@ public class HearingTestController {
      */
     private void mainConfTest() {
 
-        // todo give more time for user to enter response
-
-        Log.d("mainConfTest", "Got here");
-
         model.testThreadActive = true;
         new Thread(new Runnable() {
             @Override
@@ -470,7 +467,7 @@ public class HearingTestController {
                         new Handler(Looper.getMainLooper()).post(new Runnable() {
                             @Override
                             public void run() {   // set iModel to notHeard on main thread
-                                iModel.notHeard();
+                                iModel.resetAnswer();
                             }
                         });
                         Log.i("confTest", "Testing Earcon: " + trial.toString());

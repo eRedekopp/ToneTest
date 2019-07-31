@@ -36,8 +36,8 @@ public class Model {
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
                                                         // considered "inaudible"
-    static final int NUMBER_OF_VOLS_PER_FREQ = 2;   // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 2;  // number of times to repeat each freq-vol combination in the test
+    static final int NUMBER_OF_VOLS_PER_FREQ = 5;   // number of volumes to test for each frequency
+    static final int NUMBER_OF_TESTS_PER_VOL = 5;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
     static final int TEST_PHASE_REDUCE = 1;
     static final int TEST_PHASE_MAIN = 2;
@@ -290,8 +290,10 @@ public class Model {
      */
     public float getProbabilityForEarcon(Earcon earcon, float[] subset)
             throws IllegalStateException, IllegalArgumentException {
+
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
-        return this.hearingTestResults.getProbOfCorrectAnswer(
+
+        return this.hearingTestResults.getProbOfCorrectAnswer(              // todo fix
                 earcon.frequency, earcon.direction, earcon.volume, subset);
     }
 

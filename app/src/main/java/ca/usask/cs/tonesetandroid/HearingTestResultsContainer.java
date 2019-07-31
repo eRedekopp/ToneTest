@@ -116,22 +116,6 @@ public class HearingTestResultsContainer {
     }
 
     /**
-     * Get the probability that a user will correctly distinguish the direction of an interval
-     *
-     * @param freq1 The first frequency of the interval
-     * @param freq2 The second frequency of the interval
-     * @param vol The volume of the interval
-     * @return P(user distinguished correctly)
-     */
-    public float getProbOfCorrectAnswer(float freq1, float freq2, double vol) {
-        return getProbOfCorrectAnswer(freq1, freq2, vol, Model.FREQUENCIES);
-    }
-
-    public float getProbOfCorrectAnswer(Interval interval) {
-        return getProbOfCorrectAnswer(interval.freq1, interval.freq2, interval.vol);
-    }
-
-    /**
      * Given the starting note of the interval, its direction, its volume, and a subset of the tested frequencies,
      * determine the probability that the user will correctly hear the direction of the interval based only on the
      * given subset of frequencies
@@ -143,17 +127,15 @@ public class HearingTestResultsContainer {
      * @return An estimate of the probability that the user will correctly hear the direction of the interval
      * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
      */
-    public float getProbOfCorrectAnswer(float freq1, float freq2, double vol, float[] subset)
+    public double getProbOfCorrectAnswer(Earcon earcon, float[] subset)
             throws IllegalArgumentException {
 
-        // return average probability between both frequencies
-        return (getProbOfHearingFVP(freq1, vol, subset) + getProbOfHearingFVP(freq2, vol, subset)) / 2;
+        return 0;   // todo fix
     }
 
-    public float getProbOfCorrectAnswer(Interval interval, float[] subset) throws IllegalArgumentException {
-        return getProbOfCorrectAnswer(interval.freq1, interval.freq2, interval.vol, subset);
+    public double getProbOfCorrectAnswer(Earcon earcon) {
+        return getProbOfCorrectAnswer(earcon, Model.FREQUENCIES);
     }
-
 
     /**
      * Returns a mapping of volumes to the number of times each volume was heard in the test for the given frequency
@@ -261,11 +243,11 @@ public class HearingTestResultsContainer {
     }
 
     public double getVolFloorEstimateForEarcon(float freq, int wavResId) {
-        return getVolFloorEstimateForFreq(freq);
+        return getVolFloorEstimateForFreq(freq);    // todo fix
     }
 
     public double getVolCeilingEstimateForEarcon(float freq, int wavResId) {
-        return getVolCeilingEstimateForFreq(freq);
+        return getVolCeilingEstimateForFreq(freq);  // todo fix
     }
 
     /**
