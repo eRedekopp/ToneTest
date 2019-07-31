@@ -9,6 +9,9 @@ import android.media.MediaRecorder;
 import android.os.Build;
 import android.util.Log;
 
+import com.paramsen.noise.Noise;
+import com.paramsen.noise.NoiseOptimized;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,8 +36,8 @@ public class Model {
     static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;   // number of times listener must fail to hear a tone in the
                                                         // reduction phase of the hearing test before the volume is
                                                         // considered "inaudible"
-    static final int NUMBER_OF_VOLS_PER_FREQ = 6;   // number of volumes to test for each frequency
-    static final int NUMBER_OF_TESTS_PER_VOL = 6;  // number of times to repeat each freq-vol combination in the test
+    static final int NUMBER_OF_VOLS_PER_FREQ = 2;   // number of volumes to test for each frequency
+    static final int NUMBER_OF_TESTS_PER_VOL = 2;  // number of times to repeat each freq-vol combination in the test
     static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
     static final int TEST_PHASE_REDUCE = 1;
     static final int TEST_PHASE_MAIN = 2;
@@ -46,7 +49,7 @@ public class Model {
     ArrayList<FreqVolPair> currentVolumes;      // The current volumes being tested
     HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
     // (for finding bottom estimates)
-    ArrayList<Interval> testIntervals;  // all the freq-vol combinations that will be tested in the main test
+    ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
     HearingTestResultsContainer hearingTestResults;   // final results of test
     private boolean testPaused = false; // has the user paused the test?
     boolean testThreadActive = false; // is a thread currently performing a hearing test?
@@ -95,7 +98,7 @@ public class Model {
         this.confidenceTestResults = new ConfidenceTestResultsContainer();
         this.confidenceTestEarcons = new ArrayList<>();
         this.analysisResults = new ArrayList<>();
-        this.testIntervals = new ArrayList<>();
+        this.testPairs = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         for (float freq : FREQUENCIES) timesNotHeardPerFreq.put(freq, 0);
         this.confResultsSaved = false;
@@ -146,23 +149,21 @@ public class Model {
     /**
      * Set currentVolumes to contain all frequencies and volumes to be tested during the main stage of the hearing test
      */
-    public void configureTestIntervals() {
+    public void configureTestPairs() {
         for (float freq : FREQUENCIES) {
             double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
-            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.3;  // boost top estimate because ramp test
-            for (double vol = bottomVolEst;                                 // underestimates
+            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.2;  // Bump up by 20% because ramp stage gives
+            for (double vol = bottomVolEst;                                 // low estimates
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
-
-                testIntervals.add(new Interval(freq, freq * INTERVAL_FREQ_RATIO, vol)); // add upward interval
-                testIntervals.add(new Interval(freq, freq / INTERVAL_FREQ_RATIO, vol)); // add downward interval
+                testPairs.add(new FreqVolPair(freq, vol));
             }
         }
-        // fill testIntervals with one item for each individual interval that will be played in the test
-        ArrayList<Interval> allTests = new ArrayList<>();
-        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) allTests.addAll(this.testIntervals);
-        this.testIntervals = allTests;
-        Collections.shuffle(this.testIntervals);
+        // fill CurrentVolumes with one freqvolpair for each individual tone that will be played in the test
+        this.currentVolumes = new ArrayList<>();
+        for (int i = 0; i < Model.NUMBER_OF_TESTS_PER_VOL; i++) this.currentVolumes.addAll(this.testPairs);
+        Collections.shuffle(this.currentVolumes);
+
     }
 
     public void resetConfidenceResults() {
@@ -178,13 +179,13 @@ public class Model {
      * Populate model.confidenceTestIntervals with all freqvolpairs that will be tested in the next confidence test
      */
     @SuppressWarnings("ConstantConditions")
-    public void configureConfidenceTestPairs() {
+    public void configureConfidenceTestEarcons() {
 
        ///////////////////////////////////////////////////
        ////// Earcon selection gets adjusted here ////////
        ///////////////////////////////////////////////////
 
-        // select frequencies / build maps
+        // select frequencies / build earcon maps
         Float[] confFreqs = {523f, 1046f, 2093f, 3136f};
         ArrayList<Float> freqList = new ArrayList<>(Arrays.asList(confFreqs));
         HashMap<Float, Integer> earconsUp   = new HashMap<>(),          // set resource IDs for each earcon
@@ -203,31 +204,38 @@ public class Model {
         earconsFlat.put(2093f, R.raw.ec2093hzclavneg);
         earconsFlat.put(3136f, R.raw.ec3136hzclavneg);
 
+        // set list to contain 2 copies of each frequency
+        freqList.addAll(Arrays.asList(confFreqs));
         // randomize the order of test frequencies
         Collections.shuffle(freqList);
+
+        int numEarconsToTest = 6;
+
+        // create list to randomize order of up/down/flat earcons
+        ArrayList<Integer> directionList = new ArrayList<>();
+        for (int i = 0; i < 2; i++) directionList.addAll(Arrays.asList(
+                                    Earcon.DIRECTION_UP, Earcon.DIRECTION_DOWN, Earcon.DIRECTION_NONE));
+        Collections.shuffle(directionList);
 
         // for each frequency, add an upward, downward, and flat earcon at a volume some percentage of the way
         // between estimates for "completely inaudible" and "completely audible" volumes.
         float pct = 0;  // percentage of the way between volFloor and volCeiling at which trial should be conducted
-        float jumpSize = 1f / 4f;   // 4 = number of earcon frequencies tested
-        for (Float f : freqList) {
-            // upward
-            double volFloor   = this.hearingTestResults.getVolFloorEstimateForEarcon(f, Earcon.DIRECTION_UP);
-            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(f, Earcon.DIRECTION_UP);
+        float jumpSize = 1f / numEarconsToTest;
+        for (int i = 0; i < numEarconsToTest; i++) {
+            float freq = freqList.get(i);
+            int direction = directionList.get(i);
+            HashMap<Float, Integer> earconIdMap;
+            switch (direction) {
+                case Earcon.DIRECTION_DOWN: earconIdMap = earconsDown; break;
+                case Earcon.DIRECTION_UP:   earconIdMap = earconsUp; break;
+                case Earcon.DIRECTION_NONE: earconIdMap = earconsFlat; break;
+                default: throw new RuntimeException("Unknown direction value found : " + direction);
+            }
+
+            double volFloor   = this.hearingTestResults.getVolFloorEstimateForEarcon(freq, earconIdMap.get(freq));
+            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(freq, earconIdMap.get(freq));
             double testVol = volFloor + pct * (volCeiling - volFloor);
-            this.confidenceTestEarcons.add(new Earcon(f, earconsUp.get(f), testVol, Earcon.DIRECTION_UP));
-
-            // downward
-            volFloor = this.hearingTestResults.getVolFloorEstimateForEarcon(f, Earcon.DIRECTION_DOWN);
-            volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(f, Earcon.DIRECTION_DOWN);
-            testVol = volFloor + pct * (volCeiling - volFloor);
-            this.confidenceTestEarcons.add(new Earcon(f, earconsDown.get(f), testVol, Earcon.DIRECTION_DOWN));
-
-            // flat
-            volFloor = this.hearingTestResults.getVolFloorEstimateForEarcon(f, Earcon.DIRECTION_NONE);
-            volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(f, Earcon.DIRECTION_NONE);
-            testVol = volFloor + pct * (volCeiling - volFloor);
-            this.confidenceTestEarcons.add(new Earcon(f, earconsFlat.get(f), testVol, Earcon.DIRECTION_NONE));
+            this.confidenceTestEarcons.add(new Earcon(freq, earconIdMap.get(freq), testVol, direction));
 
             pct += jumpSize;
         }
@@ -369,6 +377,62 @@ public class Model {
         }
 
         return lineDataFloat;
+    }
+
+    /**
+     * Applies a Hann Window to the data set to improve the overall accuracy
+     * This function is slightly less general than a typical Hann window function
+     * Typically, you also want to know the starting index of the data to be windowed
+     * In this case, the index will always begin at 0
+     *
+     * @param data The data that will be windowed
+     * @return The windowed data set
+     *
+     * @author alexscott
+     */
+    private static float[] applyHannWindow(float[] data) {
+        int length = data.length;
+        for (int i = 0; i < length; i++) {
+            data[i] = (float) (data[i] * 0.5 * (1.0 - Math.cos(2.0 * Math.PI * i / length)));
+        }
+        return data;
+    }
+
+    /**
+     * Get a periodogram from the given raw PCM data
+     */
+    public FreqVolPair[] getPeriodogramFromPcmData(float[] rawPCM) {
+
+        int freqBinWidth = Model.INPUT_SAMPLE_RATE / rawPCM.length;
+
+        // Object for performing FFTs: handle real inputs of size sampleSize
+        NoiseOptimized noise = Noise.real().optimized().init(rawPCM.length, true);
+
+        // apply Hann window to reduce noise
+        float[] fftInput = applyHannWindow(rawPCM);
+
+        // perform FFT
+        float[] fftResult = noise.fft(fftInput); // noise.fft() returns from DC bin to Nyquist bin, no slicing req'd
+
+        // convert to power spectral density
+        float[] psd =  new float[fftInput.length / 2 + 1];
+        for (int i = 0; i < fftResult.length / 2; i++) {
+            float realPart = fftResult[i * 2];
+            float imagPart = fftResult[i * 2 + 1];
+
+// Power Spectral Density in dB = magnitude(fftResult) ^ 2
+// From StackOverflow user Jason R
+// https://dsp.stackexchange.com/questions/4691/what-is-the-difference-between-psd-and-squared-magnitude-of-frequency-spectrum?lq=1
+            psd[i] = (float) Math.pow(Math.sqrt(Math.pow(realPart, 2) + Math.pow(imagPart, 2)), 2);
+        }
+
+        FreqVolPair[] freqBins = new FreqVolPair[psd.length];
+        for (int i = 0; i < psd.length; i++) {
+            float freq = (float) i * freqBinWidth + freqBinWidth / 2.0f;
+            double vol = psd[i];
+            freqBins[i] = new FreqVolPair(freq, vol);
+        }
+        return freqBins;
     }
 
     /**
@@ -543,8 +607,8 @@ public class Model {
     public void printResultsToConsole() {
         Log.i("printResultsToConsole", String.format("Subject ID: %d\nCalibration Background Noise Type: %s",
                 this.subjectId,
-                this.hearingTestResults.getNoiseType() == null ? "N/A" :  // show noise type if
-                        this.hearingTestResults.getNoiseType().toString()));  // applicable
+                this.hearingTestResults.getBackgroundNoise() == null ? "N/A" :      // show noise type if
+                        this.hearingTestResults.getBackgroundNoise().toString()));  // applicable
         if (hearingTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", hearingTestResults.toString());
     }

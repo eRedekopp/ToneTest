@@ -1,7 +1,9 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -11,35 +13,32 @@ import java.util.ListIterator;
 
 public class HearingTestResultsContainer {
 
-    // Keyed by Interval.freq
-    public HashMap<Float, HearingTestSingleIntervalResult> allResultsUpward;   // for upward intervals
+    // each frequency tested mapped to its corresponding SingleFreqResult
+    private HashMap<Float, HearingTestSingleFreqResult> allResults;
 
-    public HashMap<Float, HearingTestSingleIntervalResult> allResultsDownward; // for downward intervals
+    private BackgroundNoiseType backgroundNoise;
 
-    private BackgroundNoiseType noiseType;
+    private Context context;
 
     public HearingTestResultsContainer() {
-        allResultsUpward = new HashMap<>();
-        allResultsDownward = new HashMap<>();
+        allResults = new HashMap<>();
     }
 
     /**
      * Add a new calibration test result to this container
      *
      * @param freq The frequency of the trial
-     * @param vol  The volume of the trial
+     * @param vol The volume of the trial
      * @param heard Was the trial heard?
      */
     @SuppressWarnings("ConstantConditions")
-    public void addResult(Interval interval, boolean heard) {
-        HashMap<Float, HearingTestSingleIntervalResult> mapToUpdate =
-                interval.isUpward ? allResultsUpward : allResultsDownward;
+    public void addResult(float freq, double vol, boolean heard) {
         try {
-            mapToUpdate.get(interval.freq1).addResult(interval.vol, heard);
+            allResults.get(freq).addResult(vol, heard);
         } catch (NullPointerException e) {
-            HearingTestSingleIntervalResult r = new HearingTestSingleIntervalResult(interval.freq1, interval.freq2);
-            r.addResult(interval.vol, heard);
-            mapToUpdate.put(interval.freq1, r);
+            HearingTestSingleFreqResult r = new HearingTestSingleFreqResult(freq);
+            r.addResult(vol, heard);
+            allResults.put(freq, r);
         }
     }
 
@@ -47,35 +46,26 @@ public class HearingTestResultsContainer {
      * @return true if there are no results stored in this container, else false
      */
     public boolean isEmpty() {
-        return allResultsUpward.isEmpty() && allResultsDownward.isEmpty();
+        return allResults.isEmpty();
     }
 
     /**
-     * Given the first frequency direction, and volume of an interval, determine the probability that the user will
-     * correctly hear the direction of the interval
-     *
-     * @param freq the starting frequency of the interval
-     * @param upward Is the interval upward?
-     * @param vol The volume of the tones in the interval
-     * @return The probability that the user will correctly hear the direction of the interval
+     * @return  the probability of hearing a tone of the given frequency at the given volume
      */
     @SuppressWarnings("ConstantConditions")
-    public float getProbOfCorrectAnswer(float freq, boolean upward, double vol) {
-
-        HashMap<Float, HearingTestSingleIntervalResult> resultMap =
-                upward ? this.allResultsUpward : this.allResultsDownward;
+    public float getProbOfHearingFVP(float freq, double vol) {
 
         // find frequencies tested just above and below freq
         float freqAbove = findNearestAbove(freq, this.getTestedFreqs());
         float freqBelow = findNearestBelow(freq, this.getTestedFreqs());
 
         // if freq is higher than the highest or lower than the lowest, just return the probability of the nearest
-        if (freqAbove == -1) return resultMap.get(freqBelow).getProbOfHearing(vol);
-        if (freqBelow == -1) return resultMap.get(freqAbove).getProbOfHearing(vol);
+        if (freqAbove == -1) return this.allResults.get(freqBelow).getProbOfHearing(vol);
+        if (freqBelow == -1) return this.allResults.get(freqAbove).getProbOfHearing(vol);
 
         // find the probabilities of each of these frequencies
-        float probAbove = resultMap.get(freqAbove).getProbOfHearing(vol);
-        float probBelow = resultMap.get(freqAbove).getProbOfHearing(vol);
+        float probAbove = this.allResults.get(freqAbove).getProbOfHearing(vol);
+        float probBelow = this.allResults.get(freqAbove).getProbOfHearing(vol);
 
         // how far of the way between freqBelow and freqAbove is fvp.freq?
         float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
@@ -85,30 +75,20 @@ public class HearingTestResultsContainer {
     }
 
     /**
-     * Given the starting note of the interval, its direction, its volume, and a subset of the tested frequencies,
-     * determine the probability that the user will correctly hear the direction of the interval based only on the
-     * given subset of frequencies
+     * Given a subset of the tested frequencies, return the probability of hearing a tone of the given frequency and
+     * volume modeled only based on the subset frequencies
      *
-     * @param freq The starting frequency of the interval
-     * @param upward Is the interval upward?
-     * @param vol The volume of the tones in the interval
-     * @param subset A subset of the tested volumes, to be used to generate the estimate
-     * @return An estimate of the probability that the user will correctly hear the direction of the interval
+     * @param freq The frequency of the tone whose probability is to be determined
+     * @param vol The volume of the tone whose probability is to be determined
+     * @param subset A subset of the calibration frequencies to be used to generate the model
+     * @return The estimated probability of hearing the tone, based on the given subset
      * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
      */
     @SuppressWarnings("ConstantConditions")
-    public float getProbOfCorrectAnswer(float freq, int direction, double vol, float[] subset)
-            throws IllegalArgumentException {
-
-        if (direction == Earcon.DIRECTION_NONE)  // if no direction, return mean of up and down
-            return (getProbOfCorrectAnswer(freq, Earcon.DIRECTION_UP, vol, subset) +
-                    getProbOfCorrectAnswer(freq, direction, vol, subset)) / 2;
-
-        HashMap<Float, HearingTestSingleIntervalResult> resultMap = this.getMapForDirection(direction);
-
+    public float getProbOfHearingFVP(float freq, double vol, float[] subset) throws IllegalArgumentException{
         Float[] subsetAsObj = new Float[subset.length];
         for (int i = 0; i < subset.length; i++)
-            if (! this.freqTested(subset[i], direction == Earcon.DIRECTION_UP))
+            if (! this.allResults.containsKey(subset[i]))
                 throw new IllegalArgumentException("Subset argument must be a subset of tested frequencies");
             else subsetAsObj[i] = subset[i];
 
@@ -116,13 +96,13 @@ public class HearingTestResultsContainer {
         float freqAbove = findNearestAbove(freq, subsetAsObj);
         float freqBelow = findNearestBelow(freq, subsetAsObj);
 
-        // if freq is higher than highest or lower than lowest in subset, return probability of nearest
-        if (freqAbove == -1) return resultMap.get(freqBelow).getProbOfHearing(vol);
-        if (freqBelow == -1) return resultMap.get(freqAbove).getProbOfHearing(vol);
+        // if freq is higher than the highest or lower than the lowest, return the probability of the nearest
+        if (freqAbove == -1) return this.allResults.get(freqBelow).getProbOfHearing(vol);
+        if (freqBelow == -1) return this.allResults.get(freqAbove).getProbOfHearing(vol);
 
-        // find the probabilities of each of these frequencies
-        float probAbove = resultMap.get(freqAbove).getProbOfHearing(vol);
-        float probBelow = resultMap.get(freqAbove).getProbOfHearing(vol);
+        // find probabilities of each of these frequencies
+        float probAbove = this.allResults.get(freqAbove).getProbOfHearing(vol);
+        float probBelow = this.allResults.get(freqBelow).getProbOfHearing(vol);
 
         // how far of the way between freqBelow and freqAbove is fvp.freq?
         float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
@@ -131,163 +111,161 @@ public class HearingTestResultsContainer {
         return probBelow + pctBetween * (probAbove - probBelow);
     }
 
+    public float getProbOfHearingFVP(FreqVolPair fvp) {
+        return getProbOfHearingFVP(fvp.getFreq(), fvp.getVol());
+    }
+
     /**
-     * Given a starting frequency and a direction, return a mapping of volumes at which that interval was tested to the
-     * number of times the user answered correctly at that volume
+     * Get the probability that a user will correctly distinguish the direction of an interval
      *
-     * Note: getTimesCorrPerVolForInterval().keySet() doesn't necessarily contain all tested volumes. If never answered
-     * correctly, a volume will not be present
+     * @param freq1 The first frequency of the interval
+     * @param freq2 The second frequency of the interval
+     * @param vol The volume of the interval
+     * @return P(user distinguished correctly)
+     */
+    public float getProbOfCorrectAnswer(float freq1, float freq2, double vol) {
+        return getProbOfCorrectAnswer(freq1, freq2, vol, Model.FREQUENCIES);
+    }
+
+    public float getProbOfCorrectAnswer(Interval interval) {
+        return getProbOfCorrectAnswer(interval.freq1, interval.freq2, interval.vol);
+    }
+
+    /**
+     * Given the starting note of the interval, its direction, its volume, and a subset of the tested frequencies,
+     * determine the probability that the user will correctly hear the direction of the interval based only on the
+     * given subset of frequencies
      *
-     * @param freq The starting frequency of the interval
+     * @param freq1 The starting frequency of the interval
      * @param upward Is the interval upward?
-     * @return A mapping of volumes at which the interval was tested to the number of correct answers the user gave at
-     * that volume
+     * @param vol The volume of the tones in the interval
+     * @param subset A subset of the tested volumes, to be used to generate the estimate
+     * @return An estimate of the probability that the user will correctly hear the direction of the interval
+     * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
+     */
+    public float getProbOfCorrectAnswer(float freq1, float freq2, double vol, float[] subset)
+            throws IllegalArgumentException {
+
+        // return average probability between both frequencies
+        return (getProbOfHearingFVP(freq1, vol, subset) + getProbOfHearingFVP(freq2, vol, subset)) / 2;
+    }
+
+    public float getProbOfCorrectAnswer(Interval interval, float[] subset) throws IllegalArgumentException {
+        return getProbOfCorrectAnswer(interval.freq1, interval.freq2, interval.vol, subset);
+    }
+
+
+    /**
+     * Returns a mapping of volumes to the number of times each volume was heard in the test for the given frequency
+     *
+     * @param freq The frequency whose volume results are to be returned
+     * @return A mapping of volumes to the number of times they were heard
      */
     @SuppressWarnings("ConstantConditions")
-    public HashMap<Double, Integer> getTimesCorrPerVolForInterval(float freq, boolean upward) {
-        HashMap<Float, HearingTestSingleIntervalResult> resultMap =
-                upward ? this.allResultsUpward : this.allResultsDownward;
+    public HashMap<Double, Integer> getTimesHeardPerVolForFreq(float freq) {
         try {
-            return resultMap.get(freq).getTimesCorrPerVol();
+            return this.allResults.get(freq).getTimesHeardPerVol();
         } catch (NullPointerException e) {
             return new HashMap<>();  // empty map if freq not tested
         }
     }
 
     /**
-     * Given a starting frequency and a direction, return a mapping of volumes at which that interval was tested to the
-     * number of times the user answered incorrectly at that volume
+     * Returns a mapping of volumes to the number of times each volume was not heard in the test for the given frequency
      *
-     * Note: getTimesIncorrPerVolForInterval().keySet() doesn't necessarily contain all tested volumes. If never
-     * answered incorrectly, a volume will not be present
-     *
-     * @param freq The starting frequency of the interval
-     * @param upward Is the interval upward?
-     * @return A mapping of volumes at which the interval was tested to the number of incorrect answers the user gave at
-     * that volume
+     * @param freq The frequency whose volume results are to be returned
+     * @return A mapping of volumes to the number of times they weren't heard
      */
     @SuppressWarnings("ConstantConditions")
-    public HashMap<Double, Integer> getTimesIncorrPerVolForFreq(float freq, boolean upward) {
-        HashMap<Float, HearingTestSingleIntervalResult> resultMap =
-                upward ? this.allResultsUpward : this.allResultsDownward;
+    public HashMap<Double, Integer> getTimesNotHeardPerVolForFreq(float freq) {
         try {
-            return resultMap.get(freq).getTimesIncorrPerVol();
+            return this.allResults.get(freq).getTimesNotHeardPerVol();
         } catch (NullPointerException e) {
             return new HashMap<>();  // empty map if freq not tested
         }
     }
 
     /**
-     * Returns a list of all volumes tested for the given starting note and interval direction
+     * Returns a list of all volumes tested for the given frequency
      *
-     * @param freq The starting frequency of the interval whose tested volumes are to be returned
-     * @param upward Is the interval upward?
-     * @return A list of all volumes tested for the given frequency and direction
+     * @param freq The frequency whose tested volumes are to be returned
+     * @return A list of all volumes tested for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public Collection<Double> getTestedVolumesForFreq(float freq, boolean upward) {
-        HashMap<Float, HearingTestSingleIntervalResult> resultMap =
-                upward ? this.allResultsUpward : this.allResultsDownward;
+    public Collection<Double> getTestedVolumesForFreq(float freq) {
         try {
-            return resultMap.get(freq).getVolumes();
+            return this.allResults.get(freq).getVolumes();
         } catch (NullPointerException e) {
             return new ArrayList<>();  // empty list if frequency not tested
         }
     }
 
     /**
-     * Note: assumes that all starting frequencies were tested both upward and downward
-     * @return An array of all the first frequencies tested in these results (ie. freq of the Interval)
+     * @return An array of all the frequencies present in these results
      */
     public Float[] getTestedFreqs() {
-        Float[] outArr = new Float[allResultsUpward.size()];
-        allResultsUpward.keySet().toArray(outArr);
+        Float[] outArr = new Float[allResults.size()];
+        allResults.keySet().toArray(outArr);
         return outArr;
     }
 
-    /**
-     * Return true if the frequency and direction was tested, else false
-     *
-     * @param freq The frequency to be queried
-     * @param upward Is the interval upward?
-     * @return True if the frequency was tested, else false
-     */
-    public boolean freqTested(float freq, boolean upward) {
-        HashMap<Float, HearingTestSingleIntervalResult> resultMap =
-                upward ? this.allResultsUpward : this.allResultsDownward;
-        for (Float f : resultMap.keySet()) if (f == freq) return true;
+    public boolean freqTested(float freq) {
+        for (Float f : allResults.keySet()) if (f == freq) return true;
         return false;
     }
 
     /**
-     * Returns an estimate of the highest volume which has a 0% chance of being correctly differentiated for the given
-     * starting frequency and direction
+     * Returns an estimate of the highest volume which has a 0% chance of being heard for the given frequency
      *
      * @param freq The frequency whose volume floor is to be estimated
-     * @param direction An int indicating the direction of the Earcon (Earcon.DIRECTION_*)
      * @return An estimate of the volume floor for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolFloorEstimateForEarcon(float freq, int direction) {
-
-        if (direction == Earcon.DIRECTION_NONE)
-            return (getVolFloorEstimateForEarcon(freq, Earcon.DIRECTION_UP)       // return average of up and down if
-                    + getVolFloorEstimateForEarcon(freq, Earcon.DIRECTION_DOWN))  // no direction
-                    / 2;
-
-        boolean upward = direction == Earcon.DIRECTION_UP;
-
-        HashMap<Float, HearingTestSingleIntervalResult> resultMap =
-                upward ? this.allResultsUpward : allResultsDownward;
-
-        if (this.freqTested(freq, upward)) return resultMap.get(freq).getVolFloor();
+    public double getVolFloorEstimateForFreq(float freq) {
+        if (this.freqTested(freq)) return this.allResults.get(freq).getVolFloor();
 
         float nearestBelow = findNearestBelow(freq, this.getTestedFreqs());
         float nearestAbove = findNearestAbove(freq, this.getTestedFreqs());
 
         if (nearestAbove == -1 || nearestBelow == -1)
-            return resultMap.get(this.getNearestTestedFreq(freq)).getVolFloor();
+            return this.allResults.get(this.getNearestTestedFreq(freq)).getVolFloor();
 
         float pctBetween = (freq - nearestBelow) / (nearestAbove - nearestBelow);
-        double floorBelow = resultMap.get(nearestBelow).getVolFloor();
-        double floorAbove = resultMap.get(nearestAbove).getVolFloor();
+        double floorBelow = this.allResults.get(nearestBelow).getVolFloor();
+        double floorAbove = this.allResults.get(nearestAbove).getVolFloor();
 
         return floorBelow + (floorAbove - floorBelow) * pctBetween;
     }
 
     /**
-     * Returns an estimate of the lowest volume which has a 100% percent chance of being correctly differentiated for
-     * the given frequency
+     * Returns an estimate of the lowest volume which has a 100% percent chance of being heard for the given frequency
      *
-     * @param freq The starting frequency of the interval whose volume ceiling is to be estimated
-     * @param direction An int indicating the direction of the Earcon (Earcon.DIRECTION_*)
+     * @param freq The frequency whose volume ceiling is to be estimated
      * @return An estimate of the volume ceiling for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolCeilingEstimateForEarcon(float freq, int direction) {
-
-        if (direction == Earcon.DIRECTION_NONE)
-            return (getVolCeilingEstimateForEarcon(freq, Earcon.DIRECTION_UP)      // return average of up and down if
-                    + getVolCeilingEstimateForEarcon(freq, Earcon.DIRECTION_DOWN)) // no direction
-                    / 2;
-
-        boolean upward = direction == Earcon.DIRECTION_UP;
-        HashMap<Float, HearingTestSingleIntervalResult> resultMap =
-                upward ? this.allResultsUpward : allResultsDownward;
-
-        if (this.freqTested(freq, upward)) return resultMap.get(freq).getVolCeiling();
+    public double getVolCeilingEstimateForFreq(float freq) {
+        if (this.freqTested(freq)) return this.allResults.get(freq).getVolCeiling();
 
         float nearestBelow = findNearestBelow(freq, this.getTestedFreqs());
         float nearestAbove = findNearestAbove(freq, this.getTestedFreqs());
 
         if (nearestAbove == -1 || nearestBelow == -1)
-            return resultMap.get(this.getNearestTestedFreq(freq)).getVolCeiling();
+            return this.allResults.get(this.getNearestTestedFreq(freq)).getVolCeiling();
 
         float pctBetween = (freq - nearestBelow) / (nearestAbove - nearestBelow);
-        double floorBelow = resultMap.get(nearestBelow).getVolCeiling();
-        double floorAbove = resultMap.get(nearestAbove).getVolCeiling();
+        double floorBelow = this.allResults.get(nearestBelow).getVolCeiling();
+        double floorAbove = this.allResults.get(nearestAbove).getVolCeiling();
 
         return floorBelow + (floorAbove - floorBelow) * pctBetween;
+    }
+
+    public double getVolFloorEstimateForEarcon(float freq, int wavResId) {
+        return getVolFloorEstimateForFreq(freq);
+    }
+
+    public double getVolCeilingEstimateForEarcon(float freq, int wavResId) {
+        return getVolCeilingEstimateForFreq(freq);
     }
 
     /**
@@ -299,7 +277,7 @@ public class HearingTestResultsContainer {
     public float getNearestTestedFreq(float nearestTo) {
         float curClosest = -1;
         float minDiff = Float.MAX_VALUE;
-        for (float f : this.getTestedFreqs())
+        for (float f : this.allResults.keySet())
             if (Math.abs(f - nearestTo) < minDiff) {
                 curClosest = f;
                 minDiff = Math.abs(f - nearestTo);
@@ -310,7 +288,7 @@ public class HearingTestResultsContainer {
 
     /**
      * Return a new HearingTestResultsContainer with the same results as this one, but only containing the first n
-     * results for each interval (ie. as though Model.NUMBER_OF_TESTS_PER_VOL == n)
+     * results for each frequency-volume pair (ie. as though Model.NUMBER_OF_TESTS_PER_VOL == n)
      *
      * @param n The number of trials per freq-vol pair in the new container
      * @return A new container containing a subset of this one's results
@@ -321,66 +299,35 @@ public class HearingTestResultsContainer {
             throw new IllegalArgumentException(
                     "n = " + n + " is larger than the actual sample size = " + this.getNumOfTrials());
         HearingTestResultsContainer newContainer = new HearingTestResultsContainer();
-        for (HearingTestSingleIntervalResult htsr : this.allResultsUpward.values())
-            newContainer.allResultsUpward.put(htsr.freq1, htsr.getSubsetResult(n));
-        for (HearingTestSingleIntervalResult htsr : this.allResultsDownward.values())
-            newContainer.allResultsDownward.put(htsr.freq1, htsr.getSubsetResult(n));
-        newContainer.setNoiseType(this.noiseType);
+        for (HearingTestSingleFreqResult htsr : this.allResults.values())
+            newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));
+        newContainer.setBackgroundNoise(this.backgroundNoise);
         return newContainer;
     }
 
-    public List<HearingTestSingleIntervalResult> getAllResults() {
-        ArrayList<HearingTestSingleIntervalResult> outList = new ArrayList<>(this.allResultsUpward.values());
-        outList.addAll(this.allResultsDownward.values());
-        return outList;
-    }
-
     /**
-     * @return The number of trials in this hearing test (assumes all intervals tested equal number of times)
+     * @return The number of trials in this hearing test (assumes all FVPs tested equal number of times)
      */
     @SuppressWarnings("ConstantConditions")
     public int getNumOfTrials() {
-        HearingTestSingleIntervalResult aResult = this.allResultsUpward.get(this.getTestedFreqs()[0]);
+        HearingTestSingleFreqResult aResult = this.allResults.get(this.getTestedFreqs()[0]);
         double aVol = aResult.getVolumes().iterator().next();
         return aResult.getNumSamples(aVol);
     }
 
-    public BackgroundNoiseType getNoiseType() {
-        return noiseType;
+    public BackgroundNoiseType getBackgroundNoise() {
+        return backgroundNoise;
     }
 
-    public void setNoiseType(BackgroundNoiseType noiseType) {
-        this.noiseType = noiseType;
-    }
-
-    /**
-     * Given an int indicating a direction, return the map containing results for that direction, or null if
-     * DIRECTION_NONE
-     *
-     * @param direction An int indicating a direction (Earcon.DIRECTION_*)
-     * @return the map containing results for that direction, of null if DIRECTION_NONE
-     * @throws IllegalArgumentException If direction not recognized
-     */
-    public HashMap<Float, HearingTestSingleIntervalResult> getMapForDirection(int direction)
-            throws IllegalArgumentException {
-        switch (direction) {
-            case Earcon.DIRECTION_DOWN:
-                return this.allResultsDownward;
-            case Earcon.DIRECTION_UP:
-                return this.allResultsUpward;
-            case Earcon.DIRECTION_NONE:
-                return null;
-            default:
-                throw new IllegalArgumentException("Unrecognized direction indicator: " + direction);
-        }
+    public void setBackgroundNoise(BackgroundNoiseType backgroundNoise) {
+        this.backgroundNoise = backgroundNoise;
     }
 
     @Override
     @NonNull
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        for (HearingTestSingleIntervalResult result : allResultsUpward.values()) builder.append(result.toString());
-        for (HearingTestSingleIntervalResult result : allResultsDownward.values()) builder.append(result.toString());
+        for (HearingTestSingleFreqResult result : allResults.values()) builder.append(result.toString());
         return builder.toString();
     }
 
@@ -414,68 +361,51 @@ public class HearingTestResultsContainer {
         return closest;
     }
 
-    /**
-     * @return true if the array contains the item, else false
-     */
-    public static boolean arrContains(Comparable[] arr, Comparable item) {
-        for (Comparable c : arr) if (c.equals(item)) return true;
-        return false;
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * A class for storing the hearing test results for a single frequency at multiple volumes
      */
-    protected class HearingTestSingleIntervalResult {
+    protected class HearingTestSingleFreqResult {
 
-        public final float freq1; // the first frequency of the interval
+        private final float freq;
 
-        public final float freq2; // the second frequency of the interval
-
-        public final boolean isUpward; // true -> upward interval, false -> downward interval
-
-        /* (timesCorr or timesIncorr).keySet() doesn't necessarily contain all tested volumes - if a volume is never
-         * answered correctly, timesCorr will not contain a key for that volume (sim. for timesIncorr). All tested
-         * intervals exist in testResultsPerVol.keySet() but preferably use this.getVolumes()
-         * */
         // do not mutate these maps except in addResult()
-        private HashMap<Double, Integer> timesCorrPerVol; // how many times has the user answered correctly at each vol
+        private HashMap<Double, Integer> timesHeardPerVol;
 
-        private HashMap<Double, Integer> timesIncorrPerVol;  // ^^ except incorrectly
+        private HashMap<Double, Integer> timesNotHeardPerVol;
 
-        private HashMap<Double, List<Boolean>> testResultsPerVol; // The sequence of responses for each volume
+        private HashMap<Double, List<Boolean>> testResultsPerVol;
 
-        private HearingTestSingleIntervalResult(float freq1, float freq2) {
-            this.freq1 = freq1;
-            this.freq2 = freq2;
-            this.timesCorrPerVol = new HashMap<>();
-            this.timesIncorrPerVol = new HashMap<>();
+        private HearingTestSingleFreqResult(float freq) {
+            this.freq = freq;
+            this.timesHeardPerVol = new HashMap<>();
+            this.timesNotHeardPerVol = new HashMap<>();
             this.testResultsPerVol = new HashMap<>();
-            this.isUpward = freq1 < freq2;
         }
 
         /**
-         * Add a new test result to this object
+         * Add a new test result to this singleFreqResult
          *
          * @param vol The volume of the trial
-         * @param correct Did the user correctly guess the direction of the interval?
+         * @param heard Was the tone heard in the trial?
          */
         @SuppressWarnings("ConstantConditions")
-        public void addResult(double vol, boolean correct) {
+        public void addResult(double vol, boolean heard) {
             // update testResultsPerVol
             if (!testResultsPerVol.containsKey(vol)) testResultsPerVol.put(vol, new ArrayList<Boolean>());
-            testResultsPerVol.get(vol).add(correct);
-            // update to timesCorr/timesIncorr
-            if (correct)
-                if (timesCorrPerVol.containsKey(vol))
-                    mapReplace(timesCorrPerVol, vol, timesCorrPerVol.get(vol) + 1);
+            testResultsPerVol.get(vol).add(heard);
+            // update to timesHeard / timesNotHeard
+            if (heard)
+                if (timesHeardPerVol.containsKey(vol))
+                    mapReplace(timesHeardPerVol, vol, timesHeardPerVol.get(vol) + 1);
 
-                else timesCorrPerVol.put(vol, 1);
+                else timesHeardPerVol.put(vol, 1);
             else
-            if (timesIncorrPerVol.containsKey(vol))
-                mapReplace(timesIncorrPerVol, vol, timesIncorrPerVol.get(vol) + 1);
-            else timesIncorrPerVol.put(vol, 1);
+            if (timesNotHeardPerVol.containsKey(vol))
+                mapReplace(timesNotHeardPerVol, vol, timesNotHeardPerVol.get(vol) + 1);
+            else timesNotHeardPerVol.put(vol, 1);
+
         }
 
         /**
@@ -512,57 +442,48 @@ public class HearingTestResultsContainer {
         }
 
         /**
-         * Gets the actual probability found of being able to differentiate this interval at a given volume
+         * Gets the actual probability found of hearing the given volume
          *
          * @param vol The volume whose probability is to be found
-         * @return The probability of differentiating the interval at the given volume
+         * @return The probability of hearing the volume
          * @throws IllegalArgumentException If the given volume was not tested
          */
         @SuppressWarnings("ConstantConditions")
         public float getActualProb(double vol) throws IllegalArgumentException {
             if (! this.getVolumes().contains(vol)) throw new IllegalArgumentException("Volume not present in results");
-            int timesCorr, timesIncorr;
+            int timesHeard, timesNotHeard;
             try {
-                timesCorr = timesCorrPerVol.get(vol);
+                timesHeard = timesHeardPerVol.get(vol);
             } catch (NullPointerException e) {
-                timesCorr = 0;
+                timesHeard = 0;
             }
             try {
-                timesIncorr = timesIncorrPerVol.get(vol);
+                timesNotHeard = timesNotHeardPerVol.get(vol);
             } catch (NullPointerException e) {
-                timesIncorr = 0;
+                timesNotHeard = 0;
             }
-            return (float) timesCorr / (float) (timesCorr + timesIncorr);
+            return (float) timesHeard / (float) (timesHeard + timesNotHeard);
         }
 
         /**
-         * @return The largest volume which was never answered correctly, or the lowest tested volume if all were
-         * answered correctly at least once
+         * @return The largest volume which was never heard, or the lowest tested volume if all were heard
          */
         public double getVolFloor() {
             ArrayList<Double> unheardVols = new ArrayList<>();
-            for (double vol : this.getVolumes()) if (! timesCorrPerVol.containsKey(vol)) unheardVols.add(vol);
+            for (double vol : this.getVolumes()) if (! timesHeardPerVol.containsKey(vol)) unheardVols.add(vol);
             if (unheardVols.isEmpty()) return Collections.min(this.getVolumes());
             else return Collections.max(unheardVols);
         }
 
         /**
-         * @return The smallest volume which was answered correctly in every trial, or the largest tested volume if none
-         * were answered correctly in every trial
+         * @return The smallest volume which was heard in every trial, or the highest tested volume if none were
+         * heard every time
          */
         public double getVolCeiling() {
             ArrayList<Double> alwaysHeardVols = new ArrayList<>();
-            for (double vol : this.getVolumes()) if (! timesIncorrPerVol.containsKey(vol)) alwaysHeardVols.add(vol);
+            for (double vol : this.getVolumes()) if (! timesNotHeardPerVol.containsKey(vol)) alwaysHeardVols.add(vol);
             if (alwaysHeardVols.isEmpty()) return Collections.max(this.getVolumes());
             else return Collections.min(alwaysHeardVols);
-        }
-
-        public HashMap<Double, Integer> getTimesCorrPerVol() {
-            return timesCorrPerVol;
-        }
-
-        public HashMap<Double, Integer> getTimesIncorrPerVol() {
-            return timesIncorrPerVol;
         }
 
         /**
@@ -573,30 +494,30 @@ public class HearingTestResultsContainer {
          */
         @SuppressWarnings("ConstantConditions")
         public int getNumSamples(double vol) {
-            int corr, incorr;
+            int heard, notHeard;
             try {
-                corr = this.timesCorrPerVol.get(vol);
+                heard = this.timesHeardPerVol.get(vol);
             } catch (NullPointerException e) {
-                corr = 0;
+                heard = 0;
             }
             try {
-                incorr = this.timesIncorrPerVol.get(vol);
+                notHeard = this.timesNotHeardPerVol.get(vol);
             } catch (NullPointerException e) {
-                incorr = 0;
+                notHeard = 0;
             }
-            return corr + incorr;
+            return heard + notHeard;
         }
 
         /**
-         * Returns a new HearingTestSingleIntervalResult containing the first n results for each volume stored within
-         * this object
+         * Returns a new HearingTestSingleFreqResult containing the first n results for each volume stored within this
+         * object
          *
          * @param n The number of results for each frequency
-         * @return A new HearingTestSingleIntervalResult containing a subset of the results in this one
+         * @return A new HearingTestSingleFreqResult containing a subset of the results in this one
          */
         @SuppressWarnings("ConstantConditions")
-        public HearingTestSingleIntervalResult getSubsetResult(int n) {
-            HearingTestSingleIntervalResult newResult = new HearingTestSingleIntervalResult(this.freq1, this.freq2);
+        public HearingTestSingleFreqResult getSubsetResult(int n) {
+            HearingTestSingleFreqResult newResult = new HearingTestSingleFreqResult(this.freq);
             for (Double vol : this.getVolumes()) {
                 // addResult for the first n responses in the hearing test
                 ListIterator<Boolean> iter = this.testResultsPerVol.get(vol).listIterator();
@@ -609,15 +530,33 @@ public class HearingTestResultsContainer {
 
         @Override
         @NonNull
+        @SuppressWarnings("ConstantConditions")
         public String toString() {
             StringBuilder builder = new StringBuilder();
             ArrayList<Double> testedVolumes = new ArrayList<>(this.getVolumes());
             Collections.sort(testedVolumes);
 
-            builder.append(String.format("Interval: %.1f, %.1f\n", this.freq1, this.freq2));
-
+            builder.append("Frequency: ");
+            builder.append(this.freq);
+            builder.append('\n');
             for (Double d : testedVolumes) {
-                builder.append(String.format("Volume %.2f: P(Heard) = %.4f\n", d, this.getActualProb(d)));
+                int timesHeard;
+                try {
+                    timesHeard = this.timesHeardPerVol.get(d);
+                } catch (NullPointerException e) {
+                    timesHeard = 0;
+                }
+                int timesNotHeard;
+                try {
+                    timesNotHeard = this.timesNotHeardPerVol.get(d);
+                } catch (NullPointerException e) {
+                    timesNotHeard = 0;
+                }
+                float pHeard = (float) timesHeard / (float) (timesHeard + timesNotHeard);
+                builder.append("Volume ");
+                builder.append(String.format("%.2f", d));
+                builder.append(": P(heard) = ");
+                builder.append(String.format("%.4f\n", pHeard));
             }
             return builder.toString();
         }
@@ -633,6 +572,16 @@ public class HearingTestResultsContainer {
         public void mapReplace(HashMap<Double, Integer> map, Double key, Integer newValue) {
             map.remove(key);
             map.put(key, newValue);
+        }
+
+        @SuppressWarnings("unchecked")
+        public HashMap<Double, Integer> getTimesHeardPerVol() {
+            return (HashMap<Double, Integer>) this.timesHeardPerVol.clone();
+        }
+
+        @SuppressWarnings("unchecked")
+        public HashMap<Double, Integer> getTimesNotHeardPerVol() {
+            return (HashMap<Double, Integer>) this.timesNotHeardPerVol.clone();
         }
 
         public Collection<Double> getVolumes() {

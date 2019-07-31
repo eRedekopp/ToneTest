@@ -3,7 +3,6 @@ package ca.usask.cs.tonesetandroid;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.MediaStore;
 import android.util.Log;
 
 import com.paramsen.noise.Noise;
@@ -41,17 +40,12 @@ public class HearingTestController {
     private static final int TONE_DURATION_MS = 1500;
 
     private static final String rampInfo =
-            "In this test, tones will play quietly and slowly get louder. Please press the \"Heard " +
+            "In this phase of the test, tones will play quietly and slowly get louder. Please press the \"Heard " +
             "Tone\" button as soon as the tone becomes audible";
 
     private static final String mainInfo =
-            "In this test, tones of various frequencies and volumes will be played at random times. Please press the " +
-            "\"Heard Tone\" button each time that you hear a tone";
-
-    private static final String intervalInfo =
-            "In this test, two tones will be played in sequence at various frequencies and volumes at random times. " +
-            "Please press the \"Up\" button if the second tone was higher than the first tone, press the \"Down\" " +
-            "button if the second tone was lower than the first tone, or do nothing if you couldn't tell";
+            "In this phase of the test, tones of various frequencies and volumes will be played at random times. " +
+            "Please press the \"Heard Tone\" button each time that you hear a tone";
 
     private static final String earconInfo =
             "In this test, notification sounds will be played at various volumes at random times. Please press the " +
@@ -93,41 +87,6 @@ public class HearingTestController {
                 model.lineOut.write(model.buf, 0, 2);
             }
 
-        } finally {
-            model.stopAudio();
-        }
-    }
-
-    /**
-     * Play two sine waves consecutively
-     *
-     * @param freq1 The frequency of the first sine
-     * @param freq2 The frequency of the second sine
-     * @param vol The volume of the sine waves
-     * @param duration_ms The duration of both tones combined
-     */
-    private void playInterval(float freq1, float freq2, double vol, int duration_ms) {
-        model.startAudio();
-        try {
-            model.enforceMaxVolume();
-            duration_ms /= 2;  // halve tone duration so entire interval lasts duration_ms milliseconds
-            for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
-                float period = (float) Model.OUTPUT_SAMPLE_RATE / freq1;
-                double angle = 2 * i / (period) * Math.PI;
-                short a = (short) (Math.sin(angle) * vol);
-                model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
-                model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
-                model.lineOut.write(model.buf, 0, 2);
-            }
-            for (int i = 0; i < duration_ms * (float) 44100 / 1000; i++) {
-                if (iModel.answered()) return;
-                float period = (float) Model.OUTPUT_SAMPLE_RATE / freq2;
-                double angle = 2 * i / (period) * Math.PI;
-                short a = (short) (Math.sin(angle) * vol);
-                model.buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
-                model.buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
-                model.lineOut.write(model.buf, 0, 2);
-            }
         } finally {
             model.stopAudio();
         }
@@ -226,7 +185,7 @@ public class HearingTestController {
                         @Override
                         public void run() {
                             model.setTestPhase(Model.TEST_PHASE_RAMP);
-                            noiseController.playNoise(model.hearingTestResults.getNoiseType());
+                            noiseController.playNoise(model.hearingTestResults.getBackgroundNoise());
                             view.showInformationDialog(rampInfo);
                         }
                     });
@@ -250,19 +209,19 @@ public class HearingTestController {
                         model.reduceCurrentVolumes();
                         testCurrentVolumes();
                     }
-                    model.setTestPaused(true);
                     new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
                             model.bottomVolEstimates = (ArrayList<FreqVolPair>) model.currentVolumes.clone();
-                            model.configureTestIntervals();
+                            model.configureTestPairs();
                             model.setTestPhase(Model.TEST_PHASE_MAIN);
-                            // show information for next segment of test
-                            view.showInformationDialog(intervalInfo);
                         }
                     });
                     // after getting bottom estimates, prepare for next phase of test
-                } finally { model.testThreadActive = false; }
+                } finally {
+                    model.testThreadActive = false;
+                    model.notifySubscribers();  // begin next test phase
+                }
             }
         }).start();
     }
@@ -421,23 +380,19 @@ public class HearingTestController {
             @Override
             public void run() {
                 try {
-                    while (!model.testIntervals.isEmpty()) {
+                    while (!model.currentVolumes.isEmpty()) {
                         if (model.testPaused()) return;
-                        Log.d("mainTest", model.testIntervals.toString());
-                        Interval trial = model.testIntervals.get(0);
-                        model.testIntervals.remove(0);
+
+                        FreqVolPair trial = model.currentVolumes.get(0);
+                        model.currentVolumes.remove(0);
                         model.startAudio();
                         Log.i("mainTest", "Testing " + trial.toString());
-                        iModel.resetAnswer();
-                        playInterval(trial.freq1, trial.freq2, trial.vol, TONE_DURATION_MS);
-                        boolean correct = (iModel.getAnswer() == Earcon.DIRECTION_UP && trial.isUpward)
-                                       || (iModel.getAnswer() == Earcon.DIRECTION_DOWN && ! trial.isUpward);
-                        model.hearingTestResults.addResult(trial, correct);
+                        iModel.notHeard();
+                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
+                        model.hearingTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
 
-                        Log.i("mainTest", correct ? "Answered correctly" : "Answered incorrectly");
-
-                        model.stopAudio();
-                        try {               // sleep for for random length 1-3 seconds
+                        model.stopAudio();  // sleep for for random length 1-3 seconds
+                        try {
                             Thread.sleep((long) (Math.random() * 2000 + 1000));
                         } catch (InterruptedException e) {
                             return;
@@ -455,6 +410,7 @@ public class HearingTestController {
                 } finally { model.testThreadActive = false; }
             }
         }).start();
+
     }
 
     /////////////////////////////////// methods for confidence test ///////////////////////////////////////////////////
@@ -472,7 +428,7 @@ public class HearingTestController {
 
                     // configure model for test
                     model.configureAudio();
-                    model.configureConfidenceTestPairs();
+                    model.configureConfidenceTestEarcons();
                     model.setConfResultsSaved(false);
 
                     // show info dialog
@@ -497,6 +453,8 @@ public class HearingTestController {
     private void mainConfTest() {
 
         // todo give more time for user to enter response
+
+        Log.d("mainConfTest", "Got here");
 
         model.testThreadActive = true;
         new Thread(new Runnable() {
@@ -549,82 +507,19 @@ public class HearingTestController {
     ///////////////////////////////////// methods for auto test ///////////////////////////////////////////////////////
 
     /**
-     * Applies a Hann Window to the data set to improve the overall accuracy
-     * This function is slightly less general than a typical Hann window function
-     * Typically, you also want to know the starting index of the data to be windowed
-     * In this case, the index will always begin at 0
-     *
-     * @param data The data that will be windowed
-     * @return The windowed data set
-     *
-     * @author alexscott
-     */
-    private static float[] applyHannWindow(float[] data) {
-        int length = data.length;
-        for (int i = 0; i < length; i++) {
-            data[i] = (float) (data[i] * 0.5 * (1.0 - Math.cos(2.0 * Math.PI * i / length)));
-        }
-        return data;
-    }
-
-    /**
      * Populate model.hearingTestResults with results automatically through the microphone
      *
      * @author redekopp
      */
     public void autoTest() {
-        FreqVolPair[] periodogram = this.getPeriodogramFromLineIn(2048);
 
         // todo finish this later
-    }
-
-    /**
-     * Get a sample of audio from the line in, then perform an FFT and get a periodogram from it
-     *
-     * @param sampleSize The number of audio samples to use for the calculations (must be a power of 2)
-     * @return FreqVolPairs where each frequency is the central frequency of a bin and the volume is the volume of that
-     *         frequency bin
-     */
-    public FreqVolPair[] getPeriodogramFromLineIn(int sampleSize) {
-        // todo : take multiple samples and average them?
-
-        int freqBinWidth = Model.INPUT_SAMPLE_RATE / sampleSize;
-
-        // Object for performing FFTs: handle real inputs of size sampleSize
-        NoiseOptimized noise = Noise.real().optimized().init(sampleSize, true);
-
-        // apply Hann window to reduce noise
-        float[] rawMicData = model.getAudioSample(sampleSize);
-        float[] fftInput = applyHannWindow(rawMicData);
-
-        // perform FFT
-        float[] fftResult = noise.fft(fftInput); // noise.fft() returns from DC bin to Nyquist bin, no slicing req'd
-
-        // convert to power spectral density
-        float[] psd =  new float[fftInput.length / 2 + 1];
-        for (int i = 0; i < fftResult.length / 2; i++) {
-            float realPart = fftResult[i * 2];
-            float imagPart = fftResult[i * 2 + 1];
-
-// Power Spectral Density in dB = magnitude(fftResult) ^ 2
-// From StackOverflow user Jason R
-// https://dsp.stackexchange.com/questions/4691/what-is-the-difference-between-psd-and-squared-magnitude-of-frequency-spectrum?lq=1
-            psd[i] = (float) Math.pow(Math.sqrt(Math.pow(realPart, 2) + Math.pow(imagPart, 2)), 2);
-        }
-
-        FreqVolPair[] freqBins = new FreqVolPair[psd.length];
-        for (int i = 0; i < psd.length; i++) {
-            float freq = (float) i * freqBinWidth + freqBinWidth / 2.0f;
-            double vol = psd[i];
-            freqBins[i] = new FreqVolPair(freq, vol);
-        }
-        return freqBins;
     }
 
     //////////////////////////////////// click handlers + miscellaneous ////////////////////////////////////////////
 
     public void handleCalibClick() {
-        if (this.model.hearingTestResults.getNoiseType() == null)
+        if (this.model.hearingTestResults.getBackgroundNoise() == null)
             throw new IllegalStateException("Background noise must be configured before beginning calibration");
         this.hearingTest();
     }

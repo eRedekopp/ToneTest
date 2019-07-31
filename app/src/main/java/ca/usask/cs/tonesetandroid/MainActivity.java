@@ -32,7 +32,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     public static final int REQUEST_PERMISSIONS = 1;
 
-    private Context context = this; // for passing to other classes from inner methods
+    public static Context context; // for passing to other classes from inner methods
 
     Model model;
     HearingTestInteractionModel iModel;
@@ -70,6 +70,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         // instantiate self
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context = this;
 
         // Create mvc elements
         final Model newModel = new Model();
@@ -93,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.controller.setNoiseController(newNoiseController);
         this.controller.setContext(this);
         this.noiseController.setModel(this.model);
+
 
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
@@ -233,25 +235,24 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void run() {
                 // choose which test button to use depending on which test phase we are in
-                if (model.getTestPhase() == Model.TEST_PHASE_RAMP || model.getTestPhase() == Model.TEST_PHASE_REDUCE) {
+                if (model.getTestPhase() != Model.TEST_PHASE_CONF) {
                     heardButton.setVisibility(View.VISIBLE);
-                    heardButton.setEnabled(true);
-                    upButton.setVisibility(View.GONE);
+                    heardButton.setEnabled(model.testing() && ! model.testPaused());
+                    upButton.setVisibility(View.INVISIBLE);
                     upButton.setEnabled(false);
-                    downButton.setVisibility(View.GONE);
+                    downButton.setVisibility(View.INVISIBLE);
                     downButton.setEnabled(false);
-                    flatButton.setVisibility(View.GONE);
+                    flatButton.setVisibility(View.INVISIBLE);
                     flatButton.setEnabled(false);
                 } else {
-                    heardButton.setVisibility(View.GONE);
+                    heardButton.setVisibility(View.INVISIBLE);
                     heardButton.setEnabled(false);
                     upButton.setVisibility(View.VISIBLE);
-                    upButton.setEnabled(model.testing() && ! model.testPaused());
+                    upButton.setEnabled(true);
                     downButton.setVisibility(View.VISIBLE);
-                    downButton.setEnabled(model.testing() && ! model.testPaused());
+                    downButton.setEnabled(true);
                     flatButton.setVisibility(View.VISIBLE);
-                    flatButton.setEnabled(model.testing() && ! model.testPaused()
-                                        && model.getTestPhase() == Model.TEST_PHASE_CONF);
+                    flatButton.setEnabled(true);
                 }
 
                 calibButton.setEnabled(!model.testing());
@@ -260,6 +261,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 saveConfButton.setEnabled(model.hasConfResults() && !model.testing() && !model.confResultsSaved());
                 resetButton.setEnabled(!model.testing() || model.testPaused());
                 pauseButton.setEnabled(model.testing());
+                pauseButton.setText(model.testPaused() ? "Resume" : "Pause");
 
                 controller.checkForHearingTestResume(); // resume hearing test if necessary
             }
@@ -303,8 +305,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         // todo implement autoTest later on
 
-        FreqVolPair[] periodogram = controller.getPeriodogramFromLineIn(2048);
-        GraphActivity.setData(periodogram);
+//        FreqVolPair[] periodogram = controller.getPeriodogramFromPcmData(2048);
+//        GraphActivity.setData(periodogram);
 
         Intent graphIntent = new Intent(this, GraphActivity.class);
         startActivity(graphIntent);
@@ -450,7 +452,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 dialogInterface.cancel();
                 BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
                 if (isCalib) {
-                    model.hearingTestResults.setNoiseType(noiseType);
+                    model.hearingTestResults.setBackgroundNoise(noiseType);
                     controller.handleCalibClick();
                 }
                 else {
