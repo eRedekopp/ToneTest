@@ -2,6 +2,7 @@ package ca.usask.cs.tonesetandroid;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.paramsen.noise.Noise;
 import com.paramsen.noise.NoiseOptimized;
@@ -137,7 +138,7 @@ public class HearingTestResultsContainer {
 
         // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
 
-        int nAudioSamples = 500;
+        int nAudioSamples = 50;
 
         float[] topFreqs = topFrequencies(earcon.audioResourceID, nAudioSamples);
         double[] probEstimates = new double[nAudioSamples];
@@ -323,7 +324,9 @@ public class HearingTestResultsContainer {
 
         try {
             int size = rawPCM.available() / 2; // /2 because each sample is 2 bytes
-            for (int i = 0; i < size; i += (size - nSamples * sampleSize) / nSamples) {
+            for (int i = 0;
+                 i < size - 1000;
+                 i += (size - nSamples * sampleSize) / nSamples) {
 
                 for (int j = 0; j < sampleSize; j++, i++) {      // populate pcm for current set of samples
                     rawPCM.read(buf, 0, 2);       // read data from stream

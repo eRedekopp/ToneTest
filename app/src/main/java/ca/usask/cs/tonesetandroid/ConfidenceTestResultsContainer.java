@@ -156,6 +156,11 @@ public class ConfidenceTestResultsContainer {
                 returnList.add(cstr.earcon.clone());
             }
         }
+        for (List<ConfidenceSingleTestResult> lst : this.allResultsFlat.values()) {
+            for (ConfidenceSingleTestResult cstr : lst) {
+                returnList.add(cstr.earcon.clone());
+            }
+        }
         return returnList;
     }
 
@@ -207,7 +212,7 @@ public class ConfidenceTestResultsContainer {
      * @return A StatsAnalysisResultsContainer containing the results of the analysis
      * @throws IllegalArgumentException If the given frequency and volume were not tested in the confidence test
      */
-    public StatsAnalysisResultsContainer performAnalysis(Earcon earcon, float estimate)
+    public StatsAnalysisResultsContainer performAnalysis(Earcon earcon, double estimate)
                                                          throws IllegalArgumentException {
         ConfidenceSingleTestResult result = this.getResultForEarcon(earcon);
         if (result == null) throw new IllegalArgumentException("Interval not present in results");
@@ -245,7 +250,7 @@ public class ConfidenceTestResultsContainer {
 
         public final float confProbEstimate;  // The probability estimate as determined by the confidence test
 
-        public final float probEstimate;  // the probability estimate as determined by the model
+        public final double probEstimate;  // the probability estimate as determined by the model
 
         public final boolean estimatesSigDifferent; // Are the results statistically significantly different?
 
@@ -264,7 +269,7 @@ public class ConfidenceTestResultsContainer {
          * @param probEstimate The probability estimate found by the model (ie. based on the hearing test
          *                          results) for the frequency and volume tested in confResult
          */
-        private StatsAnalysisResultsContainer(ConfidenceSingleTestResult confResult, float probEstimate) {
+        private StatsAnalysisResultsContainer(ConfidenceSingleTestResult confResult, double probEstimate) {
             // set constants
             this.earcon = confResult.earcon;
             this.confProbEstimate = confResult.getActual();
@@ -290,7 +295,7 @@ public class ConfidenceTestResultsContainer {
             this.critHigh = critAbove;
 
             // Check if probEstimate within rejection region
-            int x = Math.round(probEstimate * confResult.getTotalTrials());
+            int x = (int) Math.round(probEstimate * confResult.getTotalTrials());
             this.estimatesSigDifferent = x < critBelow || x > critAbove;
 
             // calculate beta assuming confProbEstimate is correct

@@ -106,7 +106,7 @@ public class HearingTestController {
                     model.buf[0] = model.buf[1];
                     model.buf[1] = b;
 
-                    short sample = ByteBuffer.wrap(model.buf).getShort();           // convert to short
+                    short sample = (short) (model.buf[0] << 8 | model.buf[1] & 0xFF);  // convert to short
                     double amplitude = (double) sample / (double) Short.MIN_VALUE;
                     sample = (short) (amplitude * earcon.volume);                   // convert to same vol scale as
                                                                                     // sines
@@ -420,6 +420,7 @@ public class HearingTestController {
      * Begin a confidence test
      */
     public void confidenceTest() {
+        // todo add dialog while calculating floor/ceiling volumes
         model.testThreadActive = true;
         new Thread(new Runnable() {
             @Override

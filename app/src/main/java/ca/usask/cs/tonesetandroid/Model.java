@@ -280,7 +280,7 @@ public class Model {
      * @return The probability of the given freq-vol pair being heard given the calibration results
      * @throws IllegalStateException If there are no calibration results stored in the model
      */
-    public float getProbabilityForEarcon(Earcon earcon) throws IllegalStateException {
+    public double getProbabilityForEarcon(Earcon earcon) throws IllegalStateException {
         return this.getProbabilityForEarcon(earcon, FREQUENCIES);
     }
 
@@ -288,16 +288,16 @@ public class Model {
      * Same as other method except calculates probability as though only the frequencies in the given subset were tested
      * @throws IllegalArgumentException if the given subset was not a subset of the tested frequencies
      */
-    public float getProbabilityForEarcon(Earcon earcon, float[] subset)
+    public double getProbabilityForEarcon(Earcon earcon, float[] subset)
             throws IllegalStateException, IllegalArgumentException {
 
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
 
-        // todo fix this
+        // todo test
 
 //        return this.hearingTestResults.getProbOfCorrectAnswer(
 //        earcon.frequency, earcon.direction, earcon.volume, subset);
-        return 0;
+        return this.hearingTestResults.getProbOfCorrectAnswer(earcon, subset);
     }
 
     /**

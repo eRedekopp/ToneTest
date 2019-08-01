@@ -107,7 +107,7 @@
         android:layout_width="275dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="296dp"
+        android:layout_marginTop="36dp"
         android:layout_marginEnd="8dp"
         android:soundEffectsEnabled="false"
         android:text="Heard Tone"
@@ -123,7 +123,8 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="36dp"
         android:layout_marginEnd="8dp"
-        android:text="Flat ⏤"
+        android:soundEffectsEnabled="false"
+        android:text="Flat -"
         app:layout_constraintEnd_toStartOf="@+id/downButton"
         app:layout_constraintStart_toEndOf="@+id/upButton"
         app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
