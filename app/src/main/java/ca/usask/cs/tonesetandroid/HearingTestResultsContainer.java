@@ -3,7 +3,12 @@ package ca.usask.cs.tonesetandroid;
 import android.content.Context;
 import android.support.annotation.NonNull;
 
+import com.paramsen.noise.Noise;
+import com.paramsen.noise.NoiseOptimized;
+
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -112,13 +117,12 @@ public class HearingTestResultsContainer {
     }
 
     public float getProbOfHearingFVP(FreqVolPair fvp) {
-        return getProbOfHearingFVP(fvp.getFreq(), fvp.getVol());
+        return getProbOfHearingFVP(fvp.freq, fvp.vol);
     }
 
     /**
-     * Given the starting note of the interval, its direction, its volume, and a subset of the tested frequencies,
-     * determine the probability that the user will correctly hear the direction of the interval based only on the
-     * given subset of frequencies
+     * Given an earcon and a subset of the tested frequencies, determine the probability that the user will correctly
+     * hear the direction of the earcon based only on the given subset of frequencies
      *
      * @param freq1 The starting frequency of the interval
      * @param upward Is the interval upward?
@@ -127,13 +131,25 @@ public class HearingTestResultsContainer {
      * @return An estimate of the probability that the user will correctly hear the direction of the interval
      * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
      */
-    public double getProbOfCorrectAnswer(Earcon earcon, float[] subset)
-            throws IllegalArgumentException {
+    public double getProbOfCorrectAnswer(Earcon earcon, float[] subset) throws IllegalArgumentException {
 
-        return 0;   // todo fix
+//        return 0;   // todo test
+
+        // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
+
+        int nAudioSamples = 500;
+
+        float[] topFreqs = topFrequencies(earcon.audioResourceID, nAudioSamples);
+        double[] probEstimates = new double[nAudioSamples];
+
+        for (int i = 0; i < nAudioSamples; i++)
+            probEstimates[i] = this.getProbOfHearingFVP(topFreqs[i], earcon.volume, subset);
+
+        return mean(probEstimates);
+
     }
 
-    public double getProbOfCorrectAnswer(Earcon earcon) {
+    public double getProbOfCorrectAnswer(Earcon earcon) throws IllegalArgumentException {
         return getProbOfCorrectAnswer(earcon, Model.FREQUENCIES);
     }
 
@@ -242,12 +258,34 @@ public class HearingTestResultsContainer {
         return floorBelow + (floorAbove - floorBelow) * pctBetween;
     }
 
-    public double getVolFloorEstimateForEarcon(float freq, int wavResId) {
-        return getVolFloorEstimateForFreq(freq);    // todo fix
+    public double getVolFloorEstimateForEarcon(int wavResId) {
+//        return getVolFloorEstimateForFreq(freq);    // todo test
+
+        // find most prominent frequencies in samples of .wav file, return average of their floor estimates
+
+        int nAudioSamples = 50;
+
+        float[] topFreqs = topFrequencies(wavResId, nAudioSamples);
+        double[] floorEstimates = new double[nAudioSamples];
+
+        for (int i = 0; i < nAudioSamples; i++) floorEstimates[i] = this.getVolFloorEstimateForFreq(topFreqs[i]);
+
+        return mean(floorEstimates);
     }
 
-    public double getVolCeilingEstimateForEarcon(float freq, int wavResId) {
-        return getVolCeilingEstimateForFreq(freq);  // todo fix
+    public double getVolCeilingEstimateForEarcon(int wavResId) {
+//        return getVolCeilingEstimateForFreq(freq);  // todo test
+
+        // find most prominent frequencies in samples of .wav file, return average of their ceiling estimates
+
+        int nAudioSamples = 50;
+
+        float[] topFreqs = topFrequencies(wavResId, nAudioSamples);
+        double[] ceilingEstimates = new double[nAudioSamples];
+
+        for (int i = 0; i < nAudioSamples; i++) ceilingEstimates[i] = this.getVolCeilingEstimateForFreq(topFreqs[i]);
+
+        return mean(ceilingEstimates);
     }
 
     /**
@@ -266,6 +304,45 @@ public class HearingTestResultsContainer {
             }
         if (curClosest == -1) throw new RuntimeException("Found unexpected value -1");
         return curClosest;
+    }
+
+    /**
+     * Given an ID for a .wav file, return the most prominent frequencies present in the audio
+     *
+     * @param wavResId The resource ID for the wav file to be tested
+     * @param nSamples The number of samples to test from the file (fewer samples -> faster, less precise)
+     * @return An array of length nSamples containing the most prominent frequencies in each sample
+     */
+    public float[] topFrequencies(int wavResId, int nSamples) {
+        int sampleSize = 1000;
+        InputStream rawPCM = MainActivity.context.getResources().openRawResource(wavResId);
+        byte[] buf = new byte[2];
+        float[] pcm = new float[sampleSize];
+        float[] results = new float[nSamples];
+        int nSamplesTaken = 0;
+
+        try {
+            int size = rawPCM.available() / 2; // /2 because each sample is 2 bytes
+            for (int i = 0; i < size; i += (size - nSamples * sampleSize) / nSamples) {
+
+                for (int j = 0; j < sampleSize; j++, i++) {      // populate pcm for current set of samples
+                    rawPCM.read(buf, 0, 2);       // read data from stream
+
+                    byte b = buf[0];              // convert to big-endian
+                    buf[0] = buf[1];
+                    buf[1] = b;
+                    short sample = ByteBuffer.wrap(buf).getShort();           // convert to short
+                    pcm[j] = (float) sample / (float) Short.MIN_VALUE;
+                }
+
+                FreqVolPair[] periodogram = Model.getPeriodogramFromPcmData(pcm);   // get fft of pcm data
+                FreqVolPair max = FreqVolPair.maxVol(periodogram);
+                results[nSamplesTaken++] = max.freq;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return results;
     }
 
     /**
@@ -341,6 +418,13 @@ public class HearingTestResultsContainer {
             }
         }
         return closest;
+    }
+
+
+    public double mean(double[] arr) {
+        double total = 0;
+        for (double f : arr) total += f;
+        return total / arr.length;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

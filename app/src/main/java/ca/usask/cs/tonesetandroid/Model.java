@@ -293,8 +293,11 @@ public class Model {
 
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
 
-        return this.hearingTestResults.getProbOfCorrectAnswer(              // todo fix
-                earcon.frequency, earcon.direction, earcon.volume, subset);
+        // todo fix this
+
+//        return this.hearingTestResults.getProbOfCorrectAnswer(
+//        earcon.frequency, earcon.direction, earcon.volume, subset);
+        return 0;
     }
 
     /**
@@ -403,7 +406,7 @@ public class Model {
     /**
      * Get a periodogram from the given raw PCM data
      */
-    public FreqVolPair[] getPeriodogramFromPcmData(float[] rawPCM) {
+    public static FreqVolPair[] getPeriodogramFromPcmData(float[] rawPCM) {
 
         int freqBinWidth = Model.INPUT_SAMPLE_RATE / rawPCM.length;
 

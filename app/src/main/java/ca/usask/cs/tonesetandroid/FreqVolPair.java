@@ -7,30 +7,12 @@ package ca.usask.cs.tonesetandroid;
  */
 public class FreqVolPair implements Cloneable {
 
-    float freq;
-    double vol;
+    public final float freq;
+    public final double vol;
 
     public FreqVolPair(float f, double v) {
         freq = f;
         vol = v;
-    }
-
-    /**
-     * Get the frequency
-     *
-     * @return freq: the frequency component of the pair
-     */
-    public float getFreq() {
-        return freq;
-    }
-
-    /**
-     * Get the volume
-     *
-     * @return vol: the volume component of the pair
-     */
-    public double getVol() {
-        return vol;
     }
 
     @Override
@@ -45,6 +27,16 @@ public class FreqVolPair implements Cloneable {
         } catch (CloneNotSupportedException e) {
             return new FreqVolPair(this.freq, this.vol);
         }
+    }
+
+    /**
+     * @param arr An array of freqvolpairs
+     * @return The freqvolpair with the highest volume
+     */
+    public static FreqVolPair maxVol(FreqVolPair[] arr) {
+        FreqVolPair curMax = arr[0];
+        for (FreqVolPair fvp : arr) if (fvp.vol > curMax.vol) curMax = fvp;
+        return curMax;
     }
 
 }
