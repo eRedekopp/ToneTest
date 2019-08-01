@@ -239,14 +239,14 @@ public class HearingTestController {
             Log.i("reducePhase", "Testing " + fvp.toString());
 
             // only test frequencies whose bottom ends hasn't already been estimated
-            if (model.timesNotHeardPerFreq.get(fvp.getFreq()) >= Model.TIMES_NOT_HEARD_BEFORE_STOP) continue;
+            if (model.timesNotHeardPerFreq.get(fvp.freq) >= Model.TIMES_NOT_HEARD_BEFORE_STOP) continue;
 
             // play the sine, update the map if not heard
             iModel.notHeard();
-            this.playSine(fvp.getFreq(), fvp.getVol(), TONE_DURATION_MS);
+            this.playSine(fvp.freq, fvp.vol, TONE_DURATION_MS);
             if (! iModel.heard)
-                mapReplace(model.timesNotHeardPerFreq, fvp.getFreq(),
-                        model.timesNotHeardPerFreq.get(fvp.getFreq()) + 1);
+                mapReplace(model.timesNotHeardPerFreq, fvp.freq,
+                        model.timesNotHeardPerFreq.get(fvp.freq) + 1);
             Log.i("reducePhase", iModel.heard ? "Tone Heard" : "Tone not heard");   // print message indicating whether
             // tone was heard
 
@@ -281,7 +281,7 @@ public class HearingTestController {
                     // test all frequencies in Model.FREQUENCIES which haven't already been tested
                     ArrayList<Float> freqsToTest = new ArrayList<>();
                     for (float freq : Model.FREQUENCIES) freqsToTest.add(freq);
-                    for (FreqVolPair fvp : model.topVolEstimates) freqsToTest.remove(fvp.getFreq());
+                    for (FreqVolPair fvp : model.topVolEstimates) freqsToTest.remove(fvp.freq);
 
                     //Loop through all of the frequencies for the hearing test
                     for (Float freq : freqsToTest) {
@@ -388,8 +388,8 @@ public class HearingTestController {
                         model.startAudio();
                         Log.i("mainTest", "Testing " + trial.toString());
                         iModel.notHeard();
-                        playSine(trial.getFreq(), trial.getVol(), TONE_DURATION_MS);
-                        model.hearingTestResults.addResult(trial.getFreq(), trial.getVol(), iModel.heard);
+                        playSine(trial.freq, trial.vol, TONE_DURATION_MS);
+                        model.hearingTestResults.addResult(trial.freq, trial.vol, iModel.heard);
                         model.stopAudio();
                         Log.i("mainTest", "Tone " + (iModel.heard ? "heard" : "not heard"));
 

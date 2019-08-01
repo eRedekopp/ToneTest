@@ -232,8 +232,8 @@ public class Model {
                 default: throw new RuntimeException("Unknown direction value found : " + direction);
             }
 
-            double volFloor   = this.hearingTestResults.getVolFloorEstimateForEarcon(freq, earconIdMap.get(freq));
-            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(freq, earconIdMap.get(freq));
+            double volFloor   = this.hearingTestResults.getVolFloorEstimateForEarcon(earconIdMap.get(freq));
+            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(earconIdMap.get(freq));
             double testVol = volFloor + pct * (volCeiling - volFloor);
             this.confidenceTestEarcons.add(new Earcon(freq, earconIdMap.get(freq), testVol, direction));
 
@@ -466,8 +466,8 @@ public class Model {
         ArrayList<FreqVolPair> newVols = new ArrayList<>();
         for (FreqVolPair fvp : currentVolumes) {
             // only reduce volumes of frequencies still being tested
-            if (timesNotHeardPerFreq.get(fvp.getFreq()) >= TIMES_NOT_HEARD_BEFORE_STOP) newVols.add(fvp);
-            else newVols.add(new FreqVolPair(fvp.getFreq(), fvp.getVol() * (1 - HEARING_TEST_REDUCE_RATE)));
+            if (timesNotHeardPerFreq.get(fvp.freq) >= TIMES_NOT_HEARD_BEFORE_STOP) newVols.add(fvp);
+            else newVols.add(new FreqVolPair(fvp.freq, fvp.vol * (1 - HEARING_TEST_REDUCE_RATE)));
         }
         this.currentVolumes = newVols;
     }
@@ -602,7 +602,7 @@ public class Model {
      * @throws IllegalArgumentException if there is no pair with the given frequency
      */
     public static double getVolForFreq(List<FreqVolPair> list, Float freq) throws IllegalArgumentException {
-        for (FreqVolPair fvp : list) if (fvp.getFreq() == freq) return fvp.getVol();
+        for (FreqVolPair fvp : list) if (fvp.freq == freq) return fvp.vol;
         throw new IllegalArgumentException("Requested frequency not present in list");
     }
 
