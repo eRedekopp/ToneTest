@@ -38,5 +38,4 @@ public class FreqVolPair implements Cloneable {
         for (FreqVolPair fvp : arr) if (fvp.vol > curMax.vol) curMax = fvp;
         return curMax;
     }
-
 }

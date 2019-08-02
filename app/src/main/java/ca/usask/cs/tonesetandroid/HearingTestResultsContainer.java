@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -136,68 +137,74 @@ public class HearingTestResultsContainer {
 
         // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
 
-//        int nAudioSamples = 50;
-//
-//        float[] topFreqs = topFrequencies(earcon.audioResourceID, nAudioSamples);
+        int nAudioSamples = 50;
+
+        Log.d("earcon", earcon.toString());
+
+        float[] topFreqs = topFrequencies(earcon.audioResourceID, nAudioSamples);
+
 //        double[] probEstimates = new double[nAudioSamples];
+        ArrayList<Float> probEstimates = new ArrayList<>(nAudioSamples);
+
+        for (int i = 0; i < nAudioSamples; i++) if (topFreqs[i] >= 100)  // only add probs for audible frequencies
+            probEstimates.add(this.getProbOfHearingFVP(topFreqs[i], earcon.volume, subset));
+
+        Log.d("probEstimates", probEstimates.toString());
+
+        return mean(probEstimates);
+
+//        InputStream rawPCM = MainActivity.context.getResources().openRawResource(earcon.audioResourceID);
+//        float[] beginningPCM = new float[1000];
+//        float[] endPCM = new float[1000];
+//        byte[] buf = new byte[2];
 //
-//        for (int i = 0; i < nAudioSamples; i++)
-//            probEstimates[i] = this.getProbOfHearingFVP(topFreqs[i], earcon.volume, subset);
+//        // populate PCM data
 //
-//        return mean(probEstimates);
-
-        InputStream rawPCM = MainActivity.context.getResources().openRawResource(earcon.audioResourceID);
-        float[] beginningPCM = new float[1000];
-        float[] endPCM = new float[1000];
-        byte[] buf = new byte[2];
-
-        // populate PCM data
-
-        for (int i = 0; i < 1000; i++) {
-            try {
-                rawPCM.read(buf, 0, 2);       // read data from stream
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            byte b = buf[0];              // convert to big-endian
-            buf[0] = buf[1];
-            buf[1] = b;
-
-            short sample = (short) (buf[0] << 8 | buf[1] & 0xFF);           // convert to short
-            double amplitude = (double) sample / (double) Short.MIN_VALUE;
-            beginningPCM[i] = (float) amplitude;
-        }
-        try {
-            while (rawPCM.available() > 1000) rawPCM.read(buf, 0, 2);   // skip middle
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        for (int i = 0; i < 1000; i++) {
-            try {
-                rawPCM.read(buf, 0, 2);       // read data from stream
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            byte b = buf[0];              // convert to big-endian
-            buf[0] = buf[1];
-            buf[1] = b;
-
-            short sample = (short) (buf[0] << 8 | buf[1] & 0xFF);           // convert to short
-            double amplitude = (double) sample / (double) Short.MIN_VALUE;
-            endPCM[i] = (float) amplitude;
-        }
-
-        float beginningMax = FreqVolPair.maxVol(Model.getPeriodogramFromPcmData(beginningPCM)).freq;
-        float endMax = FreqVolPair.maxVol(Model.getPeriodogramFromPcmData(endPCM)).freq;
-
-        Log.d("getProbOfCorrectAnswer",
-                "earcon = " + earcon.toString() + " beginning freq = " + beginningMax + " end freq = " + endMax);
-
-        return (getProbOfHearingFVP(beginningMax, earcon.volume, subset)
-                + getProbOfHearingFVP(endMax, earcon.volume, subset)) / 2;
+//        for (int i = 0; i < 1000; i++) {
+//            try {
+//                rawPCM.read(buf, 0, 2);     // read data from stream
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//            byte b = buf[0];                // convert to big-endian
+//            buf[0] = buf[1];
+//            buf[1] = b;
+//
+//            short sample = (short) (buf[0] << 8 | buf[1] & 0xFF);           // convert to short
+//            double amplitude = (double) sample / (double) Short.MIN_VALUE;
+//            beginningPCM[i] = (float) amplitude;
+//        }
+//        try {
+//            while (rawPCM.available() > 3000) rawPCM.read(buf, 0, 2);       // skip middle (cut off last 2000 samples)
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//
+//        for (int i = 0; i < 1000; i++) {
+//            try {
+//                rawPCM.read(buf, 0, 2);     // read data from stream
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//
+//            byte b = buf[0];                // convert to big-endian
+//            buf[0] = buf[1];
+//            buf[1] = b;
+//
+//            short sample = (short) (buf[0] << 8 | buf[1] & 0xFF);           // convert to short
+//            double amplitude = (double) sample / (double) Short.MIN_VALUE;
+//            endPCM[i] = (float) amplitude;
+//        }
+//
+//        float beginningMax = FreqVolPair.maxVol(Model.getPeriodogramFromPcmData(beginningPCM)).freq;
+//        float endMax = FreqVolPair.maxVol(Model.getPeriodogramFromPcmData(endPCM)).freq;
+//
+//        Log.d("getProbOfCorrectAnswer",
+//                "earcon = " + earcon.toString() + " beginning freq = " + beginningMax + " end freq = " + endMax);
+//
+//        return (getProbOfHearingFVP(beginningMax, earcon.volume, subset)
+//                + getProbOfHearingFVP(endMax, earcon.volume, subset)) / 2;
 
     }
 
@@ -472,11 +479,20 @@ public class HearingTestResultsContainer {
         return closest;
     }
 
-
+    /**
+     * @param arr An array of doubles
+     * @return The mean of the array - does not include any values under 100
+     */
     public static double mean(double[] arr) {
         double total = 0;
         for (double d : arr) total += d;
         return total / arr.length;
+    }
+
+    public static double mean(List<Float> lst) {
+        Float total = 0f;
+        for (Float n : lst) total += n;
+        return total / lst.size();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

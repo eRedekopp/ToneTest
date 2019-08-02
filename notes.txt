@@ -8,3 +8,16 @@ Constructing 95% CI for confidence trial
   - https://www.desmos.com/calculator/bjzixmtknu
     - Need a huge number of trials to get any sort of accuracy
   - stats textbook p452 type II error probabilities
+
+
+Earcon models tried:
+    - n=50 samples of 1000 using only most prominent frequency from each:
+            - Guesses within ~30%
+            - Inconsistent: wrong in both directions
+    - n=2 samples from very beginning and very end:
+            - Close for low frequencies but off by ~40% for higher probabilities
+            - Guesses low, generally
+            - Doesn't seem to generate probabilities over 50%
+    - Above, except cuts off last 2000 samples from earcon
+            - Actually somewhat accurate
+            - Frequencies from periodogram are not even close to actual frequencies, end frequency always 8.0

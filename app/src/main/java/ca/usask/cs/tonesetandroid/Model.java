@@ -234,6 +234,7 @@ public class Model {
 
             double volFloor   = this.hearingTestResults.getVolFloorEstimateForEarcon(earconIdMap.get(freq));
             double volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(earconIdMap.get(freq));
+            Log.d("configureConfEarcons", "volFloor = " + volFloor + " volCeiling = " + volCeiling);
             double testVol = volFloor + pct * (volCeiling - volFloor);
             this.confidenceTestEarcons.add(new Earcon(freq, earconIdMap.get(freq), testVol, direction));
 
