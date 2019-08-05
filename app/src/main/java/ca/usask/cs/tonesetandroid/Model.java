@@ -78,8 +78,8 @@ public class Model {
     ConfidenceTestResultsContainer confidenceTestResults;
     ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
 
-    public static final int[] CONF_SAMP_SIZES = {1, 3, 5, 7, 8, 9, 10}; // alternate values of NUMBER_OF_TESTS_PER_VOL
-    // to be tested while analyzing data
+    public static final int[] CONF_SAMP_SIZES = {1, 3, 5};  // alternate values of NUMBER_OF_TESTS_PER_VOL
+                                                            // to be tested while analyzing data
 
     public Model() {
         buf = new byte[2];
