@@ -293,11 +293,6 @@ public class Model {
             throws IllegalStateException, IllegalArgumentException {
 
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
-
-        // todo test
-
-//        return this.hearingTestResults.getProbOfCorrectAnswer(
-//        earcon.frequency, earcon.direction, earcon.volume, subset);
         return this.hearingTestResults.getProbOfCorrectAnswer(earcon, subset);
     }
 

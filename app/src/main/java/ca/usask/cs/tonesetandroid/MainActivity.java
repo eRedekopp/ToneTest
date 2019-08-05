@@ -445,7 +445,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     private void getBackgroundNoiseAndBeginTest_3(final boolean isCalib) {
         // prompt user to press OK to begin test
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setMessage("Press the button when you are ready to begin the test");
+        builder.setMessage("Press the button when you are ready to begin the test\n" +
+                           "Note: app may appear to freeze for several seconds before test begins");
         builder.setPositiveButton("BEGIN", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {

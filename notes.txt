@@ -9,8 +9,13 @@ Constructing 95% CI for confidence trial
     - Need a huge number of trials to get any sort of accuracy
   - stats textbook p452 type II error probabilities
 
+Things to do while waiting for pilot results:
+    - analyze interval results
+    - add "wait" screen for earcon selection and results analysis
+    - force up, flat, down buttons to fit layout more precisely
+    - Make Short conversion marginally more efficient (see todos)
 
-Earcon models tried:
+Earcon models tried (based only on self-tests):
     - n=50 samples of 1000 using only most prominent frequency from each:
             - Guesses within ~30%
             - Inconsistent: wrong in both directions
@@ -21,3 +26,10 @@ Earcon models tried:
     - Above, except cuts off last 2000 samples from earcon
             - Actually somewhat accurate
             - Frequencies from periodogram are not even close to actual frequencies, end frequency always 8.0
+    - n=50 samples of 1000 using only most prominent frequency from each:
+            - Seems to guess within 20%
+            - Tends to guess high
+    - All of the above are bad for "neg" earcon
+    - n=50 samples of 1000 using top 3 most prominent frequencies in each, probability averaged of all with equal weight
+            - Guesses within about 15%
+            - Most accurate so far

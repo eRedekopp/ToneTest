@@ -102,7 +102,7 @@ public class HearingTestController {
                 while (rawPCM.available() > 0) {
                     rawPCM.read(model.buf, 0, 2);       // read data from stream
 
-                    byte b = model.buf[0];              // convert to big-endian
+                    byte b = model.buf[0];              // convert to big-endian todo get rid of this and swap below
                     model.buf[0] = model.buf[1];
                     model.buf[1] = b;
 

@@ -133,79 +133,23 @@ public class HearingTestResultsContainer {
      */
     public double getProbOfCorrectAnswer(Earcon earcon, float[] subset) throws IllegalArgumentException {
 
-//        return 0;   // todo test
-
         // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
 
         int nAudioSamples = 50;
+        int nFreqsPerSample = 3;  // top 3 frequencies in every sample
 
         Log.d("earcon", earcon.toString());
 
-        float[] topFreqs = topFrequencies(earcon.audioResourceID, nAudioSamples);
+        float[][] topFreqs = topNFrequencies(earcon.audioResourceID, nAudioSamples, 3);
 
-//        double[] probEstimates = new double[nAudioSamples];
-        ArrayList<Float> probEstimates = new ArrayList<>(nAudioSamples);
+        ArrayList<Float> probEstimates = new ArrayList<>();
 
-        for (int i = 0; i < nAudioSamples; i++) if (topFreqs[i] >= 100)  // only add probs for audible frequencies
-            probEstimates.add(this.getProbOfHearingFVP(topFreqs[i], earcon.volume, subset));
-
-        Log.d("probEstimates", probEstimates.toString());
+        for (int i = 0; i < nAudioSamples; i++)
+            for (int j = 0; j < nFreqsPerSample; j++)
+                if (topFreqs[i] != null && topFreqs[i][j] > 100)
+                    probEstimates.add(getProbOfHearingFVP(topFreqs[i][j], earcon.volume, subset));
 
         return mean(probEstimates);
-
-//        InputStream rawPCM = MainActivity.context.getResources().openRawResource(earcon.audioResourceID);
-//        float[] beginningPCM = new float[1000];
-//        float[] endPCM = new float[1000];
-//        byte[] buf = new byte[2];
-//
-//        // populate PCM data
-//
-//        for (int i = 0; i < 1000; i++) {
-//            try {
-//                rawPCM.read(buf, 0, 2);     // read data from stream
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//
-//            byte b = buf[0];                // convert to big-endian
-//            buf[0] = buf[1];
-//            buf[1] = b;
-//
-//            short sample = (short) (buf[0] << 8 | buf[1] & 0xFF);           // convert to short
-//            double amplitude = (double) sample / (double) Short.MIN_VALUE;
-//            beginningPCM[i] = (float) amplitude;
-//        }
-//        try {
-//            while (rawPCM.available() > 3000) rawPCM.read(buf, 0, 2);       // skip middle (cut off last 2000 samples)
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        for (int i = 0; i < 1000; i++) {
-//            try {
-//                rawPCM.read(buf, 0, 2);     // read data from stream
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//
-//            byte b = buf[0];                // convert to big-endian
-//            buf[0] = buf[1];
-//            buf[1] = b;
-//
-//            short sample = (short) (buf[0] << 8 | buf[1] & 0xFF);           // convert to short
-//            double amplitude = (double) sample / (double) Short.MIN_VALUE;
-//            endPCM[i] = (float) amplitude;
-//        }
-//
-//        float beginningMax = FreqVolPair.maxVol(Model.getPeriodogramFromPcmData(beginningPCM)).freq;
-//        float endMax = FreqVolPair.maxVol(Model.getPeriodogramFromPcmData(endPCM)).freq;
-//
-//        Log.d("getProbOfCorrectAnswer",
-//                "earcon = " + earcon.toString() + " beginning freq = " + beginningMax + " end freq = " + endMax);
-//
-//        return (getProbOfHearingFVP(beginningMax, earcon.volume, subset)
-//                + getProbOfHearingFVP(endMax, earcon.volume, subset)) / 2;
-
     }
 
     public double getProbOfCorrectAnswer(Earcon earcon) {
@@ -319,6 +263,8 @@ public class HearingTestResultsContainer {
 
     public double getVolFloorEstimateForEarcon(int wavResId) {
 
+        // todo ignore silence
+
         // find most prominent frequencies in samples of .wav file, return average of their floor estimates
 
         int nAudioSamples = 50;
@@ -332,6 +278,8 @@ public class HearingTestResultsContainer {
     }
 
     public double getVolCeilingEstimateForEarcon(int wavResId) {
+
+        // todo ignore silence
 
         // find most prominent frequencies in samples of .wav file, return average of their ceiling estimates
 
@@ -361,6 +309,51 @@ public class HearingTestResultsContainer {
             }
         if (curClosest == -1) throw new RuntimeException("Found unexpected value -1");
         return curClosest;
+    }
+
+    /**
+     * Given an ID for a .wav file, return the most prominent frequencies in each sample for some number of
+     * evenly-spaced samples.
+     *
+     * @param wavResId The resource ID for the wav file to be tested
+     * @param nSamples The number of samples to test from the file (fewer samples -> faster, less precise)
+     * @param nFreqsPerSample The number of most prominent frequencies to return for each sample
+     * @return An array of length nSamples containing the most prominent frequencies in each sample
+     */
+    public static float[][] topNFrequencies(int wavResId, int nSamples, int nFreqsPerSample) {
+        int sampleSize = 1000;
+        InputStream rawPCM = MainActivity.context.getResources().openRawResource(wavResId);
+        byte[] buf = new byte[2];
+        float[] pcm = new float[sampleSize];
+        float[][] results = new float[nSamples][];
+        int nSamplesTaken = 0;
+
+        try {
+            int size = rawPCM.available() / 2; // /2 because each sample is 2 bytes
+            for (int i = 0;
+                 i < size - sampleSize;
+                 i += (size - nSamples * sampleSize) / nSamples) {
+
+                for (int j = 0; j < sampleSize; j++, i++) {      // populate pcm for current set of samples
+                    rawPCM.read(buf, 0, 2);       // read data from stream
+
+                    byte b = buf[0];              // convert to big-endian
+                    buf[0] = buf[1];
+                    buf[1] = b;
+                    short sample = ByteBuffer.wrap(buf).getShort();   // convert to short todo use more efficient method
+                    pcm[j] = (float) sample / (float) Short.MIN_VALUE;
+                }
+
+                FreqVolPair[] periodogram = Model.getPeriodogramFromPcmData(pcm);   // get fft of pcm data
+                FreqVolPair[] max = FreqVolPair.maxNVols(periodogram, nFreqsPerSample);
+                float[] maxFreqs = new float[max.length];
+                for (int j = 0; j < nFreqsPerSample; j++) maxFreqs[j] = max[j].freq;
+                results[nSamplesTaken++] = maxFreqs;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return results;
     }
 
     /**
@@ -493,6 +486,23 @@ public class HearingTestResultsContainer {
         Float total = 0f;
         for (Float n : lst) total += n;
         return total / lst.size();
+    }
+
+    /**
+     *
+     * @param lst A list of lists of floats in ascending order of importance
+     * @return The weighted mean of all list elements such that the elements of the last (most important) list have
+     * weight lst.length() and elements of the first (least important) list have weight 1
+     */
+    public static double weightedMean(List<List<Float>> lst) {
+        if (lst.isEmpty()) throw new IllegalArgumentException("List must not be empty");
+
+        double numerator = 0, denominator = 0;
+        for (int i = lst.size() - 1; i >= 0; i--) {
+            for (Float f : lst.get(i)) numerator += f * (i + 1);
+            denominator += i;
+        }
+        return numerator / denominator;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
