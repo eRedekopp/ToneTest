@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 import org.apache.commons.math3.distribution.BinomialDistribution;
 
@@ -7,8 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 
-public class ConfidenceTestResultsContainer {
+
+public class ConfidenceTestResults {
 
     // Map starting frequency of interval to all single test results of that frequency, separated by direction
     private HashMap<Float, List<ConfidenceSingleTestResult>> allResultsUpward;
@@ -17,7 +20,7 @@ public class ConfidenceTestResultsContainer {
 
     private BackgroundNoiseType noiseType;  // the background noise type used in the test from which these results come
 
-    public ConfidenceTestResultsContainer() {
+    public ConfidenceTestResults() {
         this.allResultsUpward = new HashMap<>();
         this.allResultsDownward = new HashMap<>();
         this.allResultsFlat = new HashMap<>();
@@ -234,7 +237,7 @@ public class ConfidenceTestResultsContainer {
                 return this.allResultsDownward;
             case Earcon.DIRECTION_UP:
                 return this.allResultsUpward;
-            case Earcon.DIRECTION_NONE:
+            case Earcon.DIRECTION_FLAT:
                 return this.allResultsFlat;
             default:
                 throw new IllegalArgumentException("Unrecognized value for direction: " + direction);

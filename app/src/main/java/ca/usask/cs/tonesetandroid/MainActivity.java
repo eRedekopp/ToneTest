@@ -299,7 +299,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     }
 
     /**
-     * Performs an autoTest and sets HearingTestResults, then displays the current noise to a graph in a GraphActivity
+     * Performs an autoTest and sets CalibrationTestResults, then displays the current noise to a graph in a GraphActivity
      */
     private void goToAuto() {
 
@@ -453,7 +453,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 dialogInterface.cancel();
                 BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
                 if (isCalib) {
-                    model.hearingTestResults.setBackgroundNoise(noiseType);
+                    model.calibrationTestResults.setBackgroundNoise(noiseType);
                     controller.handleCalibClick();
                 }
                 else {

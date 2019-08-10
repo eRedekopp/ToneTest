@@ -21,13 +21,16 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.ConfidenceTestResults;
+
 
 /**
  * A class for handling file IO. Methods for reading files are static; must be instantiated
  * to save files
  *
  * Note: Directory structure starts at resultsDir, then each subject gets a folder named
- * Subject##, which contains subdirectories HearingTestResults and ConfidenceTestResults
+ * Subject##, which contains subdirectories CalibrationTestResults and ConfidenceTestResults
  *
  * @author redekopp, alexscott
  */
@@ -37,8 +40,33 @@ public class FileNameController {
 
     private static final File RESULTS_DIR = getResultsDir();
 
+    private File currentFile;
+
     public void setModel(Model model) {
         this.model = model;
+    }
+
+    /**
+     * Saves a line representing an individual trial to the current file
+     *
+     * @param lineEnd The end of the line, ie. information specific only to the trial being saved
+     * @param testTypeName A string identifying the type of test
+     */
+    public void saveLine(String lineEnd, String testTypeName) {
+        // todo (do in new thread)
+    }
+
+    public void startNewSaveFile(boolean isCalib) {
+        if (isCalib) this.currentFile = this.getNewCalibSaveFile();
+        else this.currentFile = this.getNewConfSaveFile();
+    }
+
+    private File getNewCalibSaveFile() {
+        return null; // todo
+    }
+
+    private File getNewConfSaveFile() {
+        return null; // todo
     }
 
     /**
@@ -60,9 +88,9 @@ public class FileNameController {
             if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
             out = new BufferedWriter(new FileWriter(fout));
             out.write(String.format("ParticipantID %d BackgroundNoise %s\n", model.getSubjectId(),
-                    model.hearingTestResults.getBackgroundNoise().toString()));
+                    model.calibrationTestResults.getBackgroundNoise().toString()));
             out.write("Freq(Hz),Volume,nHeard,nNotHeard\n");
-            HearingTestResultsContainer results = model.getHearingTestResults();
+            CalibrationTestResults results = model.getCalibrationTestResults();
             for (float freq : results.getTestedFreqs()) {
                 HashMap<Double, Integer> timesHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
                 HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
@@ -214,7 +242,7 @@ public class FileNameController {
 
             out = new BufferedWriter(new FileWriter(fout));
 
-            HearingTestResultsContainer results = model.getHearingTestResults();
+            CalibrationTestResults results = model.getCalibrationTestResults();
 
             // write background noise info
             out.write(String.format("ParticipantID %d BackgroundNoise %s\n",
@@ -226,7 +254,7 @@ public class FileNameController {
             // test using different sample sizes
             for (int n : Model.CONF_SAMP_SIZES) {
                 try {  // change hearing test results to new sample size
-                    model.hearingTestResults = results.getSubsetResults(n);
+                    model.calibrationTestResults = results.getSubsetResults(n);
                 } catch (IllegalArgumentException e) {  // skip if n is invalid
                     continue;
                 }
@@ -242,7 +270,7 @@ public class FileNameController {
 
                 // write results for each freq-vol pair in subset
                 // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
-                for (ConfidenceTestResultsContainer.StatsAnalysisResultsContainer result : model.analysisResults) {
+                for (ConfidenceTestResults.StatsAnalysisResultsContainer result : model.analysisResults) {
                     out.write(String.format(
                             "%.2f,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
                             result.earcon.frequency, result.earcon.getDirectionAsString(), result.earcon.volume,
@@ -254,7 +282,7 @@ public class FileNameController {
 
             }
 
-            model.hearingTestResults = results; // reset hearingTestResults
+            model.calibrationTestResults = results; // reset calibrationTestResults
 
             // make the scanner aware of the new file
             MediaScannerConnection.scanFile(
@@ -336,12 +364,12 @@ public class FileNameController {
      */
     private static File getResultsDir() {
         File extDir = Environment.getExternalStorageDirectory();
-        File subDir = new File(extDir, "HearingTestResults");
+        File subDir = new File(extDir, "CalibrationTestResults");
 
         // make results directory if doesn't already exist
         if (!subDir.isDirectory())
             if (! subDir.mkdir())
-                Log.e("getResultsDir", "Error creating HearingTestResults directory");
+                Log.e("getResultsDir", "Error creating CalibrationTestResults directory");
         return subDir;
     }
 
@@ -387,7 +415,7 @@ public class FileNameController {
             return;
         }
 
-        HearingTestResultsContainer results = new HearingTestResultsContainer();
+        CalibrationTestResults results = new CalibrationTestResults();
 
         scanner.useDelimiter(Pattern.compile("\\s"));
         scanner.next(); scanner.next();     // skip subject id
@@ -414,7 +442,7 @@ public class FileNameController {
                 for (int i = 0; i < nextNotHeard; i++) results.addResult((float) nextFreq, nextVol, false);
                 if (scanner.hasNextLine()) scanner.nextLine();
             }
-            model.hearingTestResults = results;
+            model.calibrationTestResults = results;
         } catch (NoSuchElementException e) {
             Log.e("InitializeModel", "Error reading file: EOF reached before input finished");
             e.printStackTrace();

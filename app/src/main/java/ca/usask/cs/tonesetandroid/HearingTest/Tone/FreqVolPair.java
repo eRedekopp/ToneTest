@@ -1,11 +1,11 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
 /**
  * A data structure for storing a frequency, volume pair
  *
- * @author alexscott
+ * @author alexscott, redekopp
  */
-public class FreqVolPair implements Cloneable {
+public class FreqVolPair implements Cloneable, Tone {
 
     public final float freq;
     public final double vol;

@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
 import android.support.annotation.NonNull;
 
@@ -6,14 +6,14 @@ import android.support.annotation.NonNull;
  * A class representing an "earcon" at a certain volume. It is up to the programmer to ensure that frequency and
  * direction match up with the .wav file with the given audioResourceID
  */
-public class Earcon implements Cloneable {
+public class Earcon implements Cloneable, Tone {
 
     // to indicate the direction of the notes in the earcon
-    public static final int DIRECTION_UP = 1;
+    public static final int DIRECTION_UP = 2;
 
-    public static final int DIRECTION_DOWN = 2;
+    public static final int DIRECTION_DOWN = 3;
 
-    public static final int DIRECTION_NONE = 0;
+    public static final int DIRECTION_FLAT = 4;
 
     /**
      * An int indicating the direction of this earcon (use values from DIRECTION_*)
@@ -45,7 +45,7 @@ public class Earcon implements Cloneable {
      * @throws IllegalArgumentException If value of direction is not recognized
      */
     public Earcon(float freq, int audioResourceID, double volume, int direction) throws IllegalArgumentException {
-        if (direction != DIRECTION_DOWN && direction != DIRECTION_UP && direction != DIRECTION_NONE)
+        if (direction != DIRECTION_DOWN && direction != DIRECTION_UP && direction != DIRECTION_FLAT)
             throw new IllegalArgumentException("Invalid direction value: " + direction);
         else this.direction = direction;
         this.frequency = freq;
@@ -96,7 +96,7 @@ public class Earcon implements Cloneable {
         switch (direction) {
             case DIRECTION_DOWN: return "down";
             case DIRECTION_UP: return "up";
-            case DIRECTION_NONE: return "flat";
+            case DIRECTION_FLAT: return "flat";
             default: throw new IllegalStateException("Earcon has unexpected direction : " + direction);
         }
     }

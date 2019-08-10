@@ -15,6 +15,8 @@ import com.androidplot.xy.XYSeries;
 
 import java.util.Arrays;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+
 /**
  * An activity that displays a graph of freq-vol pairs - data must be previously set by another activity using setData()
  */

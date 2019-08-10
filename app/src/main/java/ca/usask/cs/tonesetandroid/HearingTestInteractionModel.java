@@ -2,6 +2,8 @@ package ca.usask.cs.tonesetandroid;
 
 import java.util.ArrayList;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
+
 /**
  * A class for keeping track of interactions within a PureTone or RampUp test
  *
@@ -11,9 +13,37 @@ public class HearingTestInteractionModel {
 
     boolean heard; // Has the tone been heard?
 
-    private static final int ANSWER_NULL = -100;
+    public static final int ANSWER_NULL = 0;
+
+    public static final int ANSWER_HEARD = 1;
+
+    public static final int ANSWER_UP = Earcon.DIRECTION_UP;     // == 2
+
+    public static final int ANSWER_DOWN = Earcon.DIRECTION_DOWN; // == 3
+
+    public static final int ANSWER_FLAT = Earcon.DIRECTION_FLAT; // == 4
 
     private int answer = ANSWER_NULL;
+
+    private boolean testThreadActive;
+
+    private boolean testPaused;
+
+    public boolean testThreadActive() {
+        return testThreadActive;
+    }
+
+    public void setTestThreadActive(boolean testThreadActive) {
+        this.testThreadActive = testThreadActive;
+    }
+
+    public void setTestPaused(boolean paused) {
+        this.testPaused = paused;
+    }
+
+    public boolean testPaused() {
+        return this.testPaused;
+    }
 
     private ArrayList<ModelListener> subscribers;
 
@@ -50,9 +80,7 @@ public class HearingTestInteractionModel {
     }
 
     /**
-     * @return An integer indicating the direction that the user answered (Earcon.DIRECTION_*), or
-     * HearingTestInteractionModel.ANSWER_NULL if user did not answer (ANSWER_NULL guaranteed to not be equal to an
-     * Earcon direction)
+     * @return An integer indicating the direction that the user answered (HearingTestInteractionModel.ANSWER_*)
      */
     public int getAnswer() {
         return this.answer;

@@ -1,24 +1,26 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.paramsen.noise.Noise;
-import com.paramsen.noise.NoiseOptimized;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 
-public class HearingTestResultsContainer {
+import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.MainActivity;
+import ca.usask.cs.tonesetandroid.Model;
+
+public class CalibrationTestResults {
 
     // each frequency tested mapped to its corresponding SingleFreqResult
     private HashMap<Float, HearingTestSingleFreqResult> allResults;
@@ -27,7 +29,7 @@ public class HearingTestResultsContainer {
 
     private Context context;
 
-    public HearingTestResultsContainer() {
+    public CalibrationTestResults() {
         allResults = new HashMap<>();
     }
 
@@ -398,18 +400,18 @@ public class HearingTestResultsContainer {
     }
 
     /**
-     * Return a new HearingTestResultsContainer with the same results as this one, but only containing the first n
+     * Return a new CalibrationTestResults with the same results as this one, but only containing the first n
      * results for each frequency-volume pair (ie. as though Model.NUMBER_OF_TESTS_PER_VOL == n)
      *
      * @param n The number of trials per freq-vol pair in the new container
      * @return A new container containing a subset of this one's results
      * @throws IllegalArgumentException If n is greater than the number of trials performed in this test
      */
-    public HearingTestResultsContainer getSubsetResults(int n) throws IllegalArgumentException {
+    public CalibrationTestResults getSubsetResults(int n) throws IllegalArgumentException {
         if (n > this.getNumOfTrials())
             throw new IllegalArgumentException(
                     "n = " + n + " is larger than the actual sample size = " + this.getNumOfTrials());
-        HearingTestResultsContainer newContainer = new HearingTestResultsContainer();
+        CalibrationTestResults newContainer = new CalibrationTestResults();
         for (HearingTestSingleFreqResult htsr : this.allResults.values())
             newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));
         newContainer.setBackgroundNoise(this.backgroundNoise);

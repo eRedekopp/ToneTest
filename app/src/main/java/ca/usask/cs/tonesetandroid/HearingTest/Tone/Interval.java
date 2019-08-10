@@ -1,8 +1,8 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
 import android.support.annotation.NonNull;
 
-public class Interval implements Cloneable {
+public class Interval implements Cloneable, Tone {
 
     public final float freq1;
 

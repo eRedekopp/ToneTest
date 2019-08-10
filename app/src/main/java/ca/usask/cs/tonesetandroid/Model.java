@@ -18,6 +18,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.ConfidenceTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+
 /**
  * Contains information about the current/most recent tests as well as an interface for generating
  * sine wave audio
@@ -38,11 +43,11 @@ public class Model {
                                                         // considered "inaudible"
     static final int NUMBER_OF_VOLS_PER_FREQ = 5;   // number of volumes to test for each frequency
     static final int NUMBER_OF_TESTS_PER_VOL = 5;  // number of times to repeat each freq-vol combination in the test
-    static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
-    static final int TEST_PHASE_REDUCE = 1;
-    static final int TEST_PHASE_MAIN = 2;
-    static final int TEST_PHASE_CONF = 3;
-    static final int TEST_PHASE_NULL = -1;
+    public static final int TEST_PHASE_RAMP = 0;       // for identifying which test phase (if any) we are currently in
+    public static final int TEST_PHASE_REDUCE = 1;
+    public static final int TEST_PHASE_MAIN = 2;
+    public static final int TEST_PHASE_CONF = 3;
+    public static final int TEST_PHASE_NULL = -1;
     private int testPhase;
     ArrayList<FreqVolPair> topVolEstimates;     // The rough estimates for volumes which have P(heard) = 1
     ArrayList<FreqVolPair> bottomVolEstimates;  // The rough estimates for volumes which have P(heard) = 0
@@ -50,16 +55,17 @@ public class Model {
     HashMap<Float, Integer> timesNotHeardPerFreq;   // how many times each frequency was not heard
     // (for finding bottom estimates)
     ArrayList<FreqVolPair> testPairs;  // all the freq-vol combinations that will be tested in the main test
-    HearingTestResultsContainer hearingTestResults;   // final results of test
+    CalibrationTestResults calibrationTestResults;   // final results of test
     private boolean testPaused = false; // has the user paused the test?
-    boolean testThreadActive = false; // is a thread currently performing a hearing test?
+
+    private boolean testThreadActive = false; // is a thread currently performing a hearing test?
     public static final float[] FREQUENCIES = {200, 500, 1000, 2000, 4000, /*8000*/};   // From British Society of
     // Audiology
     static final float INTERVAL_FREQ_RATIO = 1.25f; // 5:4 ratio = major third
 
 
     /////////////// Vars/values for audio ///////////////
-    AudioTrack lineOut;
+    public AudioTrack lineOut;
     public static final int OUTPUT_SAMPLE_RATE  = 44100;  // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     public int duration_ms; // how long to play each tone in a test
@@ -75,8 +81,8 @@ public class Model {
     /////////////// vars/values for confidence test ///////////////
     static final int CONF_NUMBER_OF_TRIALS_PER_EARCON = 20;
     ArrayList<Earcon> confidenceTestEarcons;  // freq-vol pairs to be tested in the next confidence test
-    ConfidenceTestResultsContainer confidenceTestResults;
-    ArrayList<ConfidenceTestResultsContainer.StatsAnalysisResultsContainer> analysisResults;
+    ConfidenceTestResults confidenceTestResults;
+    ArrayList<ConfidenceTestResults.StatsAnalysisResultsContainer> analysisResults;
 
     public static final int[] CONF_SAMP_SIZES = {1, 3, 5};  // alternate values of NUMBER_OF_TESTS_PER_VOL
                                                             // to be tested while analyzing data
@@ -88,14 +94,14 @@ public class Model {
     }
 
     /**
-     * Resets this model to its just-initialized state. Only resets hearingTestResults if it is null - reset those
+     * Resets this model to its just-initialized state. Only resets calibrationTestResults if it is null - reset those
      * with this.resetHearingTestResults
      */
     public void reset() {
         this.topVolEstimates = new ArrayList<>();
         this.bottomVolEstimates = new ArrayList<>();
         this.currentVolumes = new ArrayList<>();
-        this.confidenceTestResults = new ConfidenceTestResultsContainer();
+        this.confidenceTestResults = new ConfidenceTestResults();
         this.confidenceTestEarcons = new ArrayList<>();
         this.analysisResults = new ArrayList<>();
         this.testPairs = new ArrayList<>();
@@ -104,8 +110,8 @@ public class Model {
         this.confResultsSaved = false;
         this.testThreadActive = false;
         this.setTestPhase(TEST_PHASE_NULL);
-        if (this.hearingTestResults == null) {
-            this.hearingTestResults = new HearingTestResultsContainer();
+        if (this.calibrationTestResults == null) {
+            this.calibrationTestResults = new CalibrationTestResults();
             this.resultsSaved = false;
         }
     }
@@ -114,7 +120,7 @@ public class Model {
      * @return True if this model has hearing test results saved to it, else false
      */
     public boolean hasResults() {
-        return ! this.hearingTestResults.isEmpty();
+        return ! this.calibrationTestResults.isEmpty();
     }
 
     /**
@@ -167,12 +173,20 @@ public class Model {
     }
 
     public void resetConfidenceResults() {
-        this.confidenceTestResults = new ConfidenceTestResultsContainer();
+        this.confidenceTestResults = new ConfidenceTestResults();
     }
 
     public void resetHearingTestResults() {
-        this.hearingTestResults = new HearingTestResultsContainer();
+        this.calibrationTestResults = new CalibrationTestResults();
         this.resultsSaved = false;
+    }
+
+    public boolean threadActive() {
+        return testThreadActive;
+    }
+
+    public void setTestThreadActive(boolean testThreadActive) {
+        this.testThreadActive = testThreadActive;
     }
 
     /**
@@ -214,7 +228,7 @@ public class Model {
         // create list to randomize order of up/down/flat earcons
         ArrayList<Integer> directionList = new ArrayList<>();
         for (int i = 0; i < 2; i++) directionList.addAll(Arrays.asList(
-                                    Earcon.DIRECTION_UP, Earcon.DIRECTION_DOWN, Earcon.DIRECTION_NONE));
+                                    Earcon.DIRECTION_UP, Earcon.DIRECTION_DOWN, Earcon.DIRECTION_FLAT));
         Collections.shuffle(directionList);
 
         // for each frequency, add an upward, downward, and flat earcon at a volume some percentage of the way
@@ -228,12 +242,12 @@ public class Model {
             switch (direction) {
                 case Earcon.DIRECTION_DOWN: earconIdMap = earconsDown; break;
                 case Earcon.DIRECTION_UP:   earconIdMap = earconsUp; break;
-                case Earcon.DIRECTION_NONE: earconIdMap = earconsFlat; break;
+                case Earcon.DIRECTION_FLAT: earconIdMap = earconsFlat; break;
                 default: throw new RuntimeException("Unknown direction value found : " + direction);
             }
 
-            double volFloor   = this.hearingTestResults.getVolFloorEstimateForEarcon(earconIdMap.get(freq));
-            double volCeiling = this.hearingTestResults.getVolCeilingEstimateForEarcon(earconIdMap.get(freq));
+            double volFloor   = this.calibrationTestResults.getVolFloorEstimateForEarcon(earconIdMap.get(freq));
+            double volCeiling = this.calibrationTestResults.getVolCeilingEstimateForEarcon(earconIdMap.get(freq));
             Log.d("configureConfEarcons", "volFloor = " + volFloor + " volCeiling = " + volCeiling);
             double testVol = volFloor + pct * (volCeiling - volFloor);
             this.confidenceTestEarcons.add(new Earcon(freq, earconIdMap.get(freq), testVol, direction));
@@ -293,7 +307,7 @@ public class Model {
             throws IllegalStateException, IllegalArgumentException {
 
         if (! this.hasResults()) throw new IllegalStateException("No data stored in model");
-        return this.hearingTestResults.getProbOfCorrectAnswer(earcon, subset);
+        return this.calibrationTestResults.getProbOfCorrectAnswer(earcon, subset);
     }
 
     /**
@@ -603,19 +617,19 @@ public class Model {
     }
 
     /**
-     * Print the contents of hearingTestResults to the console (for testing)
+     * Print the contents of calibrationTestResults to the console (for testing)
      */
     public void printResultsToConsole() {
         Log.i("printResultsToConsole", String.format("Subject ID: %d\nCalibration Background Noise Type: %s",
                 this.subjectId,
-                this.hearingTestResults.getBackgroundNoise() == null ? "N/A" :      // show noise type if
-                        this.hearingTestResults.getBackgroundNoise().toString()));  // applicable
-        if (hearingTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
-        else Log.i("printResultsToConsole", hearingTestResults.toString());
+                this.calibrationTestResults.getBackgroundNoise() == null ? "N/A" :      // show noise type if
+                        this.calibrationTestResults.getBackgroundNoise().toString()));  // applicable
+        if (calibrationTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
+        else Log.i("printResultsToConsole", calibrationTestResults.toString());
     }
 
-    public HearingTestResultsContainer getHearingTestResults() {
-        return this.hearingTestResults;
+    public CalibrationTestResults getCalibrationTestResults() {
+        return this.calibrationTestResults;
     }
 
     /**

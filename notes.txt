@@ -33,3 +33,15 @@ Earcon models tried (based only on self-tests):
     - n=50 samples of 1000 using top 3 most prominent frequencies in each, probability averaged of all with equal weight
             - Guesses within about 15%
             - Most accurate so far
+
+
+Big Refactor:
+    Done:
+        - simple sine confidence test
+        - ramp test and reduce test
+    Next:
+        - adjust reduce test to use SingleTrialResults
+        - implement main ToneTest
+        - implement controller to run tests
+        - adjust UI to make new test runnable
+        - keep picking off to-do items
