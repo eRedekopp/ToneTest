@@ -39,9 +39,10 @@ Big Refactor:
     Done:
         - simple sine confidence test
         - ramp test and reduce test
-    Next:
         - adjust reduce test to use SingleTrialResults
+    Next:
         - implement main ToneTest
+        - make playTone() abstract method for confidence test
         - implement controller to run tests
         - adjust UI to make new test runnable
         - keep picking off to-do items

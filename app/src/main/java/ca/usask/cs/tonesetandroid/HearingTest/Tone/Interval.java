@@ -2,7 +2,7 @@ package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
 import android.support.annotation.NonNull;
 
-public class Interval implements Cloneable, Tone {
+public class Interval extends Tone implements Cloneable {
 
     public final float freq1;
 
@@ -17,6 +17,16 @@ public class Interval implements Cloneable, Tone {
         this.freq2 = freq2;
         this.vol = vol;
         this.isUpward = freq1 < freq2;
+    }
+
+    @Override
+    public double vol() {
+        return this.vol;
+    }
+
+    @Override
+    public float freq() {
+        return this.freq1;
     }
 
     @Override

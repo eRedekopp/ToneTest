@@ -1,21 +1,39 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
+import android.support.annotation.NonNull;
+
 /**
  * A data structure for storing a frequency, volume pair
  *
  * @author alexscott, redekopp
  */
-public class FreqVolPair implements Cloneable, Tone {
+public class FreqVolPair extends ReducibleTone implements Cloneable {
 
-    public final float freq;
-    public final double vol;
+    protected final float freq;
+    protected final double vol;
 
     public FreqVolPair(float f, double v) {
-        freq = f;
-        vol = v;
+        this.freq = f;
+        this.vol = v;
     }
 
     @Override
+    public ReducibleTone newVol(double vol) {
+        return new FreqVolPair(this.freq, vol);
+    }
+
+    @Override
+    public double vol() {
+        return this.vol;
+    }
+
+    @Override
+    public float freq() {
+        return this.freq;
+    }
+
+    @Override
+    @NonNull
     public String toString() {
         return String.format("Frequency: %f, Volume: %f", freq, vol);
     }

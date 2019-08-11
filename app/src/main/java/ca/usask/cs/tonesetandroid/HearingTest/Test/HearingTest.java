@@ -18,7 +18,7 @@ import ca.usask.cs.tonesetandroid.HearingTestInteractionModel;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 import ca.usask.cs.tonesetandroid.Model;
 
-public abstract class HearingTest {
+public abstract class HearingTest<T extends Tone> {
 
     // constants
     public static final float[] CALIB_FREQS = {200, 500, 1000, 2000, 4000};
@@ -38,6 +38,12 @@ public abstract class HearingTest {
     // elements representing current state
     protected SingleTrialResult currentTrial;
     protected ArrayList<SingleTrialResult> completedTrials;
+
+    // Integers representing the possible answers in a hearing test
+    public static final int ANSWER_UP = 1;
+    public static final int ANSWER_DOWN = 2;
+    public static final int ANSWER_FLAT = 3;
+    public static final int ANSWER_HEARD = 4;
 
 
     static void setModel(Model theModel) {  // todo add this to init
@@ -61,17 +67,6 @@ public abstract class HearingTest {
     }
 
     /**
-     * Resume the test if necessary, else do nothing
-     */
-    public void checkForHearingTestResume() { // todo edit this to make test phase internal to HearingTest
-        if (    ! iModel.testThreadActive() &&
-                model.getTestPhase() != Model.TEST_PHASE_NULL &&
-                ! this.isComplete() &&
-                ! iModel.testPaused())
-            this.run();
-    }
-
-    /**
      * Begin or resume this hearing test on a new thread
      */
     protected abstract void run();
@@ -84,16 +79,33 @@ public abstract class HearingTest {
 
     /**
      * Return the information to be written after the header in the save file for the given trial
+     *
      * @param result The individual trial result to be saved
      * @return A string with the information to write after the header in the line
      */
     protected abstract String getLineEnd(SingleTrialResult result);
 
+    public HearingTest(BackgroundNoiseType backgroundNoiseType) {
+        this.completedTrials = new ArrayList<>();
+        this.backgroundNoiseType = backgroundNoiseType;
+    }
+
+    /**
+     * Resume the test if necessary, else do nothing
+     */
+    public void checkForHearingTestResume() { // todo edit this to make test phase internal to HearingTest
+        if (    ! iModel.testThreadActive() &&
+                model.getTestPhase() != Model.TEST_PHASE_NULL &&
+                ! this.isComplete() &&
+                ! iModel.testPaused())
+            this.run();
+    }
+
     /**
      * Set currentTrial to a new SingleTrialResult with the given tone, and if the current trial is not null, add the
      * current one to the list of results
      */
-    protected void newCurrentTrial(Tone tone) {
+    protected void newCurrentTrial(T tone) {
         if (this.currentTrial != null) this.completedTrials.add(this.currentTrial);
         this.currentTrial = new SingleTrialResult(tone);
     }
@@ -120,7 +132,7 @@ public abstract class HearingTest {
     }
 
     protected void playSine(FreqVolPair fvp, int durationMs) {
-        playSine(fvp.freq, fvp.vol, durationMs);
+        playSine(fvp.freq(), fvp.vol(), durationMs);
     }
 
     /**
@@ -180,10 +192,10 @@ public abstract class HearingTest {
 
     /**
      * Adds a new Click object to this test's results for the current earcon if a test is currently being performed
-     * @param direction An int representing the direction that the user answered
+     * @param answer An int representing the answer associated with this click
      */
-    public void handleAnswerClick(int direction) {
-        Click newClick = new Click(direction);
+    public void handleAnswerClick(int answer) {
+        Click newClick = new Click(answer);
         if (this.currentTrial == null) {
             Log.e("handleAnswerClick", "No current trial set");
             return;
@@ -201,6 +213,20 @@ public abstract class HearingTest {
         try {
             Thread.sleep((long) (minMs + Math.random() * (maxMs - minMs)));
         } catch (InterruptedException e) { e.printStackTrace(); }
+    }
+
+    /**
+     * Given an int representing a test response, return a string representing the meaning of that response (eg.
+     * "Up", "Down")
+     */
+    public static String answerAsString(int answer) {
+        switch (answer) {
+            case ANSWER_UP:     return "Up";
+            case ANSWER_DOWN:   return "Down";
+            case ANSWER_FLAT:   return "Flat";
+            case ANSWER_HEARD:  return "Heard";
+            default:            return "Unknown";
+        }
     }
 
     public BackgroundNoiseType getBackgroundNoiseType() {

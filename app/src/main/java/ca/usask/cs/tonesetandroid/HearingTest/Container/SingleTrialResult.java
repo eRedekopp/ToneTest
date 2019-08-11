@@ -1,14 +1,17 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
+import android.support.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 
 import ca.usask.cs.tonesetandroid.Click;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public class SingleTrialResult {
 
-    public final long startTime;
+    private long startTime;
     private ArrayList<Click> clicks;
     public final Tone tone;
     private boolean wasCorrect = false;
@@ -16,7 +19,6 @@ public class SingleTrialResult {
     public SingleTrialResult(Tone tone) {
         this.clicks = new ArrayList<>();
         this.tone = tone;
-        this.startTime = Calendar.getInstance().getTime().getTime();
     }
 
     /**
@@ -28,6 +30,14 @@ public class SingleTrialResult {
     }
 
     /**
+     * Set the start time to the current millisecond on the clock. Call this method immediately before the tone plays
+     * in a test
+     */
+    public void start() {
+        this.startTime = Calendar.getInstance().getTime().getTime();
+    }
+
+    /**
      * Add a single click to this result
      * @param click A new click object representing the click to be added
      */
@@ -36,10 +46,10 @@ public class SingleTrialResult {
     }
 
     /**
-     * Set wasCorrect to true if the last direction clicked was expectedDirection, else set it to false
+     * Set wasCorrect to the given value
      */
-    public void setCorrect(int expectedDirection) {
-        this.wasCorrect = this.lastClick().direction == expectedDirection;
+    public void setCorrect(boolean b) {
+        this.wasCorrect = b;
     }
 
     /**
@@ -62,7 +72,30 @@ public class SingleTrialResult {
      */
     public long[] clickTimes() {
         long[] newArr = new long[this.clicks.size()];
-        for (int i = 0; i < this.clicks.size(); i++) newArr[i] = this.clicks.get(i).time.getTime() - this.startTime;
+        for (int i = 0; i < this.clicks.size(); i++) newArr[i] = this.clicks.get(i).time - this.startTime;
         return newArr;
+    }
+
+    /**
+     * eg. "Up 200, Down 250, Flat 275"
+     *
+     * @return A string containing the direction and offset in milliseconds from the start time for each click
+     */
+    public String getClicksAsString() {
+        StringBuilder builder = new StringBuilder();
+        for (Click click : this.clicks) {
+            builder.append(HearingTest.answerAsString(click.answer));
+            builder.append(' ');
+            builder.append(click.time - this.startTime);
+            builder.append(", ");
+        }
+        return builder.toString();
+    }
+
+    @Override
+    @NonNull
+    public String toString() {
+        return String.format("Tone: %s, Correct? %b, nClicks: %d, clicks: %s",
+                this.tone.toString(), this.wasCorrect, this.nClicks(), this.getClicksAsString());
     }
 }

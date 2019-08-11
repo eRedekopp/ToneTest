@@ -2,9 +2,13 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
 import java.util.ArrayList;
 
-public class SineRampTest extends RampTest {
+import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 
-    public SineRampTest() {
+public class SineRampTest extends RampTest<FreqVolPair> {
+
+    public SineRampTest(BackgroundNoiseType noiseType) {
+        super(noiseType);
         this.testInfo =
                 "In this phase of the test, tones will play quietly and slowly get louder. Please press the \"Heard " +
                         "Tone\" button as soon as the tone becomes audible";

@@ -1,16 +1,15 @@
 package ca.usask.cs.tonesetandroid;
 
 import java.util.Calendar;
-import java.util.Date;
 
 public class Click {
 
-    public final Date time;
-    public final int direction;
+    public final long time;  // the time in milliseconds since 1970 at which the click was registered
+    public final int answer; // the response value associated with this click
 
     public Click(int direction) {
-        this.time = Calendar.getInstance().getTime();
-        this.direction = direction;
+        this.time = Calendar.getInstance().getTime().getTime();
+        this.answer = direction;
     }
 
 }

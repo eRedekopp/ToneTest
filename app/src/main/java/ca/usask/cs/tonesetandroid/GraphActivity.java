@@ -61,8 +61,8 @@ public class GraphActivity extends Activity {
         Number[] yData = new Double[data.length];
         Double maxY = Double.MIN_VALUE;   // keep track of largest Y value for setting axis range
         for (int i = 0; i < data.length; i++) {
-            xData[i] = data[i].freq;
-            yData[i] = data[i].vol;
+            xData[i] = data[i].freq();
+            yData[i] = data[i].vol();
             if (maxY < (Double) yData[i]) maxY = (Double) yData[i];
         }
 

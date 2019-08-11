@@ -121,7 +121,7 @@ public class CalibrationTestResults {
     }
 
     public float getProbOfHearingFVP(FreqVolPair fvp) {
-        return getProbOfHearingFVP(fvp.freq, fvp.vol);
+        return getProbOfHearingFVP(fvp.freq(), fvp.vol());
     }
 
     /**
@@ -349,7 +349,7 @@ public class CalibrationTestResults {
                 FreqVolPair[] periodogram = Model.getPeriodogramFromPcmData(pcm);   // get fft of pcm data
                 FreqVolPair[] max = FreqVolPair.maxNVols(periodogram, nFreqsPerSample);
                 float[] maxFreqs = new float[max.length];
-                for (int j = 0; j < nFreqsPerSample; j++) maxFreqs[j] = max[j].freq;
+                for (int j = 0; j < nFreqsPerSample; j++) maxFreqs[j] = max[j].freq();
                 results[nSamplesTaken++] = maxFreqs;
             }
         } catch (IOException e) {
@@ -391,7 +391,7 @@ public class CalibrationTestResults {
 
                 FreqVolPair[] periodogram = Model.getPeriodogramFromPcmData(pcm);   // get fft of pcm data
                 FreqVolPair max = FreqVolPair.maxVol(periodogram);
-                results[nSamplesTaken++] = max.freq;
+                results[nSamplesTaken++] = max.freq();
             }
         } catch (IOException e) {
             e.printStackTrace();

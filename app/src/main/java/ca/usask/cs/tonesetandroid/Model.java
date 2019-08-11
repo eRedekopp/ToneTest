@@ -22,6 +22,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.ConfidenceTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 /**
  * Contains information about the current/most recent tests as well as an interface for generating
@@ -155,11 +156,13 @@ public class Model {
     /**
      * Set currentVolumes to contain all frequencies and volumes to be tested during the main stage of the hearing test
      */
+    @SuppressWarnings("ConstantConditions")
     public void configureTestPairs() {
         for (float freq : FREQUENCIES) {
-            double bottomVolEst = getVolForFreq(bottomVolEstimates, freq);
-            double topVolEst = getVolForFreq(topVolEstimates, freq) * 1.2;  // Bump up by 20% because ramp stage gives
-            for (double vol = bottomVolEst;                                 // low estimates
+            double bottomVolEst = Tone.getVolForFreq((FreqVolPair[]) bottomVolEstimates.toArray(), freq);
+            // bump by 20% because ramp test gives low results
+            double topVolEst = Tone.getVolForFreq((FreqVolPair[]) topVolEstimates.toArray(), freq) * 1.2;
+            for (double vol = bottomVolEst;
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / NUMBER_OF_VOLS_PER_FREQ) {
                 testPairs.add(new FreqVolPair(freq, vol));
@@ -476,8 +479,8 @@ public class Model {
         ArrayList<FreqVolPair> newVols = new ArrayList<>();
         for (FreqVolPair fvp : currentVolumes) {
             // only reduce volumes of frequencies still being tested
-            if (timesNotHeardPerFreq.get(fvp.freq) >= TIMES_NOT_HEARD_BEFORE_STOP) newVols.add(fvp);
-            else newVols.add(new FreqVolPair(fvp.freq, fvp.vol * (1 - HEARING_TEST_REDUCE_RATE)));
+            if (timesNotHeardPerFreq.get(fvp.freq()) >= TIMES_NOT_HEARD_BEFORE_STOP) newVols.add(fvp);
+            else newVols.add(new FreqVolPair(fvp.freq(), fvp.vol() * (1 - HEARING_TEST_REDUCE_RATE)));
         }
         this.currentVolumes = newVols;
     }
@@ -602,18 +605,6 @@ public class Model {
 
     public void setCurrentVolumes(ArrayList<FreqVolPair> currentVolumes) {
         this.currentVolumes = currentVolumes;
-    }
-
-    /**
-     * Given a list of FreqVolPairs, return the volume associated with the given frequency in a pair
-     *
-     * @param list A list of freqvolpairs
-     * @param freq The frequency whose corresponding volume is to be returned
-     * @throws IllegalArgumentException if there is no pair with the given frequency
-     */
-    public static double getVolForFreq(List<FreqVolPair> list, Float freq) throws IllegalArgumentException {
-        for (FreqVolPair fvp : list) if (fvp.freq == freq) return fvp.vol;
-        throw new IllegalArgumentException("Requested frequency not present in list");
     }
 
     /**

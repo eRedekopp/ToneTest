@@ -6,10 +6,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.ReducibleTone;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
-public abstract class ReduceTest extends HearingTest {
+public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T> {
 
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
 
@@ -17,21 +20,22 @@ public abstract class ReduceTest extends HearingTest {
                                                             // reduction phase of the hearing test before the volume is
                                                             // considered "inaudible"
 
-    ReduceTestResults results;
-    ArrayList<FreqVolPair> currentVolumes;
-    HashMap<Float, Integer> timesNotHeardPerFreq;
+    protected RampTest.RampTestResults rampResults;
+    protected ReduceTestResults results;
+    protected ArrayList<T> currentVolumes;
+    protected HashMap<Float, Integer> timesNotHeardPerFreq;
 
-    public ReduceTest(RampTest.RampTestResults rampResults) {
+    public ReduceTest(RampTest.RampTestResults rampResults, BackgroundNoiseType noiseType) {
+        super(noiseType);
+        this.rampResults = rampResults;
         this.currentVolumes = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
-
-        for (FreqVolPair fvp : rampResults.getResults()) {
-            this.currentVolumes.add(fvp);
-            this.timesNotHeardPerFreq.put(fvp.freq, 0);
-        }
+        this.configureCurrentVolumes();
     }
 
-    protected abstract void playTone(FreqVolPair fvp);
+    protected abstract void playTone(Tone tone);
+
+    protected abstract void configureCurrentVolumes();
 
     @Override
     @SuppressWarnings("ConstantConditions")
@@ -43,15 +47,17 @@ public abstract class ReduceTest extends HearingTest {
                     iModel.setTestThreadActive(true);
 
                     while (! isComplete() && ! iModel.testPaused()) {
-                        for (FreqVolPair trial : currentVolumes) {
+                        for (T trial : currentVolumes) {
                             if (iModel.testPaused()) return;
 
                             newCurrentTrial(trial);
                             iModel.resetAnswer();
                             Log.i(testTypeName, "Testing " + trial.toString());
+                            currentTrial.start();
                             playTone(trial);
                             if (! iModel.answered())
-                                mapReplace(timesNotHeardPerFreq, trial.freq, timesNotHeardPerFreq.get(trial.freq) + 1);
+                                mapReplace(timesNotHeardPerFreq, trial.freq(),
+                                           timesNotHeardPerFreq.get(trial.freq()) + 1);
                             Log.i(testTypeName, iModel.answered() ? "Tone Heard" : "Tone not heard");
                             saveLine();
                             sleepThread(1000, 3000);
@@ -79,13 +85,13 @@ public abstract class ReduceTest extends HearingTest {
     /**
      * Reduce all elements of currentVolumes by [element * HEARING_TEST_REDUCE_RATE]
      */
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
     public void reduceCurrentVolumes() {
-        ArrayList<FreqVolPair> newVols = new ArrayList<>();
-        for (FreqVolPair fvp : currentVolumes) {
+        ArrayList<T> newVols = new ArrayList<>();
+        for (T tone : currentVolumes) {
             // only reduce volumes of frequencies still being tested
-            if (timesNotHeardPerFreq.get(fvp.freq) >= TIMES_NOT_HEARD_BEFORE_STOP) results.addResult(fvp);
-            else newVols.add(new FreqVolPair(fvp.freq, fvp.vol * (1 - HEARING_TEST_REDUCE_RATE)));
+            if (timesNotHeardPerFreq.get(tone.freq()) >= TIMES_NOT_HEARD_BEFORE_STOP) results.addResult(tone);
+            else newVols.add((T) tone.newVol(tone.vol() * (1 - HEARING_TEST_REDUCE_RATE)));
         }
         this.currentVolumes = newVols;
     }
@@ -114,8 +120,8 @@ public abstract class ReduceTest extends HearingTest {
             this.results = new ArrayList<>();
         }
 
-        public void addResult(FreqVolPair fvp) {
-            results.add(fvp);
+        public void addResult(Tone tone) {
+            results.add(new FreqVolPair(tone.freq(), tone.vol()));
         }
 
         public FreqVolPair[] getResults() {

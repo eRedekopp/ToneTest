@@ -5,10 +5,12 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
+import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.ReducibleTone;
 
-public abstract class RampTest extends HearingTest {
+public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
     protected static final int TIME_PER_VOL = 50;
     protected static final double RAMP_RATE_1 = 1.05;
@@ -18,6 +20,10 @@ public abstract class RampTest extends HearingTest {
     protected ArrayList<Float> freqs;
     protected ListIterator<Float> position;
     protected RampTestResults results;
+
+    public RampTest(BackgroundNoiseType noiseType) {
+        super(noiseType);
+    }
 
     @Override
     protected void run() {
@@ -39,7 +45,7 @@ public abstract class RampTest extends HearingTest {
                             position.previous(); // move cursor back to starting location and return without doing
                             return;              // anything if user paused
                         }
-                        saveLine(String.format(new FreqVolPair(currentFreq, heardVol).toString() + " first"));
+                        saveLine(new FreqVolPair(currentFreq, heardVol).toString() + " first");
 
                         sleepThread(1000, 1000);  // sleep 1 second
 
@@ -51,7 +57,7 @@ public abstract class RampTest extends HearingTest {
                         }
 
                         // save result
-                        saveLine(String.format(new FreqVolPair(currentFreq, heardVol).toString() + " second"));
+                        saveLine(new FreqVolPair(currentFreq, heardVol).toString() + " second");
                         results.addResult(currentFreq, heardVol);
                     }
                 } finally { iModel.setTestThreadActive(false); }
