@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 
 

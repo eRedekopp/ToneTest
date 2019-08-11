@@ -14,11 +14,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 
-import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.MainActivity;
-import ca.usask.cs.tonesetandroid.Model;
+import ca.usask.cs.tonesetandroid.Control.Model;
 
 public class CalibrationTestResults {
 
@@ -26,8 +26,6 @@ public class CalibrationTestResults {
     private HashMap<Float, HearingTestSingleFreqResult> allResults;
 
     private BackgroundNoiseType backgroundNoise;
-
-    private Context context;
 
     public CalibrationTestResults() {
         allResults = new HashMap<>();
@@ -152,10 +150,6 @@ public class CalibrationTestResults {
                     probEstimates.add(getProbOfHearingFVP(topFreqs[i][j], earcon.volume, subset));
 
         return mean(probEstimates);
-    }
-
-    public double getProbOfCorrectAnswer(Earcon earcon) {
-        return getProbOfCorrectAnswer(earcon, Model.FREQUENCIES);
     }
 
     /**

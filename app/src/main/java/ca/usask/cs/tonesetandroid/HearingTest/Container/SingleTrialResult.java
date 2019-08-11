@@ -5,7 +5,6 @@ import android.support.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-import ca.usask.cs.tonesetandroid.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 

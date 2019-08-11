@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.Control;
 
 import android.support.annotation.NonNull;
 

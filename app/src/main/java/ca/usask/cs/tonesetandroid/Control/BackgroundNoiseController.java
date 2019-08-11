@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
 import android.media.AudioAttributes;
@@ -9,10 +9,14 @@ import android.media.MediaPlayer;
 
 import java.util.Random;
 
+import ca.usask.cs.tonesetandroid.R;
+
 
 public class BackgroundNoiseController {
 
     private Model model;
+
+    private HearingTestInteractionModel iModel;  // todo set this in mainActivity
 
     private AudioTrack lineOut = null;
 
@@ -101,7 +105,7 @@ public class BackgroundNoiseController {
                 short[] buffer = new short[2];
                 Random random = new Random();
                 lineOut.play();
-                while (model.testing()) {
+                while (iModel.testing()) {
                     buffer[0] = (short) (random.nextGaussian() * volume);
                     buffer[1] = (short) (random.nextGaussian() * volume);
                     lineOut.write(buffer, 0, 2);
@@ -125,7 +129,7 @@ public class BackgroundNoiseController {
                 mediaPlayer.start();
                 float floatVol = (float) (volume) / (float) MAX_VOL;
                 mediaPlayer.setVolume(floatVol, floatVol);
-                while (model.testing()) continue;  // Continue playing until model.testing() becomes false
+                while (iModel.testing()) continue;  // Continue playing until model.testing() becomes false
                 mediaPlayer.pause();
             }
         }).start();
@@ -142,4 +146,7 @@ public class BackgroundNoiseController {
         return (int) Math.round((double) MAX_VOL * ((double) externalVol / 100.0));
     }
 
+    public void setiModel(HearingTestInteractionModel iModel) {
+        this.iModel = iModel;
+    }
 }

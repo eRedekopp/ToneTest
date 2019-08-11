@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.Control;
 
 /**
  * An interface defining any class that changes its state based on the content of a Model, and can be notified by the

@@ -7,16 +7,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
-import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.Click;
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
-import ca.usask.cs.tonesetandroid.FileNameController;
+import ca.usask.cs.tonesetandroid.Control.FileNameController;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
-import ca.usask.cs.tonesetandroid.HearingTestInteractionModel;
+import ca.usask.cs.tonesetandroid.Control.HearingTestInteractionModel;
 import ca.usask.cs.tonesetandroid.HearingTestView;
-import ca.usask.cs.tonesetandroid.Model;
+import ca.usask.cs.tonesetandroid.Control.Model;
 
 public abstract class HearingTest<T extends Tone> {
 
@@ -40,6 +40,7 @@ public abstract class HearingTest<T extends Tone> {
     protected ArrayList<SingleTrialResult> completedTrials;
 
     // Integers representing the possible answers in a hearing test
+    public static final int ANSWER_NULL = 0;
     public static final int ANSWER_UP = 1;
     public static final int ANSWER_DOWN = 2;
     public static final int ANSWER_FLAT = 3;
@@ -93,9 +94,9 @@ public abstract class HearingTest<T extends Tone> {
     /**
      * Resume the test if necessary, else do nothing
      */
-    public void checkForHearingTestResume() { // todo edit this to make test phase internal to HearingTest
+    public void checkForHearingTestResume() {
         if (    ! iModel.testThreadActive() &&
-                model.getTestPhase() != Model.TEST_PHASE_NULL &&
+                iModel.testing() &&
                 ! this.isComplete() &&
                 ! iModel.testPaused())
             this.run();
@@ -127,7 +128,7 @@ public abstract class HearingTest<T extends Tone> {
                 model.lineOut.write(buf, 0, 2);
             }
         } finally {
-            model.stopAudio();
+            model.pauseAudio();
         }
     }
 
@@ -166,7 +167,7 @@ public abstract class HearingTest<T extends Tone> {
                 e.printStackTrace();
             }
         } finally {
-            model.stopAudio();
+            model.pauseAudio();
         }
     }
 
@@ -227,6 +228,10 @@ public abstract class HearingTest<T extends Tone> {
             case ANSWER_HEARD:  return "Heard";
             default:            return "Unknown";
         }
+    }
+
+    public String getTestInfo() {
+        return this.testInfo;
     }
 
     public BackgroundNoiseType getBackgroundNoiseType() {

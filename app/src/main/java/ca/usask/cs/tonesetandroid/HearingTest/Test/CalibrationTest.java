@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.ListIterator;
 
-import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -16,12 +16,8 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
 
     protected static final float[] STANDARD_FREQUENCIES = {200, 500, 1000, 2000, 4000};
 
-    protected static final int STANDARD_N_VOL_PER_FREQ = 5;
-    protected static final int STANDARD_N_TRIAL_PER_VOL = 5;
-
-    // results of previous tests from which to generate volumes for this test
-    protected RampTest.RampTestResults rampResults;
-    protected ReduceTest.ReduceTestResults reduceResults;
+    protected static final int DEFAULT_N_VOL_PER_FREQ = 5;
+    protected static final int DEFAULT_N_TRIAL_PER_VOL = 5;
 
     // The tones that will be tested in this calibration test
     protected ArrayList<T> testTones;
@@ -40,14 +36,20 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     /**
      * Configure the tones that will be tested in this calibration test
      */
-    protected abstract void configureTestTones(int nVolsPerFreq, int nTrialsPerVol);
+    public abstract void initialize(RampTest.RampTestResults rampResults,
+                                    ReduceTest.ReduceTestResults reduceResults,
+                                    int nVolsPerFreq,
+                                    int nTrialsPerVol);
 
-    public CalibrationTest(RampTest.RampTestResults rampResults, ReduceTest.ReduceTestResults reduceResults,
-                           BackgroundNoiseType noiseType) {
+    /**
+     * Configure the tones that will be used in this calibration test with the default values
+     */
+    public void initialize(RampTest.RampTestResults rampResults, ReduceTest.ReduceTestResults reduceResults) {
+        initialize(rampResults, reduceResults, DEFAULT_N_VOL_PER_FREQ, DEFAULT_N_TRIAL_PER_VOL);
+    }
+
+    public CalibrationTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.rampResults = rampResults;
-        this.reduceResults = reduceResults;
-        this.configureTestTones(STANDARD_N_VOL_PER_FREQ, STANDARD_N_TRIAL_PER_VOL);
         position = this.testTones.listIterator(0);
     }
 
@@ -59,20 +61,31 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                 try {
                     iModel.setTestThreadActive(true);
 
-                    while (! isComplete() && ! iModel.testPaused()) {
+                    while (! isComplete()) {
+                        if (iModel.testPaused()) return;
                         iModel.resetAnswer();
                         T current = position.next();
                         newCurrentTrial(current);
                         Log.i("CalibrationTest", "Testing tone: " + current.toString());
                         currentTrial.start();
                         playTone(current);
+                        if (iModel.testPaused()) {  // return without doing anything if user paused during tone
+                            currentTrial = null;    // remove current trial so it isn't added to list
+                            return;
+                        }
                         currentTrial.setCorrect(iModel.answered());
                         Log.i("CalibrationTest", currentTrial.wasCorrect() ? "Tone Heard" : "Tone Not Heard");
                         saveLine();
+//                        results.addResult(); // todo add to calibrationTestResults
                         sleepThread(1000, 3000);
                     }
+
+                    // test complete: finalize results
+
+
                 } finally {
                     iModel.setTestThreadActive(false);
+                    model.audioTrackCleanup();
                 }
             }
         }).start();

@@ -5,7 +5,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
-import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.ReducibleTone;
@@ -60,7 +60,17 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
                         saveLine(new FreqVolPair(currentFreq, heardVol).toString() + " second");
                         results.addResult(currentFreq, heardVol);
                     }
-                } finally { iModel.setTestThreadActive(false); }
+
+                    // ramp test complete: initialize reduce test with these results and setup to begin next
+                    iModel.getReduceTest().initialize(results);
+                    iModel.setCurrentTest(iModel.getReduceTest());
+                    iModel.setTestThreadActive(false);
+                    iModel.notifySubscribers();
+
+                } finally {
+                    iModel.setTestThreadActive(false);
+                    model.audioTrackCleanup();
+                }
             }
         }).start();
     }
@@ -75,8 +85,8 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
         throw new RuntimeException("Operation not supported for ramp test");
     }
 
-    public FreqVolPair[] getResults() {
-        return this.results.getResults();
+    public RampTestResults getResults() {
+        return this.results;
     }
 
     /**

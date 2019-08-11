@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
-import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.ReducibleTone;
@@ -20,22 +20,19 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                                                             // reduction phase of the hearing test before the volume is
                                                             // considered "inaudible"
 
-    protected RampTest.RampTestResults rampResults;
     protected ReduceTestResults results;
     protected ArrayList<T> currentVolumes;
     protected HashMap<Float, Integer> timesNotHeardPerFreq;
 
-    public ReduceTest(RampTest.RampTestResults rampResults, BackgroundNoiseType noiseType) {
+    public ReduceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.rampResults = rampResults;
         this.currentVolumes = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
-        this.configureCurrentVolumes();
     }
 
     protected abstract void playTone(Tone tone);
 
-    protected abstract void configureCurrentVolumes();
+    protected abstract void initialize(RampTest.RampTestResults rampResults);
 
     @Override
     @SuppressWarnings("ConstantConditions")
@@ -46,7 +43,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                 try {
                     iModel.setTestThreadActive(true);
 
-                    while (! isComplete() && ! iModel.testPaused()) {
+                    while (! isComplete()) {
                         for (T trial : currentVolumes) {
                             if (iModel.testPaused()) return;
 
@@ -55,6 +52,10 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                             Log.i(testTypeName, "Testing " + trial.toString());
                             currentTrial.start();
                             playTone(trial);
+                            if (iModel.testPaused()) {  // return without doing anything if user paused during tone
+                                currentTrial = null;    // remove current trial so it isn't added to list
+                                return;
+                            }
                             if (! iModel.answered())
                                 mapReplace(timesNotHeardPerFreq, trial.freq(),
                                            timesNotHeardPerFreq.get(trial.freq()) + 1);
@@ -64,7 +65,17 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                         }
                         reduceCurrentVolumes();
                     }
-                } finally { iModel.setTestThreadActive(false); }
+
+                    // test complete: set up CalibrationTest to run next
+                    iModel.getCalibrationTest().initialize(iModel.getRampTest().getResults(), results);
+                    iModel.setCurrentTest(iModel.getCalibrationTest());
+                    iModel.setTestThreadActive(false);
+                    iModel.notifySubscribers();
+
+                } finally {
+                    iModel.setTestThreadActive(false);
+                    model.audioTrackCleanup();
+                }
             }
         }).start();
     }
@@ -96,8 +107,8 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
         this.currentVolumes = newVols;
     }
 
-    public FreqVolPair[] getResults() {
-        return this.results.getResults();
+    public ReduceTestResults getResults() {
+        return this.results;
     }
 
     /**

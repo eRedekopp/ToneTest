@@ -13,6 +13,8 @@ import android.widget.EditText;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import ca.usask.cs.tonesetandroid.Control.FileNameController;
+
 /**
  * Gets a subject ID from the user and goes back to caller with the subject ID and a pathname from which
  * to read calibration results (or "" if not applicable)

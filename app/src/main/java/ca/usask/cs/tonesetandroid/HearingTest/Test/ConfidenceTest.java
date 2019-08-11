@@ -5,7 +5,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
-import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -72,12 +72,16 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                         Log.i("ConfidenceTest", "Testing tone: " + current.toString());
                         currentTrial.start();
                         playTone(current);
+                        if (iModel.testPaused()) {  // return without doing anything if user paused during tone
+                            currentTrial = null;    // remove current trial so it isn't added to list
+                            return;
+                        }
                         currentTrial.setCorrect(wasCorrect());
                         Log.i("ConfidenceTest", currentTrial.wasCorrect() ? "Tone Heard" : "Tone Not Heard");
                         saveLine();
                         sleepThread(1000, 3000);
                     }
-                } finally { model.setTestThreadActive(false); }
+                } finally { iModel.setTestThreadActive(false); }
             }
         }).start();
     }

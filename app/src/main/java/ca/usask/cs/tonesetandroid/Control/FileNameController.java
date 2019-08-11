@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
 import android.media.MediaScannerConnection;
@@ -223,91 +223,91 @@ public class FileNameController {
     }
 
 
-    /**
-     * A method for writing the results of the confidence test currently stored in the model to a file
-     *
-     * @param context The context of the calling thread (ie. MainActivity.this)
-     */
-    public void handleConfSaveClick(Context context) throws IllegalStateException {
-
-        BufferedWriter out = null;
-
-        try {
-            File fout = getDestinationFileConf();
-
-            if (! fout.createNewFile()) {
-                Log.e("HandleConfSaveClick", "Unable to create confidence file");
-                return;
-            }
-
-            out = new BufferedWriter(new FileWriter(fout));
-
-            CalibrationTestResults results = model.getCalibrationTestResults();
-
-            // write background noise info
-            out.write(String.format("ParticipantID %d BackgroundNoise %s\n",
-                                    model.getSubjectId(), results.getBackgroundNoise()));
-
-            // write calibration info
-            out.write("Calibration:\n" + results.toString() + '\n');
-
-            // test using different sample sizes
-            for (int n : Model.CONF_SAMP_SIZES) {
-                try {  // change hearing test results to new sample size
-                    model.calibrationTestResults = results.getSubsetResults(n);
-                } catch (IllegalArgumentException e) {  // skip if n is invalid
-                    continue;
-                }
-
-                out.write("### Sample Size = " + n + " ###\n");
-
-                // set model.analysisResults for current subset
-                this.model.analyzeConfidenceResults();
-
-                // write header/info for current subset
-                out.write("Freq(Hz),Direction,Volume,confProb,modelProb,alpha,beta,critLow,critHigh,actual," +
-                          "sigDifferent\n");
-
-                // write results for each freq-vol pair in subset
-                // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
-                for (ConfidenceTestResults.StatsAnalysisResultsContainer result : model.analysisResults) {
-                    out.write(String.format(
-                            "%.2f,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
-                            result.earcon.frequency, result.earcon.getDirectionAsString(), result.earcon.volume,
-                            result.confProbEstimate, result.probEstimate, result.alpha, result.beta, result.critLow,
-                            result.critHigh, result.estimatesSigDifferent
-                    ));
-                }
-                out.newLine();
-
-            }
-
-            model.calibrationTestResults = results; // reset calibrationTestResults
-
-            // make the scanner aware of the new file
-            MediaScannerConnection.scanFile(
-                    context,
-                    new String[]{fout.getAbsolutePath()},
-                    new String[]{"text/csv"},
-                    null);
-
-        } catch (FileNotFoundException e) {
-            // File was not found
-            Log.e("saveConfResults", "File not found");
-            e.printStackTrace();
-        } catch (IOException e) {
-            // Problem when writing to the file
-            Log.e("saveConfResults", "Error writing to file");
-            e.printStackTrace();
-        } finally {
-            try {
-                if (out != null) out.close();
-            } catch (IOException e) {
-                Log.e("saveConfResults", "Error closing confidence test result file");
-                e.printStackTrace();
-            }
-        }
-    }
+//    /**
+//     * A method for writing the results of the confidence test currently stored in the model to a file
+//     *
+//     * @param context The context of the calling thread (ie. MainActivity.this)
+//     */
+//    public void handleConfSaveClick(Context context) throws IllegalStateException {
+//
+//        BufferedWriter out = null;
+//
+//        try {
+//            File fout = getDestinationFileConf();
+//
+//            if (! fout.createNewFile()) {
+//                Log.e("HandleConfSaveClick", "Unable to create confidence file");
+//                return;
+//            }
+//
+//            out = new BufferedWriter(new FileWriter(fout));
+//
+//            CalibrationTestResults results = model.getCalibrationTestResults();
+//
+//            // write background noise info
+//            out.write(String.format("ParticipantID %d BackgroundNoise %s\n",
+//                                    model.getSubjectId(), results.getBackgroundNoise()));
+//
+//            // write calibration info
+//            out.write("Calibration:\n" + results.toString() + '\n');
+//
+//            // test using different sample sizes
+//            for (int n : Model.CONF_SAMP_SIZES) {
+//                try {  // change hearing test results to new sample size
+//                    model.calibrationTestResults = results.getSubsetResults(n);
+//                } catch (IllegalArgumentException e) {  // skip if n is invalid
+//                    continue;
+//                }
+//
+//                out.write("### Sample Size = " + n + " ###\n");
+//
+//                // set model.analysisResults for current subset
+//                this.model.analyzeConfidenceResults();
+//
+//                // write header/info for current subset
+//                out.write("Freq(Hz),Direction,Volume,confProb,modelProb,alpha,beta,critLow,critHigh,actual," +
+//                          "sigDifferent\n");
+//
+//                // write results for each freq-vol pair in subset
+//                // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
+//                for (ConfidenceTestResults.StatsAnalysisResultsContainer result : model.analysisResults) {
+//                    out.write(String.format(
+//                            "%.2f,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
+//                            result.earcon.frequency, result.earcon.getDirectionAsString(), result.earcon.volume,
+//                            result.confProbEstimate, result.probEstimate, result.alpha, result.beta, result.critLow,
+//                            result.critHigh, result.estimatesSigDifferent
+//                    ));
+//                }
+//                out.newLine();
+//
+//            }
+//
+//            model.calibrationTestResults = results; // reset calibrationTestResults
+//
+//            // make the scanner aware of the new file
+//            MediaScannerConnection.scanFile(
+//                    context,
+//                    new String[]{fout.getAbsolutePath()},
+//                    new String[]{"text/csv"},
+//                    null);
+//
+//        } catch (FileNotFoundException e) {
+//            // File was not found
+//            Log.e("saveConfResults", "File not found");
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            // Problem when writing to the file
+//            Log.e("saveConfResults", "Error writing to file");
+//            e.printStackTrace();
+//        } finally {
+//            try {
+//                if (out != null) out.close();
+//            } catch (IOException e) {
+//                Log.e("saveConfResults", "Error closing confidence test result file");
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 
     /**
      * Return a new File with the abstract pathname for the given subject's directory

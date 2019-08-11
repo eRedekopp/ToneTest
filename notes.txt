@@ -40,9 +40,12 @@ Big Refactor:
         - simple sine confidence test
         - ramp test and reduce test
         - adjust reduce test to use SingleTrialResults
-    Next:
         - implement main ToneTest
         - make playTone() abstract method for confidence test
+    Next:
+        - make CalibrationTestResults more generic
         - implement controller to run tests
+        - fix FileNameController
         - adjust UI to make new test runnable
+        - Normalize background noise types to same volume scale as sines/earcons
         - keep picking off to-do items

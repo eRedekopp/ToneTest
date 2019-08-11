@@ -2,7 +2,7 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
 import java.util.ArrayList;
 
-import ca.usask.cs.tonesetandroid.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 
 public class SineRampTest extends RampTest<FreqVolPair> {
