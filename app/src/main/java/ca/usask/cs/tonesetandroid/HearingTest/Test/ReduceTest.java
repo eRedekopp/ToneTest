@@ -3,6 +3,7 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
@@ -37,7 +38,7 @@ public abstract class ReduceTest extends HearingTest {
     protected void run() {
         new Thread(new Runnable() {
             @Override
-            public void run() {  // todo do this with SingleTrialResults
+            public void run() {
                 try {
                     iModel.setTestThreadActive(true);
 
@@ -45,13 +46,15 @@ public abstract class ReduceTest extends HearingTest {
                         for (FreqVolPair trial : currentVolumes) {
                             if (iModel.testPaused()) return;
 
+                            newCurrentTrial(trial);
                             iModel.resetAnswer();
                             Log.i(testTypeName, "Testing " + trial.toString());
                             playTone(trial);
                             if (! iModel.answered())
                                 mapReplace(timesNotHeardPerFreq, trial.freq, timesNotHeardPerFreq.get(trial.freq) + 1);
                             Log.i(testTypeName, iModel.answered() ? "Tone Heard" : "Tone not heard");
-                            pauseThread(1000, 3000);
+                            saveLine();
+                            sleepThread(1000, 3000);
                         }
                         reduceCurrentVolumes();
                     }
@@ -67,7 +70,10 @@ public abstract class ReduceTest extends HearingTest {
 
     @Override
     protected final String getLineEnd(SingleTrialResult result) {
-        throw new RuntimeException("Operation not permitted for ReduceTest");
+        return String.format("%s, %s, %d clicks: %s",
+                this.currentTrial.tone.toString(),
+                this.currentTrial.wasCorrect() ? "Heard" : "NotHeard", this.currentTrial.nClicks(),
+                Arrays.toString(this.currentTrial.clickTimes()));
     }
 
     /**

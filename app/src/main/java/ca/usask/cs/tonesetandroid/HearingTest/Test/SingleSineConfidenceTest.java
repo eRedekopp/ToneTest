@@ -60,7 +60,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest {
                         currentTrial.setCorrect(DIRECTION_FLAT);
                         Log.i("ConfidenceTest", currentTrial.wasCorrect() ? "Tone Heard" : "Tone Not Heard");
                         saveLine();
-                        pauseThread(1000, 3000);
+                        sleepThread(1000, 3000);
                     }
                 } finally { model.setTestThreadActive(false); }
             }

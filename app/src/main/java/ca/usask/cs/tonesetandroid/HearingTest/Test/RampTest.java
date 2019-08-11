@@ -41,7 +41,7 @@ public abstract class RampTest extends HearingTest {
                         }
                         saveLine(String.format(new FreqVolPair(currentFreq, heardVol).toString() + " first"));
 
-                        pauseThread(1000, 1000);  // sleep 1 second
+                        sleepThread(1000, 1000);  // sleep 1 second
 
                         // test frequency again, slower, starting from 1/10 the first heardVol
                         heardVol = rampUp(RAMP_RATE_2, currentFreq, heardVol / 10.0);

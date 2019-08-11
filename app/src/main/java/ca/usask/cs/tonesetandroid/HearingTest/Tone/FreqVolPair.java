@@ -17,7 +17,7 @@ public class FreqVolPair implements Cloneable, Tone {
 
     @Override
     public String toString() {
-        return String.format("Frequency: %f | Volume: %f\n", freq, vol);
+        return String.format("Frequency: %f, Volume: %f", freq, vol);
     }
 
     @Override

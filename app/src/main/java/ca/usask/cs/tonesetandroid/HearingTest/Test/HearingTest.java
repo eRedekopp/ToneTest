@@ -90,10 +90,11 @@ public abstract class HearingTest {
     protected abstract String getLineEnd(SingleTrialResult result);
 
     /**
-     * Set currentTrial to a new SingleTrialResult with the given tone, and add the current one to the list of results
+     * Set currentTrial to a new SingleTrialResult with the given tone, and if the current trial is not null, add the
+     * current one to the list of results
      */
     protected void newCurrentTrial(Tone tone) {
-        this.completedTrials.add(this.currentTrial);
+        if (this.currentTrial != null) this.completedTrials.add(this.currentTrial);
         this.currentTrial = new SingleTrialResult(tone);
     }
 
@@ -158,14 +159,16 @@ public abstract class HearingTest {
     }
 
     /**
-     * Save a test result as an individual line via the FileNameController
-     *
-     * @param lineEnd The end of the line to be saved, ie. information specific only to the trial being saved
+     * Save the current trial to the output file with the default line-end formatting via the FileNameController
      */
     protected void saveLine() {
         this.saveLine(this.getLineEnd(this.currentTrial));
     }
 
+    /**
+     * Save a line to the output file with the given string as the line-end via the FileNameController
+     * @param lineEnd The String to be written after the header in the new line
+     */
     protected void saveLine(String lineEnd) {
         if (this.backgroundNoiseType == null || this.testTypeName == null) // sanity check
             throw new IllegalStateException("Test not properly initialized: " +
@@ -189,11 +192,12 @@ public abstract class HearingTest {
     }
 
     /**
-     * Pause the current thread for a random amount of time between minMs and maxMs milliseconds
+     * Sleep the current thread for a random amount of time between minMs and maxMs milliseconds
+     *
      * @param minMs The minimum amount of time to pause the thread
      * @param maxMs The maximum amount of time to pause the thread
      */
-    public static void pauseThread(int minMs, int maxMs) {
+    public static void sleepThread(int minMs, int maxMs) {
         try {
             Thread.sleep((long) (minMs + Math.random() * (maxMs - minMs)));
         } catch (InterruptedException e) { e.printStackTrace(); }
