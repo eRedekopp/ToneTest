@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.Control.HearingTestController;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.Control.FileNameController;
@@ -28,7 +29,8 @@ public abstract class HearingTest<T extends Tone> {
     protected static HearingTestView view;
     protected static Context context; // todo memory leak?
     protected static HearingTestInteractionModel iModel;
-    protected static FileNameController fileController;
+    protected static FileNameController fileController;  // todo memory leak in filecontroller?
+    protected static HearingTestController controller;
 
     // Identifiers for individual tests
     protected BackgroundNoiseType backgroundNoiseType;
@@ -47,24 +49,28 @@ public abstract class HearingTest<T extends Tone> {
     public static final int ANSWER_HEARD = 4;
 
 
-    static void setModel(Model theModel) {  // todo add this to init
+    public static void setModel(Model theModel) {  // todo add this to init
         model = theModel;
     }
 
-    static void setView(HearingTestView theView) {  // todo add this to init
+    public static void setView(HearingTestView theView) {  // todo add this to init
         view = theView;
     }
 
-    static void setContext(Context theContext) {  // todo add this to init
+    public static void setContext(Context theContext) {  // todo add this to init
         context = theContext;
     }
 
-    static void setIModel(HearingTestInteractionModel theIModel) {  // todo add this to init
+    public static void setIModel(HearingTestInteractionModel theIModel) {  // todo add this to init
         iModel = theIModel;
     }
 
-    static void setFileController(FileNameController theFileController) {  // todo add this to init
+    public static void setFileController(FileNameController theFileController) {  // todo add this to init
         fileController = theFileController;
+    }
+
+    public static void setController(HearingTestController theController) {
+        controller = theController;
     }
 
     /**
@@ -77,6 +83,11 @@ public abstract class HearingTest<T extends Tone> {
      * @return true if all trials in this hearing test have been completed, else false
      */
     abstract boolean isComplete();
+
+    /**
+     * @return A list of all possible answer values for this particular test (ie. HearingTest.ANSWER_*)
+     */
+    public abstract int[] getRequiredButtons();
 
     /**
      * Return the information to be written after the header in the save file for the given trial
@@ -188,7 +199,7 @@ public abstract class HearingTest<T extends Tone> {
                     (this.backgroundNoiseType == null ? "BackgroundNoiseType = null " : "") +
                     (this.testTypeName == null ? "TestTypeName = null" : ""));
 
-        fileController.saveLine(lineEnd, this.testTypeName);
+        fileController.saveLine(lineEnd);
     }
 
     /**
@@ -232,6 +243,10 @@ public abstract class HearingTest<T extends Tone> {
 
     public String getTestInfo() {
         return this.testInfo;
+    }
+
+    public String getTestTypeName() {
+        return this.testTypeName;
     }
 
     public BackgroundNoiseType getBackgroundNoiseType() {

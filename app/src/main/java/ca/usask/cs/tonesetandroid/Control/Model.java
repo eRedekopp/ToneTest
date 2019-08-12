@@ -392,6 +392,10 @@ public class Model {
         this.lineOut.flush();
     }
 
+    public void setCalibrationTestResults(CalibrationTestResults calibrationTestResults) {
+        this.calibrationTestResults = calibrationTestResults;
+    }
+
     public void startAudio() {
         this.lineOut.play();
     }

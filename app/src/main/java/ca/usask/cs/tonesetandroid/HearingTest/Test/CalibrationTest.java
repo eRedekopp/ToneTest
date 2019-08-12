@@ -76,12 +76,12 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                         currentTrial.setCorrect(iModel.answered());
                         Log.i("CalibrationTest", currentTrial.wasCorrect() ? "Tone Heard" : "Tone Not Heard");
                         saveLine();
-//                        results.addResult(); // todo add to calibrationTestResults
+                        results.addResult(current, currentTrial.wasCorrect());
                         sleepThread(1000, 3000);
                     }
 
                     // test complete: finalize results
-
+                    controller.calibrationTestComplete();
 
                 } finally {
                     iModel.setTestThreadActive(false);
@@ -89,6 +89,10 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                 }
             }
         }).start();
+    }
+
+    public CalibrationTestResults getResults() {
+        return this.results;
     }
 
     @Override
@@ -103,5 +107,10 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                 this.currentTrial.wasCorrect() ? "Heard" : "NotHeard",
                 this.currentTrial.nClicks(),
                 Arrays.toString(this.currentTrial.clickTimes()));
+    }
+
+    @Override
+    public int[] getRequiredButtons() {
+        return new int[]{ANSWER_HEARD};
     }
 }

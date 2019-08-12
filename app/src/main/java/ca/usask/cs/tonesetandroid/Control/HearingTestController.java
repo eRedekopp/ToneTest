@@ -2,6 +2,12 @@ package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Test.CalibrationTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.RampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.ReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.SineReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 
 /**
@@ -15,6 +21,7 @@ public class HearingTestController {
     HearingTestInteractionModel iModel;
     HearingTestView view;
     BackgroundNoiseController noiseController;
+    FileNameController fileController;
 
     Context context;
 
@@ -38,8 +45,13 @@ public class HearingTestController {
         view.showInformationDialog(iModel.getRampTest().getTestInfo());
     }
 
+    /**
+     * Perform any final actions that need to be done before the calibration test is officially "complete"
+     */
     public void calibrationTestComplete() {  // save results to model, write any necessary output to file, etc.
-        // todo
+        this.fileController.closeFile();
+        this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
+        this.iModel.reset();
     }
 
     /**
@@ -48,20 +60,26 @@ public class HearingTestController {
      * input test information. To resume a test, use checkForHearingTestResume
      */
     public void confidenceTest() {
-
+        // todo
     }
 
     public void confidenceTestComplete() {  // save results to model, write any necessary output to file, etc.
-
+        // todo
     }
 
     //////////////////////////////////// click handlers ////////////////////////////////////////////
 
-    public void handleCalibClick() {
-        //todo
+    public void handleCalibClick(BackgroundNoiseType noise) {
+
+        iModel.reset();
+        iModel.setRampTest(new SineRampTest(noise));
+        iModel.setReduceTest(new SineReduceTest(noise));
+        iModel.setCalibrationTest(new SineCalibratonTest(noise));
+
+        this.calibrationTest();
     }
 
-    public void handleConfClick() {
+    public void handleConfClick(BackgroundNoiseType noise) {
         //todo
     }
 
@@ -101,5 +119,9 @@ public class HearingTestController {
 
     public void setContext(Context context) {
         this.context = context;
+    }
+
+    public void setFileController(FileNameController fileController) {
+        this.fileController = fileController;
     }
 }

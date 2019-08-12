@@ -1,6 +1,5 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -17,6 +16,7 @@ import java.util.ListIterator;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.MainActivity;
 import ca.usask.cs.tonesetandroid.Control.Model;
 
@@ -39,13 +39,13 @@ public class CalibrationTestResults {
      * @param heard Was the trial heard?
      */
     @SuppressWarnings("ConstantConditions")
-    public void addResult(float freq, double vol, boolean heard) {
+    public void addResult(Tone tone, boolean heard) {
         try {
-            allResults.get(freq).addResult(vol, heard);
+            allResults.get(tone.freq()).addResult(tone.vol(), heard);
         } catch (NullPointerException e) {
-            HearingTestSingleFreqResult r = new HearingTestSingleFreqResult(freq);
-            r.addResult(vol, heard);
-            allResults.put(freq, r);
+            HearingTestSingleFreqResult r = new HearingTestSingleFreqResult(tone.freq());
+            r.addResult(tone.vol(), heard);
+            allResults.put(tone.freq(), r);
         }
     }
 
@@ -57,28 +57,13 @@ public class CalibrationTestResults {
     }
 
     /**
-     * @return  the probability of hearing a tone of the given frequency at the given volume
+     * @return  the model's estimate of the probability of hearing the given tone, given these calibration results
      */
-    @SuppressWarnings("ConstantConditions")
-    public float getProbOfHearingFVP(float freq, double vol) {
-
-        // find frequencies tested just above and below freq
-        float freqAbove = findNearestAbove(freq, this.getTestedFreqs());
-        float freqBelow = findNearestBelow(freq, this.getTestedFreqs());
-
-        // if freq is higher than the highest or lower than the lowest, just return the probability of the nearest
-        if (freqAbove == -1) return this.allResults.get(freqBelow).getProbOfHearing(vol);
-        if (freqBelow == -1) return this.allResults.get(freqAbove).getProbOfHearing(vol);
-
-        // find the probabilities of each of these frequencies
-        float probAbove = this.allResults.get(freqAbove).getProbOfHearing(vol);
-        float probBelow = this.allResults.get(freqAbove).getProbOfHearing(vol);
-
-        // how far of the way between freqBelow and freqAbove is fvp.freq?
-        float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
-
-        // estimate this probability linearly between the results above and below
-        return probBelow + pctBetween * (probAbove - probBelow);
+    public float getProbOfHearing(Tone tone) {
+        Float[] testedFreqs = this.getTestedFreqs();
+        float[] testedFreqsPrimitive = new float[testedFreqs.length];
+        for (int i = 0; i < testedFreqs.length; i++) testedFreqsPrimitive[i] = testedFreqs[i];
+        return getProbOfHearing(tone.freq(), tone.vol(), testedFreqsPrimitive);
     }
 
     /**
@@ -92,14 +77,14 @@ public class CalibrationTestResults {
      * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
      */
     @SuppressWarnings("ConstantConditions")
-    public float getProbOfHearingFVP(float freq, double vol, float[] subset) throws IllegalArgumentException{
+    public float getProbOfHearing(float freq, double vol, float[] subset) throws IllegalArgumentException{
         Float[] subsetAsObj = new Float[subset.length];
         for (int i = 0; i < subset.length; i++)
-            if (! this.allResults.containsKey(subset[i]))
+            if (! this.freqTested(subset[i]))
                 throw new IllegalArgumentException("Subset argument must be a subset of tested frequencies");
             else subsetAsObj[i] = subset[i];
 
-        // find subset frequencies just above and below tested frequencies
+        // find subset frequencies just above and below requested frequency
         float freqAbove = findNearestAbove(freq, subsetAsObj);
         float freqBelow = findNearestBelow(freq, subsetAsObj);
 
@@ -111,15 +96,11 @@ public class CalibrationTestResults {
         float probAbove = this.allResults.get(freqAbove).getProbOfHearing(vol);
         float probBelow = this.allResults.get(freqBelow).getProbOfHearing(vol);
 
-        // how far of the way between freqBelow and freqAbove is fvp.freq?
+        // how far of the way between freqBelow and freqAbove is freq?
         float pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
 
         // estimate this probability linearly between the results above and below
         return probBelow + pctBetween * (probAbove - probBelow);
-    }
-
-    public float getProbOfHearingFVP(FreqVolPair fvp) {
-        return getProbOfHearingFVP(fvp.freq(), fvp.vol());
     }
 
     /**
@@ -147,7 +128,7 @@ public class CalibrationTestResults {
         for (int i = 0; i < nAudioSamples; i++)
             for (int j = 0; j < nFreqsPerSample; j++)
                 if (topFreqs[i] != null && topFreqs[i][j] > 100)
-                    probEstimates.add(getProbOfHearingFVP(topFreqs[i][j], earcon.volume, subset));
+                    probEstimates.add(getProbOfHearing(topFreqs[i][j], earcon.volume, subset));
 
         return mean(probEstimates);
     }
@@ -207,8 +188,7 @@ public class CalibrationTestResults {
     }
 
     public boolean freqTested(float freq) {
-        for (Float f : allResults.keySet()) if (f == freq) return true;
-        return false;
+        return allResults.containsKey(freq);
     }
 
     /**
@@ -484,23 +464,6 @@ public class CalibrationTestResults {
         return total / lst.size();
     }
 
-    /**
-     *
-     * @param lst A list of lists of floats in ascending order of importance
-     * @return The weighted mean of all list elements such that the elements of the last (most important) list have
-     * weight lst.length() and elements of the first (least important) list have weight 1
-     */
-    public static double weightedMean(List<List<Float>> lst) {
-        if (lst.isEmpty()) throw new IllegalArgumentException("List must not be empty");
-
-        double numerator = 0, denominator = 0;
-        for (int i = lst.size() - 1; i >= 0; i--) {
-            for (Float f : lst.get(i)) numerator += f * (i + 1);
-            denominator += i;
-        }
-        return numerator / denominator;
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -545,7 +508,6 @@ public class CalibrationTestResults {
             if (timesNotHeardPerVol.containsKey(vol))
                 mapReplace(timesNotHeardPerVol, vol, timesNotHeardPerVol.get(vol) + 1);
             else timesNotHeardPerVol.put(vol, 1);
-
         }
 
         /**

@@ -2,6 +2,7 @@ package ca.usask.cs.tonesetandroid.Control;
 
 import java.util.ArrayList;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.CalibrationTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
@@ -110,6 +111,14 @@ public class HearingTestInteractionModel {
         }
     }
 
+    /**
+     * @return An array containing all of the responses that must be available for the current stage of the test
+     */
+    public int[] getCurrentRequiredButtons() {
+        if (this.currentTest == null) return new int[]{};
+        else return this.currentTest.getRequiredButtons();
+    }
+
     public HearingTest getCurrentTest() {
         return currentTest;
     }
@@ -148,6 +157,11 @@ public class HearingTestInteractionModel {
 
     public void setCalibrationTest(CalibrationTest calibrationTest) {
         this.calibrationTest = calibrationTest;
+    }
+
+    public CalibrationTestResults getCalibrationResults() {
+        if (this.calibrationTest == null) throw new IllegalStateException("No calibration test stored");
+        else return this.calibrationTest.getResults();
     }
 
     public ConfidenceTest getConfidenceTest() {

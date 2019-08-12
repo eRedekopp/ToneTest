@@ -75,4 +75,8 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
                 fvp.toString(), trial.wasCorrect(), trial.nClicks(), Arrays.toString(trial.clickTimes()));
     }
 
+    @Override
+    public int[] getRequiredButtons() {
+        return new int[]{ANSWER_HEARD};
+    }
 }

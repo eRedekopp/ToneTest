@@ -20,35 +20,23 @@
 
     <Button
         android:id="@+id/downButton"
-        android:layout_width="85dp"
-        android:layout_height="60dp"
-        android:layout_marginTop="36dp"
-        android:layout_marginEnd="68dp"
-        android:soundEffectsEnabled="false"
-        android:text="Down ↓"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toEndOf="@+id/upButton"
-        app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
-
-    <Button
-        android:id="@+id/saveCalibButton"
         android:layout_width="275dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
-        android:text="Save Calibration"
+        android:soundEffectsEnabled="false"
+        android:text="Down ↓"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/downButton" />
+        app:layout_constraintTop_toBottomOf="@+id/flatButton" />
 
     <Button
         android:id="@+id/confidenceButton"
         android:layout_width="275dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
         android:text="Confidence Test"
         app:layout_constraintEnd_toEndOf="parent"
@@ -60,31 +48,19 @@
         android:layout_width="275dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
         android:text="Reset"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/saveConfButton" />
-
-    <Button
-        android:id="@+id/saveConfButton"
-        android:layout_width="275dp"
-        android:layout_height="60dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="25dp"
-        android:layout_marginEnd="8dp"
-        android:text="Save Confidence"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/saveCalibButton" />
+        app:layout_constraintTop_toBottomOf="@+id/downButton" />
 
     <Button
         android:id="@+id/pauseButton"
         android:layout_width="275dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="28dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
         android:text="Pause/Resume"
         app:layout_constraintEnd_toEndOf="parent"
@@ -93,21 +69,23 @@
 
     <Button
         android:id="@+id/upButton"
-        android:layout_width="85dp"
+        android:layout_width="275dp"
         android:layout_height="60dp"
-        android:layout_marginStart="68dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="8dp"
         android:soundEffectsEnabled="false"
         android:text="Up ↑"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
+        app:layout_constraintTop_toBottomOf="@+id/heardButton" />
 
     <Button
         android:id="@+id/heardButton"
         android:layout_width="275dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
         android:soundEffectsEnabled="false"
         android:text="Heard Tone"
@@ -118,15 +96,15 @@
 
     <Button
         android:id="@+id/flatButton"
-        android:layout_width="85dp"
+        android:layout_width="275dp"
         android:layout_height="60dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="24dp"
         android:layout_marginEnd="8dp"
         android:soundEffectsEnabled="false"
         android:text="Flat -"
-        app:layout_constraintEnd_toStartOf="@+id/downButton"
-        app:layout_constraintStart_toEndOf="@+id/upButton"
-        app:layout_constraintTop_toBottomOf="@+id/confidenceButton" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/upButton" />
 
 </android.support.constraint.ConstraintLayout>

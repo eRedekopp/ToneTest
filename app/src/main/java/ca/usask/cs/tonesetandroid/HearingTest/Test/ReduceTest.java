@@ -32,7 +32,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
 
     protected abstract void playTone(Tone tone);
 
-    protected abstract void initialize(RampTest.RampTestResults rampResults);
+    public abstract void initialize(RampTest.RampTestResults rampResults);
 
     @Override
     @SuppressWarnings("ConstantConditions")
@@ -91,6 +91,11 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                 this.currentTrial.tone.toString(),
                 this.currentTrial.wasCorrect() ? "Heard" : "NotHeard", this.currentTrial.nClicks(),
                 Arrays.toString(this.currentTrial.clickTimes()));
+    }
+
+    @Override
+    public int[] getRequiredButtons() {
+        return new int[]{ANSWER_HEARD};
     }
 
     /**

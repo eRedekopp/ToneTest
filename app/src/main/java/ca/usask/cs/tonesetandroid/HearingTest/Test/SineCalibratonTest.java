@@ -12,8 +12,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
     private static final int TONE_DURATION_MS = 1500;
 
-    public SineCalibratonTest(RampTest.RampTestResults rampResults, ReduceTest.ReduceTestResults reduceResults,
-                              BackgroundNoiseType noiseType) {
+    public SineCalibratonTest(BackgroundNoiseType noiseType) {
         super(noiseType);
     }
 

@@ -14,9 +14,8 @@ import ca.usask.cs.tonesetandroid.R;
 
 public class BackgroundNoiseController {
 
-    private Model model;
 
-    private HearingTestInteractionModel iModel;  // todo set this in mainActivity
+    private HearingTestInteractionModel iModel;
 
     private AudioTrack lineOut = null;
 
@@ -30,10 +29,6 @@ public class BackgroundNoiseController {
         this.context = context;
         this.setupLineOut();
         this.setupMediaPlayer();
-    }
-
-    public void setModel(Model model) {
-        this.model = model;
     }
 
     /**
@@ -122,6 +117,7 @@ public class BackgroundNoiseController {
      * @param volume The volume at which the noise is to be played, 0 <= volume <= MAX_VOL
      */
     private void playCrowdNoise(final int volume) {
+        // todo make this event-based
         if (volume > MAX_VOL) throw new IllegalArgumentException("Volume out of range : " + volume);
         new Thread(new Runnable() {
             @Override
@@ -129,7 +125,7 @@ public class BackgroundNoiseController {
                 mediaPlayer.start();
                 float floatVol = (float) (volume) / (float) MAX_VOL;
                 mediaPlayer.setVolume(floatVol, floatVol);
-                while (iModel.testing()) continue;  // Continue playing until model.testing() becomes false
+                while (iModel.testing()) continue;  // Continue playing until iModel.testing() becomes false
                 mediaPlayer.pause();
             }
         }).start();
@@ -148,5 +144,9 @@ public class BackgroundNoiseController {
 
     public void setiModel(HearingTestInteractionModel iModel) {
         this.iModel = iModel;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
     }
 }

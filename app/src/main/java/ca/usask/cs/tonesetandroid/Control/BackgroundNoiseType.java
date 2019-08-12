@@ -5,7 +5,7 @@ import android.support.annotation.NonNull;
 public class BackgroundNoiseType {
 
 
-    // Array indices correspond to ID int (eg. NOISE_TYPE_NONE = 0 -> "No Noise" = NOISE_TYPE_STRINGS[0])
+    // Array indices correspond to ID int (eg. "No Noise" == NOISE_TYPE_STRINGS[NOISE_TYPE_NONE])
     public static final String[] NOISE_TYPE_STRINGS = {"No Noise", "White Noise", "Crowd Noise"};  // for UI
 
     public static final String[] NOISE_TYPE_STRINGS_F = {"None", "White", "Crowd"};          // for file io

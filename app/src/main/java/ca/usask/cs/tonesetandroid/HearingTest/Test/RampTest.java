@@ -76,6 +76,11 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
     }
 
     @Override
+    public int[] getRequiredButtons() {
+        return new int[]{ANSWER_HEARD};
+    }
+
+    @Override
     boolean isComplete() {
         return ! position.hasNext();
     }
