@@ -1,8 +1,6 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
-
 import java.util.ArrayList;
-import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
@@ -14,11 +12,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
     public SineCalibratonTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-    }
-
-    @Override
-    protected boolean isComplete() {
-        return false;
+        this.testTypeName = "sine-calibration";
     }
 
     @Override
@@ -27,16 +21,16 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
     }
 
     @Override
-    public void initialize(RampTest.RampTestResults rampResults,
-                           ReduceTest.ReduceTestResults reduceResults,
-                           int nVolsPerFreq,
-                           int nTrialsPerVol) {
+    protected void configureTestTones(RampTest.RampTestResults rampResults,
+                                   ReduceTest.ReduceTestResults reduceResults,
+                                   int nVolsPerFreq,
+                                   int nTrialsPerVol) {
 
         // todo boost volumes
         ArrayList<FreqVolPair> allTones = new ArrayList<>();
         for (float freq : STANDARD_FREQUENCIES) {
-            double bottomVolEst = Tone.getVolForFreq(rampResults.getResults(), freq);
-            double topVolEst = Tone.getVolForFreq(reduceResults.getResults(), freq);
+            double topVolEst = Tone.getVolForFreq(rampResults.getResults(), freq);
+            double bottomVolEst = Tone.getVolForFreq(reduceResults.getResults(), freq);
             for (double vol = bottomVolEst;
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / nVolsPerFreq) {
@@ -44,7 +38,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
             }
         }
         // fill CurrentVolumes with one freqvolpair for each individual tone that will be played in the test
+        this.testTones = new ArrayList<>();
         for (int i = 0; i < nTrialsPerVol; i++) this.testTones.addAll(allTones);
-        Collections.shuffle(this.testTones);
     }
 }

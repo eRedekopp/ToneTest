@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
@@ -28,6 +29,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
         super(noiseType);
         this.currentVolumes = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
+        this.results = new ReduceTestResults();
     }
 
     protected abstract void playTone(Tone tone);
@@ -35,13 +37,15 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
     public abstract void initialize(RampTest.RampTestResults rampResults);
 
     @Override
-    @SuppressWarnings("ConstantConditions")
     protected void run() {
+        if (this.currentVolumes.isEmpty()) throw new IllegalStateException("Test not initialized");
+
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     iModel.setTestThreadActive(true);
+                    model.setUpLineOut();
 
                     while (! isComplete()) {
                         for (T trial : currentVolumes) {
@@ -57,9 +61,8 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                                 return;
                             }
                             if (! iModel.answered())
-                                mapReplace(timesNotHeardPerFreq, trial.freq(),
-                                           timesNotHeardPerFreq.get(trial.freq()) + 1);
-                            Log.i(testTypeName, iModel.answered() ? "Tone Heard" : "Tone not heard");
+                                mapIncrement(timesNotHeardPerFreq, trial.freq());
+                            currentTrial.setCorrect(iModel.answered());
                             saveLine();
                             sleepThread(1000, 3000);
                         }
@@ -74,7 +77,6 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
 
                 } finally {
                     iModel.setTestThreadActive(false);
-                    model.audioTrackCleanup();
                 }
             }
         }).start();
@@ -103,6 +105,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
      */
     @SuppressWarnings({"unchecked", "ConstantConditions"})
     public void reduceCurrentVolumes() {
+
         ArrayList<T> newVols = new ArrayList<>();
         for (T tone : currentVolumes) {
             // only reduce volumes of frequencies still being tested
@@ -110,6 +113,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
             else newVols.add((T) tone.newVol(tone.vol() * (1 - HEARING_TEST_REDUCE_RATE)));
         }
         this.currentVolumes = newVols;
+        Collections.shuffle(this.currentVolumes);
     }
 
     public ReduceTestResults getResults() {
@@ -129,6 +133,20 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
         map.put(key, newValue);
     }
 
+    /**
+     * Increase the value of the int associated with the given key in the given map by 1, or associate the key with
+     * the integer 1 if not present
+     */
+    @SuppressWarnings("ConstantConditions")
+    public static void mapIncrement(HashMap<Float, Integer> map, Float key) {
+        if (! map.containsKey(key)) map.put(key, 1);
+        else {
+            int oldVal = map.get(key);
+            map.remove(key);
+            map.put(key, ++oldVal);
+        }
+    }
+
     public class ReduceTestResults {
         ArrayList<FreqVolPair> results;
 
@@ -141,7 +159,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
         }
 
         public FreqVolPair[] getResults() {
-            return (FreqVolPair[]) results.toArray();
+            return results.toArray(new FreqVolPair[]{});
         }
     }
 }

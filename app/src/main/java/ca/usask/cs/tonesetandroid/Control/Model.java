@@ -168,7 +168,6 @@ public class Model {
     public void configureAudio() {
         this.setUpLineOut();
         this.enforceMaxVolume();
-        this.duration_ms = 1500;
     }
 
     /**
@@ -388,8 +387,12 @@ public class Model {
     }
 
     public void pauseAudio() {
-        this.lineOut.pause();
-        this.lineOut.flush();
+        try {
+            this.lineOut.pause();
+            this.lineOut.flush();
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
     }
 
     public void setCalibrationTestResults(CalibrationTestResults calibrationTestResults) {

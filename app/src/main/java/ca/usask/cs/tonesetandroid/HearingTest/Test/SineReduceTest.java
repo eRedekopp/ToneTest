@@ -1,6 +1,6 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
@@ -12,12 +12,18 @@ public class SineReduceTest extends ReduceTest<FreqVolPair> {
 
     public SineReduceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
+        this.testInfo = "In this phase of the test, tones of various pitches and volumes will play at random times. " +
+                        "Please press the \"Heard Tone\" button each time that you hear a tone";
         this.testTypeName = "sine-reduce";
     }
 
     @Override
     public void initialize(RampTest.RampTestResults rampResults) {
-        this.currentVolumes.addAll(Arrays.asList(rampResults.getResults()));
+        for (FreqVolPair fvp : rampResults.getResults()) {
+            this.currentVolumes.add(fvp);
+            this.timesNotHeardPerFreq.put(fvp.freq(), 0);
+        }
+        Collections.shuffle(this.currentVolumes);
     }
 
     @Override

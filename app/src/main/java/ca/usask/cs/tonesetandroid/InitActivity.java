@@ -13,7 +13,7 @@ import android.widget.EditText;
 import java.io.File;
 import java.io.FileNotFoundException;
 
-import ca.usask.cs.tonesetandroid.Control.FileNameController;
+import ca.usask.cs.tonesetandroid.Control.FileIOController;
 
 /**
  * Gets a subject ID from the user and goes back to caller with the subject ID and a pathname from which
@@ -65,12 +65,12 @@ public class InitActivity extends Activity {
                     showErrorDialog("Invalid subject id number");
                     return;
                 }
-                if (! FileNameController.directoryExistsForSubject(entry))
+                if (! FileIOController.directoryExistsForSubject(entry))
                     showErrorDialog("No configurations saved for subject with id " + entry);
                 else {
                     String[] subjectFileNames;
                     try {
-                        subjectFileNames = FileNameController.getFileNamesFromCalibDir(entry);
+                        subjectFileNames = FileIOController.getFileNamesFromCalibDir(entry);
                     } catch (FileNotFoundException e) {
                         showErrorDialog(e.getMessage());
                         e.printStackTrace();
@@ -106,7 +106,7 @@ public class InitActivity extends Activity {
             public void onCancel(DialogInterface dialog) {
                 File inFile;
                 try {
-                    inFile = FileNameController.getCalibFileFromName(subjectID, getDialogSelectedString());
+                    inFile = FileIOController.getCalibFileFromName(subjectID, getDialogSelectedString());
                 } catch (FileNotFoundException e) {
                     showErrorDialog("Error: selected file not found in directory");
                     e.printStackTrace();
@@ -148,7 +148,7 @@ public class InitActivity extends Activity {
      * @param id The subject id with which to initalize the model
      */
     private void handleSubjectIdClick(final int id) {
-        if (id != 0 && FileNameController.directoryExistsForSubject(id)) // show warning dialog if ID already used
+        if (id != 0 && FileIOController.directoryExistsForSubject(id)) // show warning dialog if ID already used
             new AlertDialog.Builder(this)                                // unless it's subject ID 0 (dummy ID)
                     .setMessage("This subject ID has already been used")
                     .setTitle("Warning")

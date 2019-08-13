@@ -13,18 +13,8 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Scanner;
-import java.util.regex.Pattern;
-
-import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.ConfidenceTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-
 
 /**
  * A class for handling file IO. Methods for reading files are static; must be instantiated
@@ -35,7 +25,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
  *
  * @author redekopp, alexscott
  */
-public class FileNameController {
+public class FileIOController {
 
     private Model model;
 
@@ -46,8 +36,6 @@ public class FileNameController {
     private static final File RESULTS_DIR = getResultsDir();
 
     private File currentFile;
-
-    private BufferedWriter out;
 
     public void setModel(Model model) {
         this.model = model;
@@ -62,18 +50,23 @@ public class FileNameController {
      *
      * @param lineEnd The end of the line, ie. information specific only to the trial being saved
      */
-    public void saveLine(final String lineEnd) {
-        if (currentFile == null || out == null) throw new IllegalStateException("File not properly configured");
+    public synchronized void saveLine(final String lineEnd) {
+
+        if (currentFile == null) throw new IllegalStateException("File not properly configured");
         else if (! currentFile.exists()) throw new IllegalStateException("Target file does not exist");
 
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
+                    Log.i("fileController", getLineBeginning() + " " + lineEnd);
+                    BufferedWriter out = new BufferedWriter(new FileWriter(currentFile, true));
                     out.write(getLineBeginning());
                     out.write(' ');
                     out.write(lineEnd);
                     out.newLine();
+
+                    out.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -85,20 +78,7 @@ public class FileNameController {
      * Close the current file and reset this.currentFile to null
      */
     public void closeFile() {
-        try {
-            this.out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            // make the scanner aware of the new file
-            MediaScannerConnection.scanFile(
-                    this.context,
-                    new String[]{this.currentFile.getAbsolutePath()},
-                    new String[]{"text/csv"},
-                    null);
-                this.currentFile = null;
-                this.out = null;
-        }
+        this.currentFile = null;
     }
 
     /**
@@ -106,26 +86,37 @@ public class FileNameController {
      * name, and background noise type/volume
      */
     private String getLineBeginning() {
-        Date curDate = Calendar.getInstance().getTime();
+        Date startTime;
+        try {
+            startTime = this.iModel.getCurrentTest().getLastTrialStartTime();
+        } catch (NullPointerException e) {
+            startTime = Calendar.getInstance().getTime();
+        }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-        String formattedDateTime = dateFormat.format(curDate);
-        return String.format("Subject %d, %s, %s, %s",
-                model.getSubjectId(), formattedDateTime, iModel.getCurrentTest().getTestTypeName(),
+        String formattedDateTime = dateFormat.format(startTime);
+        return String.format("%s Subject %d, Test %s, Noise %s,",
+                formattedDateTime, model.getSubjectId(), iModel.getCurrentTest().getTestTypeName(),
                 iModel.getCurrentTest().getBackgroundNoiseType().toString());
     }
 
     /**
-     * Start a new save file for a new HearingTest and set it as this.currentFile, also initialize this.out
+     * Start a new save file for a new HearingTest and set it as this.currentFile, also configureTestTones this.out
      *
      * @param isCalib Is the new file for a calibration test?
-     * @throws IOException If the new file was unable to be created
      */
-    public void startNewSaveFile(boolean isCalib) throws IOException {
-        if (isCalib) this.currentFile = this.getNewCalibSaveFile();
-
-        else this.currentFile = this.getNewConfSaveFile();
-
-        out = new BufferedWriter(new FileWriter(this.currentFile));
+    public void startNewSaveFile(boolean isCalib) {
+        try {
+            if (isCalib) this.currentFile = this.getNewCalibSaveFile();
+            else this.currentFile = this.getNewConfSaveFile();
+            // make the scanner aware of the new file
+            MediaScannerConnection.scanFile(
+                    context,
+                    new String[]{this.currentFile.getAbsolutePath()},
+                    new String[]{"text/csv"},
+                    null);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -151,73 +142,6 @@ public class FileNameController {
         if (! newFile.createNewFile()) throw new IOException("Unable to create new confidence save file");
         else return newFile;
     }
-
-//    /**
-//     * A method to write the results of the calibration test currently stored in the model to a file
-//     *
-//     * @param context The context of the calling thread (ie. MainActivity.this)
-//     * @throws IllegalStateException If there are no calibration test results stored in model
-//     */
-//    @SuppressWarnings("ConstantConditions")
-//    public void handleSaveCalibClick(Context context) throws IllegalStateException {
-//        if (! this.model.hasResults()) throw new IllegalStateException("No results stored in model");
-//
-//        if (!directoryExistsForSubject(model.getSubjectId())) createDirForSubject(model.getSubjectId());
-//
-//        BufferedWriter out = null;
-//        File fout = null;
-//        try {
-//            fout = getDestinationFileCalib();
-//            if (! fout.createNewFile()) throw new RuntimeException("Unable to create output file");
-//            out = new BufferedWriter(new FileWriter(fout));
-//            out.write(String.format("ParticipantID %d BackgroundNoise %s\n", model.getSubjectId(),
-//                    model.calibrationTestResults.getBackgroundNoise().toString()));
-//            out.write("Freq(Hz),Volume,nHeard,nNotHeard\n");
-//            CalibrationTestResults results = model.getCalibrationTestResults();
-//            for (float freq : results.getTestedFreqs()) {
-//                HashMap<Double, Integer> timesHeardPerVol = results.getTimesHeardPerVolForFreq(freq);
-//                HashMap<Double, Integer> timesNotHeardPerVol = results.getTimesNotHeardPerVolForFreq(freq);
-//                Collection<Double> volumes = results.getTestedVolumesForFreq(freq);
-//                for (Double vol : volumes) {
-//                    int nHeard, nNotHeard;
-//                    try {
-//                        nHeard = timesHeardPerVol.get(vol);
-//                    } catch (NullPointerException e) {
-//                        nHeard = 0;
-//                    }
-//                    try {
-//                        nNotHeard = timesNotHeardPerVol.get(vol);
-//                    } catch (NullPointerException e) {
-//                        nNotHeard = 0;
-//                    }
-//                    out.write(String.format("%.1f,%.2f,%d,%d,\n", freq, vol, nHeard, nNotHeard));
-//                }
-//            }
-//        } catch (FileNotFoundException e) {
-//            // File was not found
-//            Log.e("FileNameController", "Output file not found");
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            // Problem when writing to the file
-//            Log.e("FileNameController", "Unable to write to output file");
-//            e.printStackTrace();
-//        } finally {
-//            try {
-//                if (out != null) out.close();
-//            } catch (IOException e) {
-//                Log.e("FileNameController", "Error closing test result file");
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        // make the scanner aware of the new file
-//        MediaScannerConnection.scanFile(
-//                context,
-//                new String[]{fout.getAbsolutePath()},
-//                new String[]{"text/csv"},
-//                null);
-//
-//    }
 
     /**
      * Get the file where calibration results are to be saved. All parent directories of the file are
@@ -305,93 +229,6 @@ public class FileNameController {
             return new File(subjectCalibDir, fileName);
     }
 
-
-//    /**
-//     * A method for writing the results of the confidence test currently stored in the model to a file
-//     *
-//     * @param context The context of the calling thread (ie. MainActivity.this)
-//     */
-//    public void handleConfSaveClick(Context context) throws IllegalStateException {
-//
-//        BufferedWriter out = null;
-//
-//        try {
-//            File fout = getDestinationFileConf();
-//
-//            if (! fout.createNewFile()) {
-//                Log.e("HandleConfSaveClick", "Unable to create confidence file");
-//                return;
-//            }
-//
-//            out = new BufferedWriter(new FileWriter(fout));
-//
-//            CalibrationTestResults results = model.getCalibrationTestResults();
-//
-//            // write background noise info
-//            out.write(String.format("ParticipantID %d BackgroundNoise %s\n",
-//                                    model.getSubjectId(), results.getBackgroundNoise()));
-//
-//            // write calibration info
-//            out.write("Calibration:\n" + results.toString() + '\n');
-//
-//            // test using different sample sizes
-//            for (int n : Model.CONF_SAMP_SIZES) {
-//                try {  // change hearing test results to new sample size
-//                    model.calibrationTestResults = results.getSubsetResults(n);
-//                } catch (IllegalArgumentException e) {  // skip if n is invalid
-//                    continue;
-//                }
-//
-//                out.write("### Sample Size = " + n + " ###\n");
-//
-//                // set model.analysisResults for current subset
-//                this.model.analyzeConfidenceResults();
-//
-//                // write header/info for current subset
-//                out.write("Freq(Hz),Direction,Volume,confProb,modelProb,alpha,beta,critLow,critHigh,actual," +
-//                          "sigDifferent\n");
-//
-//                // write results for each freq-vol pair in subset
-//                // model.analysisResults should contain all freq-vol pairs in subset if everything works correctly
-//                for (ConfidenceTestResults.StatsAnalysisResultsContainer result : model.analysisResults) {
-//                    out.write(String.format(
-//                            "%.2f,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%d,%d,%b,\n",
-//                            result.earcon.frequency, result.earcon.getDirectionAsString(), result.earcon.volume,
-//                            result.confProbEstimate, result.probEstimate, result.alpha, result.beta, result.critLow,
-//                            result.critHigh, result.estimatesSigDifferent
-//                    ));
-//                }
-//                out.newLine();
-//
-//            }
-//
-//            model.calibrationTestResults = results; // reset calibrationTestResults
-//
-//            // make the scanner aware of the new file
-//            MediaScannerConnection.scanFile(
-//                    context,
-//                    new String[]{fout.getAbsolutePath()},
-//                    new String[]{"text/csv"},
-//                    null);
-//
-//        } catch (FileNotFoundException e) {
-//            // File was not found
-//            Log.e("saveConfResults", "File not found");
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            // Problem when writing to the file
-//            Log.e("saveConfResults", "Error writing to file");
-//            e.printStackTrace();
-//        } finally {
-//            try {
-//                if (out != null) out.close();
-//            } catch (IOException e) {
-//                Log.e("saveConfResults", "Error closing confidence test result file");
-//                e.printStackTrace();
-//            }
-//        }
-//    }
-
     /**
      * Return a new File with the abstract pathname for the given subject's directory
      *
@@ -447,12 +284,12 @@ public class FileNameController {
      */
     private static File getResultsDir() {
         File extDir = Environment.getExternalStorageDirectory();
-        File subDir = new File(extDir, "CalibrationTestResults");
+        File subDir = new File(extDir, "HearingTestResults");
 
         // make results directory if doesn't already exist
         if (!subDir.isDirectory())
             if (! subDir.mkdir())
-                Log.e("getResultsDir", "Error creating CalibrationTestResults directory");
+                Log.e("getResultsDir", "Error creating HearingTestResults directory");
         return subDir;
     }
 

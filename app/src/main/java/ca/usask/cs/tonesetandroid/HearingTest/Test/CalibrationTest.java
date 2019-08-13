@@ -4,6 +4,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.ListIterator;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
@@ -16,8 +17,8 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
 
     protected static final float[] STANDARD_FREQUENCIES = {200, 500, 1000, 2000, 4000};
 
-    protected static final int DEFAULT_N_VOL_PER_FREQ = 5;
-    protected static final int DEFAULT_N_TRIAL_PER_VOL = 5;
+    protected static final int DEFAULT_N_VOL_PER_FREQ = 2;  // todo reset these
+    protected static final int DEFAULT_N_TRIAL_PER_VOL = 2;
 
     // The tones that will be tested in this calibration test
     protected ArrayList<T> testTones;
@@ -36,10 +37,10 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     /**
      * Configure the tones that will be tested in this calibration test
      */
-    public abstract void initialize(RampTest.RampTestResults rampResults,
-                                    ReduceTest.ReduceTestResults reduceResults,
-                                    int nVolsPerFreq,
-                                    int nTrialsPerVol);
+    protected abstract void configureTestTones(RampTest.RampTestResults rampResults,
+                                            ReduceTest.ReduceTestResults reduceResults,
+                                            int nVolsPerFreq,
+                                            int nTrialsPerVol);
 
     /**
      * Configure the tones that will be used in this calibration test with the default values
@@ -50,7 +51,16 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
 
     public CalibrationTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        position = this.testTones.listIterator(0);
+        this.results = new CalibrationTestResults();
+    }
+
+    public void initialize(RampTest.RampTestResults rampResults,
+                           ReduceTest.ReduceTestResults reduceResults,
+                           int nVolsPerFreq,
+                           int nTrialsPerVol) {
+        this.configureTestTones(rampResults, reduceResults, nVolsPerFreq, nTrialsPerVol);
+        Collections.shuffle(this.testTones);
+        this.position = testTones.listIterator(0);
     }
 
     @Override
@@ -62,7 +72,8 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                     iModel.setTestThreadActive(true);
 
                     while (! isComplete()) {
-                        if (iModel.testPaused()) return;
+
+                        if (iModel.testPaused()) return;  // todo make sure test has right number of trials
                         iModel.resetAnswer();
                         T current = position.next();
                         newCurrentTrial(current);
@@ -74,7 +85,6 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                             return;
                         }
                         currentTrial.setCorrect(iModel.answered());
-                        Log.i("CalibrationTest", currentTrial.wasCorrect() ? "Tone Heard" : "Tone Not Heard");
                         saveLine();
                         results.addResult(current, currentTrial.wasCorrect());
                         sleepThread(1000, 3000);
@@ -97,7 +107,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
 
     @Override
     protected boolean isComplete() {
-        return this.position.hasNext();
+        return ! this.position.hasNext();
     }
 
     @Override

@@ -23,6 +23,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
     public RampTest(BackgroundNoiseType noiseType) {
         super(noiseType);
+        this.results = new RampTestResults();
     }
 
     @Override
@@ -40,6 +41,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
                         // test frequency, ramp up quickly
                         Log.i(testTypeName, "Testing frequency: " + currentFreq);
+                        iModel.resetAnswer();
                         heardVol = rampUp(RAMP_RATE_1, currentFreq, STARTING_VOL);
                         if (heardVol == -1 || iModel.testPaused()) {
                             position.previous(); // move cursor back to starting location and return without doing
@@ -50,6 +52,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
                         sleepThread(1000, 1000);  // sleep 1 second
 
                         // test frequency again, slower, starting from 1/10 the first heardVol
+                        iModel.resetAnswer();
                         heardVol = rampUp(RAMP_RATE_2, currentFreq, heardVol / 10.0);
                         if (heardVol == -1 || iModel.testPaused()) {
                             position.previous(); // move cursor back to starting location and return without doing
@@ -61,15 +64,16 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
                         results.addResult(currentFreq, heardVol);
                     }
 
-                    // ramp test complete: initialize reduce test with these results and setup to begin next
+                    // ramp test complete: configureTestTones reduce test with these results and setup to begin next
                     iModel.getReduceTest().initialize(results);
                     iModel.setCurrentTest(iModel.getReduceTest());
                     iModel.setTestThreadActive(false);
                     iModel.notifySubscribers();
+                    iModel.setTestPaused(true);
+                    view.showInformationDialog(iModel.getReduceTest().getTestInfo());
 
                 } finally {
                     iModel.setTestThreadActive(false);
-                    model.audioTrackCleanup();
                 }
             }
         }).start();
@@ -88,6 +92,11 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
     @Override
     protected final String getLineEnd(SingleTrialResult result) {
         throw new RuntimeException("Operation not supported for ramp test");
+    }
+
+    @Override
+    public void handleAnswerClick(int answer) {
+        // RampTests have no need for this method because they do not track click times
     }
 
     public RampTestResults getResults() {
@@ -119,7 +128,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
         }
 
         public FreqVolPair[] getResults() {
-            return (FreqVolPair[]) results.toArray();
+            return results.toArray(new FreqVolPair[]{});
         }
 
     }

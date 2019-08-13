@@ -57,6 +57,7 @@ public class HearingTestInteractionModel {
 
     public void setTestPaused(boolean paused) {
         this.testPaused = paused;
+        this.notifySubscribers();
     }
 
     public boolean testPaused() {
@@ -64,7 +65,7 @@ public class HearingTestInteractionModel {
     }
 
     public boolean testing() {
-        return this.currentTest == null;
+        return this.currentTest != null;
     }
 
     /**
@@ -125,6 +126,12 @@ public class HearingTestInteractionModel {
 
     public void setCurrentTest(HearingTest currentTest) {
         this.currentTest = currentTest;
+        this.notifySubscribers();
+    }
+
+    public void addClick(int answer) {
+        if (this.currentTest == null) throw new IllegalStateException("There is no test currently stored");
+        this.currentTest.handleAnswerClick(answer);
     }
 
     public BackgroundNoiseType getCurrentNoise() {

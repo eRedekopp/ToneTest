@@ -20,11 +20,9 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 
-import java.io.FileNotFoundException;
-
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseController;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.Control.FileNameController;
+import ca.usask.cs.tonesetandroid.Control.FileIOController;
 import ca.usask.cs.tonesetandroid.Control.HearingTestController;
 import ca.usask.cs.tonesetandroid.Control.HearingTestInteractionModel;
 import ca.usask.cs.tonesetandroid.Control.Model;
@@ -46,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     Model model;
     HearingTestInteractionModel iModel;
     HearingTestController controller;
-    FileNameController fileController;
+    FileIOController fileController;
     BackgroundNoiseController noiseController;
 
     private int dialogSelectedItem;  // for selecting background noise configurations
@@ -82,7 +80,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         Model newModel = new Model();
         HearingTestInteractionModel newIModel = new HearingTestInteractionModel();
         HearingTestController newController = new HearingTestController();
-        FileNameController newFController = new FileNameController();
+        FileIOController newFController = new FileIOController();
         BackgroundNoiseController newNoiseController = new BackgroundNoiseController(this);
 
         // set up relations
@@ -92,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.setModel(newModel);
         this.setFileController(newFController);
 
-        this.fileController.setModel(this.model);       // FileNameController
+        this.fileController.setModel(this.model);       // FileIOController
         this.fileController.setiModel(this.iModel);
         this.fileController.setContext(this);
 
@@ -108,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         HearingTest.setModel(this.model);               // HearingTest
         HearingTest.setContext(this);
+        HearingTest.setController(this.controller);
         HearingTest.setFileController(this.fileController);
         HearingTest.setIModel(this.iModel);
         HearingTest.setView(this);
@@ -238,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                                 flatButton.setEnabled(! iModel.testPaused());
                                 break;
                             case HearingTest.ANSWER_HEARD:
-                                flatButton.setEnabled(! iModel.testPaused());
+                                heardButton.setEnabled(! iModel.testPaused());
                                 break;
                             default: throw new RuntimeException("Unknown option value found: " + option);
                         }
@@ -269,7 +268,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.controller = controller;
     }
 
-    public void setFileController(FileNameController fileController) {
+    public void setFileController(FileIOController fileController) {
         this.fileController = fileController;
     }
 
@@ -304,7 +303,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.model.setSubjectId(subjectID);
 //        if (!pathName.equals(""))  // todo file input
 //            try {
-//                FileNameController.initializeModelFromFileData(pathName, this.model);
+//                FileIOController.initializeModelFromFileData(pathName, this.model);
 //            } catch (FileNotFoundException e) {
 //                Log.e("onActivityResult", e.getMessage());
 //                e.printStackTrace();
@@ -343,11 +342,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 setDialogSelectedItem(i);
             }
         });
+        builder.setCancelable(false);
+        builder.setNegativeButton("Cancel", null);
+
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 setDialogNoiseID();
-                Log.i("mainActivity", "noise type ID set as " + dialogNoiseID);
                 dialogInterface.cancel();
                 getBackgroundNoiseAndBeginTest_2(isCalib);
             }
@@ -373,6 +374,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             editText.setText("0");
             builder.setView(editText);
             builder.setTitle("Please enter the volume of the noise for this test");
+            builder.setCancelable(false);
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialogInterface, int i) {
@@ -408,6 +410,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     }
                 }
             });
+
+            builder.setNegativeButton("Cancel", null);
             builder.show();
         }
     }
@@ -420,6 +424,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         // prompt user to press OK to begin test
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setMessage("Press the button when you are ready to begin the test");
+        builder.setCancelable(false);
         builder.setPositiveButton("BEGIN", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
@@ -465,24 +470,29 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      *
      * @param message The message to be displayed
      */
-    public void showInformationDialog(String message) {
-        iModel.setTestPaused(true);
-        AlertDialog.Builder infoBuilder = new AlertDialog.Builder(this);
-        infoBuilder.setTitle("Information");
-        infoBuilder.setMessage(message);
-        infoBuilder.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+    public void showInformationDialog(final String message) {
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
+            public void run() {
+                iModel.setTestPaused(true);
+                AlertDialog.Builder infoBuilder = new AlertDialog.Builder(context);
+                infoBuilder.setTitle("Information");
+                infoBuilder.setMessage(message);
+                infoBuilder.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                });
+                infoBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialogInterface) {
+                        iModel.setTestPaused(false);
+                    }
+                });
+                infoBuilder.show();
             }
         });
-        infoBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialogInterface) {
-                iModel.setTestPaused(false);
-            }
-        });
-        infoBuilder.show();
     }
 
     /**

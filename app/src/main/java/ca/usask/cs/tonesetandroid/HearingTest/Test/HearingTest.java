@@ -6,12 +6,13 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.HearingTestController;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
-import ca.usask.cs.tonesetandroid.Control.FileNameController;
+import ca.usask.cs.tonesetandroid.Control.FileIOController;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -29,7 +30,7 @@ public abstract class HearingTest<T extends Tone> {
     protected static HearingTestView view;
     protected static Context context; // todo memory leak?
     protected static HearingTestInteractionModel iModel;
-    protected static FileNameController fileController;  // todo memory leak in filecontroller?
+    protected static FileIOController fileController;  // todo memory leak in filecontroller?
     protected static HearingTestController controller;
 
     // Identifiers for individual tests
@@ -65,7 +66,7 @@ public abstract class HearingTest<T extends Tone> {
         iModel = theIModel;
     }
 
-    public static void setFileController(FileNameController theFileController) {  // todo add this to init
+    public static void setFileController(FileIOController theFileController) {  // todo add this to init
         fileController = theFileController;
     }
 
@@ -148,6 +149,26 @@ public abstract class HearingTest<T extends Tone> {
     }
 
     /**
+     * Exactly the same as playSine except it never calls model.startAudio(), model.stopAudio(), or model.pauseAudio()
+     */
+    protected void playSineRaw(FreqVolPair fvp, int durationMs) {
+        playSineRaw(fvp.freq(), fvp.vol(), durationMs);
+    }
+
+    protected void playSineRaw(float freq, double vol, int durationMs) {
+        byte[] buf = new byte[2];
+        model.enforceMaxVolume();
+        for (int i = 0; i < durationMs * (float) Model.OUTPUT_SAMPLE_RATE / 1000; i++) {
+            float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
+            double angle = 2 * i / (period) * Math.PI;
+            short a = (short) (Math.sin(angle) * vol);
+            buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+            buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+            model.lineOut.write(buf, 0, 2);
+        }
+    }
+
+    /**
      * Play the given Earcon via the model
      * @param earcon the earcon to be played
      */
@@ -183,17 +204,21 @@ public abstract class HearingTest<T extends Tone> {
     }
 
     /**
-     * Save the current trial to the output file with the default line-end formatting via the FileNameController
+     * Save the current trial to the output file with the default line-end formatting via the FileIOController
      */
     protected void saveLine() {
         this.saveLine(this.getLineEnd(this.currentTrial));
     }
 
     /**
-     * Save a line to the output file with the given string as the line-end via the FileNameController
+     * Save a line to the output file with the given string as the line-end via the FileIOController
      * @param lineEnd The String to be written after the header in the new line
      */
     protected void saveLine(String lineEnd) {
+
+        // todo "heard" and "notHeard" not always correct
+        // todo does this even work?
+
         if (this.backgroundNoiseType == null || this.testTypeName == null) // sanity check
             throw new IllegalStateException("Test not properly initialized: " +
                     (this.backgroundNoiseType == null ? "BackgroundNoiseType = null " : "") +
@@ -247,6 +272,10 @@ public abstract class HearingTest<T extends Tone> {
 
     public String getTestTypeName() {
         return this.testTypeName;
+    }
+
+    public Date getLastTrialStartTime() {
+        return this.currentTrial.getStartTime();
     }
 
     public BackgroundNoiseType getBackgroundNoiseType() {

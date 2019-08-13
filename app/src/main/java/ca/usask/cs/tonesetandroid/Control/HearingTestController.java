@@ -2,9 +2,7 @@ package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Test.CalibrationTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.RampTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.ReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineReduceTest;
@@ -21,7 +19,7 @@ public class HearingTestController {
     HearingTestInteractionModel iModel;
     HearingTestView view;
     BackgroundNoiseController noiseController;
-    FileNameController fileController;
+    FileIOController fileController;
 
     Context context;
 
@@ -42,6 +40,7 @@ public class HearingTestController {
         iModel.setTestPaused(true);
         iModel.setCurrentTest(iModel.getRampTest());
         noiseController.playNoise(iModel.getRampTest().getBackgroundNoiseType());
+        fileController.startNewSaveFile(true);
         view.showInformationDialog(iModel.getRampTest().getTestInfo());
     }
 
@@ -52,6 +51,7 @@ public class HearingTestController {
         this.fileController.closeFile();
         this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
         this.iModel.reset();
+        iModel.notifySubscribers();
     }
 
     /**
@@ -96,7 +96,12 @@ public class HearingTestController {
     }
 
     public void handleHeardClick() {
-        //todo
+        try {
+            this.iModel.addClick(HearingTest.ANSWER_HEARD);
+            this.iModel.setAnswer(HearingTest.ANSWER_HEARD);
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
     }
 
     //////////////////////////////////// accessor/mutator ////////////////////////////////////////////
@@ -121,7 +126,7 @@ public class HearingTestController {
         this.context = context;
     }
 
-    public void setFileController(FileNameController fileController) {
+    public void setFileController(FileIOController fileController) {
         this.fileController = fileController;
     }
 }

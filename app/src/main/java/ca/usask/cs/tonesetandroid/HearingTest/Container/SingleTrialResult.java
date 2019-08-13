@@ -4,13 +4,14 @@ import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public class SingleTrialResult {
 
-    private long startTime;
+    private Date startTime;
     private ArrayList<Click> clicks;
     public final Tone tone;
     private boolean wasCorrect = false;
@@ -33,7 +34,7 @@ public class SingleTrialResult {
      * in a test
      */
     public void start() {
-        this.startTime = Calendar.getInstance().getTime().getTime();
+        this.startTime = Calendar.getInstance().getTime();
     }
 
     /**
@@ -71,7 +72,7 @@ public class SingleTrialResult {
      */
     public long[] clickTimes() {
         long[] newArr = new long[this.clicks.size()];
-        for (int i = 0; i < this.clicks.size(); i++) newArr[i] = this.clicks.get(i).time - this.startTime;
+        for (int i = 0; i < this.clicks.size(); i++) newArr[i] = this.clicks.get(i).time - this.startTime.getTime();
         return newArr;
     }
 
@@ -85,10 +86,14 @@ public class SingleTrialResult {
         for (Click click : this.clicks) {
             builder.append(HearingTest.answerAsString(click.answer));
             builder.append(' ');
-            builder.append(click.time - this.startTime);
+            builder.append(click.time - this.startTime.getTime());
             builder.append(", ");
         }
         return builder.toString();
+    }
+
+    public Date getStartTime() {
+        return this.startTime;
     }
 
     @Override
