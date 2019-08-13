@@ -283,9 +283,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      * Starts an InitActivity which initializes the model with an ID number and possibly data
      */
     private void goToInit() {
-        // todo reset everything if not first time
         Intent initIntent = new Intent(this, InitActivity.class);
         int reqCode = 1;
+        this.model.reset();
+        this.iModel.reset();
         startActivityForResult(initIntent, reqCode);
     }
 

@@ -36,11 +36,12 @@ public class Model {
     public static final int OUTPUT_SAMPLE_RATE  = 44100;  // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     public int duration_ms; // how long to play each tone in a test
+    public static int MIN_AUDIO_BUF_SIZE = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_MONO,
+                                                                         AudioFormat.ENCODING_PCM_16BIT);
 
     /////////////// Vars for file io ///////////////
     private int subjectId = -1;     // -1 indicates not set
     private boolean resultsSaved = false;       // have hearing test results been saved since the model was initialized?
-    private boolean confResultsSaved = false;   // have conf test results been saved since the model was initialized?
 
     /////////////// vars/values for confidence test ///////////////
     ArrayList<ConfidenceTestResults.StatsAnalysisResultsContainer> analysisResults;
@@ -59,18 +60,16 @@ public class Model {
      */
     public void reset() {
         this.analysisResults = new ArrayList<>();
-        this.confResultsSaved = false;
-        if (this.calibrationTestResults == null) {
-            this.calibrationTestResults = new CalibrationTestResults();
-            this.resultsSaved = false;
-        }
+        this.resultsSaved = false;
+        this.calibrationTestResults = null;
     }
 
     /**
      * @return True if this model has hearing test results saved to it, else false
      */
     public boolean hasResults() {
-        return ! this.calibrationTestResults.isEmpty();
+        if (this.calibrationTestResults == null) return false;
+        else return ! this.calibrationTestResults.isEmpty();
     }
 
 
@@ -194,13 +193,13 @@ public class Model {
 //     */
 //    public float[] getAudioSample(int size) {
 //
-//        int minBufferSize = AudioRecord.getMinBufferSize(
+//        int MIN_AUDIO_BUF_SIZE = AudioRecord.getMinBufferSize(
 //                INPUT_SAMPLE_RATE,
 //                AudioFormat.CHANNEL_IN_MONO,
 //                AudioFormat.ENCODING_PCM_16BIT
 //        );
-//        if (size < minBufferSize)
-//            throw new IllegalArgumentException("Audio sample size must have length >= " + minBufferSize);
+//        if (size < MIN_AUDIO_BUF_SIZE)
+//            throw new IllegalArgumentException("Audio sample size must have length >= " + MIN_AUDIO_BUF_SIZE);
 //
 //        // build AudioRecord: input from mic and output as floats
 //        AudioRecord recorder;
@@ -325,16 +324,13 @@ public class Model {
     public void setUpLineOut() {
         // do not run if line already initialized
         if (lineOut == null || lineOut.getState() == AudioTrack.STATE_UNINITIALIZED) {
-            int minBufferSize = AudioTrack.getMinBufferSize(44100,
-                    AudioFormat.CHANNEL_OUT_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT);
             AudioAttributes audioAttributes =
                     new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
                             .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build();
             AudioFormat format =
                     new AudioFormat.Builder().setChannelMask(AudioFormat.CHANNEL_OUT_DEFAULT)
                             .setSampleRate(OUTPUT_SAMPLE_RATE).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build();
-            lineOut = new AudioTrack(audioAttributes, format, minBufferSize,
+            lineOut = new AudioTrack(audioAttributes, format, MIN_AUDIO_BUF_SIZE,
                     AudioTrack.MODE_STREAM, AudioManager.AUDIO_SESSION_ID_GENERATE);
             lineOut.setVolume(1.0f); // unity gain - no amplification
         }
@@ -377,15 +373,6 @@ public class Model {
         return resultsSaved;
     }
 
-    public void setConfResultsSaved(boolean b) {
-        this.confResultsSaved = b;
-        this.notifySubscribers();
-    }
-
-    public boolean confResultsSaved() {
-        return confResultsSaved;
-    }
-
     public void pauseAudio() {
         try {
             this.lineOut.pause();
@@ -408,7 +395,8 @@ public class Model {
      */
     public void printResultsToConsole() {
         Log.i("printResultsToConsole", String.format("Subject ID: %d", this.subjectId));
-        if (calibrationTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
+        if (calibrationTestResults == null || calibrationTestResults.isEmpty())
+            Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", calibrationTestResults.toString());
     }
 

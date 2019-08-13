@@ -23,6 +23,7 @@ public class SineRampTest extends RampTest<FreqVolPair> {
         // ramp up, increasing volume slowly. Return when answered else return Short.MAX_VALUE (ie. the highest
         // amplitude possible in 16-bit PCM)
         model.startAudio();
+        model.enforceMaxVolume();
         try {
             for (double vol = startingVol; vol < Short.MAX_VALUE; vol *= rateOfRamp) {
                 if (iModel.testPaused()) return -1;
