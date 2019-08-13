@@ -20,6 +20,9 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseController;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.FileIOController;
@@ -301,16 +304,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         this.model.reset();
         this.model.setSubjectId(subjectID);
-//        if (!pathName.equals(""))  // todo file input
-//            try {
-//                FileIOController.initializeModelFromFileData(pathName, this.model);
-//            } catch (FileNotFoundException e) {
-//                Log.e("onActivityResult", e.getMessage());
-//                e.printStackTrace();
-//                System.exit(1);
-//            }
+        if (!pathName.equals("")) FileIOController.initializeModelFromFile(this.model, new File(pathName));
+
         model.printResultsToConsole();
-        this.modelChanged();
+        this.model.notifySubscribers();
     }
 
     @Override

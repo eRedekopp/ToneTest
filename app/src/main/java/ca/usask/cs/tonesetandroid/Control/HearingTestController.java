@@ -51,7 +51,8 @@ public class HearingTestController {
         this.fileController.closeFile();
         this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
         this.iModel.reset();
-        iModel.notifySubscribers();
+        this.model.printResultsToConsole();
+        this.iModel.notifySubscribers();
     }
 
     /**

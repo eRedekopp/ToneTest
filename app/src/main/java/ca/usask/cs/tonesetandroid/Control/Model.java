@@ -407,10 +407,7 @@ public class Model {
      * Print the contents of calibrationTestResults to the console (for testing)
      */
     public void printResultsToConsole() {
-        Log.i("printResultsToConsole", String.format("Subject ID: %d\nCalibration Background Noise Type: %s",
-                this.subjectId,
-                this.calibrationTestResults.getBackgroundNoise() == null ? "N/A" :      // show noise type if
-                        this.calibrationTestResults.getBackgroundNoise().toString()));  // applicable
+        Log.i("printResultsToConsole", String.format("Subject ID: %d", this.subjectId));
         if (calibrationTestResults.isEmpty()) Log.i("printResultsToConsole", "No results stored in model");
         else Log.i("printResultsToConsole", calibrationTestResults.toString());
     }

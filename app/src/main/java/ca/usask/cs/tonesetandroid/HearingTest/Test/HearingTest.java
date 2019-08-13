@@ -35,7 +35,9 @@ public abstract class HearingTest<T extends Tone> {
 
     // Identifiers for individual tests
     protected BackgroundNoiseType backgroundNoiseType;
-    protected String testTypeName;
+    protected String testTypeName;  // a unique string identifying the type of test, to be used in save files and logs.
+                                    // all ramp tests must contain the word "ramp", reduce tests must contain the
+                                    // word "reduce", confidence tests must contain the word "confidence"
     protected String testInfo; // info about this test to be displayed for user
 
     // elements representing current state
@@ -98,7 +100,7 @@ public abstract class HearingTest<T extends Tone> {
      */
     protected abstract String getLineEnd(SingleTrialResult result);
 
-    public HearingTest(BackgroundNoiseType backgroundNoiseType) {
+    public HearingTest(BackgroundNoiseType backgroundNoiseType) {  // todo test the backgroundnoisecontroller
         this.completedTrials = new ArrayList<>();
         this.backgroundNoiseType = backgroundNoiseType;
     }

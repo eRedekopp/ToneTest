@@ -115,6 +115,7 @@ public class InitActivity extends Activity {
                 returnToCaller(subjectID, inFile.getAbsolutePath());
             }
         });
+        optBuilder.setNegativeButton("Cancel", null);
         optBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

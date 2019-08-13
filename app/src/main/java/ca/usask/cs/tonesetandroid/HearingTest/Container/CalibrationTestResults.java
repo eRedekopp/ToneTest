@@ -656,7 +656,7 @@ public class CalibrationTestResults {
                 }
                 float pHeard = (float) timesHeard / (float) (timesHeard + timesNotHeard);
                 builder.append("Volume ");
-                builder.append(String.format("%.2f", d));
+                builder.append(String.format("%.4f", d));
                 builder.append(": P(heard) = ");
                 builder.append(String.format("%.4f\n", pHeard));
             }

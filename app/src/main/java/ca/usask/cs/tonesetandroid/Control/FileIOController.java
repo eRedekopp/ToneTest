@@ -8,13 +8,20 @@ import android.util.Log;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Scanner;
+
+import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 
 /**
  * A class for handling file IO. Methods for reading files are static; must be instantiated
@@ -319,60 +326,63 @@ public class FileIOController {
         }
     }
 
-//    /**
-//     * Initialize the model with the information contained in the file with pathname filePath
-//     *
-//     * @param filePath The absolute pathname of the file to be read
-//     * @param model The model to be initialized from the file
-//     */
-//    public static void initializeModelFromFileData(String filePath, Model model) throws FileNotFoundException {
-//
-//        File file = new File(filePath);
-//        if (! file.exists()) throw new FileNotFoundException("File does not exist. Pathname: " + filePath);
-//        Scanner scanner;
-//
-//        try {
-//            scanner = new Scanner(file);
-//        } catch (FileNotFoundException e) {
-//            Log.e("initializeModel", "Error: file not found");
-//            e.printStackTrace();
-//            return;
-//        }
-//
-//        CalibrationTestResults results = new CalibrationTestResults();
-//
-//        scanner.useDelimiter(Pattern.compile("\\s"));
-//        scanner.next(); scanner.next();     // skip subject id
-//        scanner.next();                     // skip noise type label
-//        String noiseType = scanner.next();
-//        int volume = scanner.nextInt();
-//        results.setBackgroundNoise(new BackgroundNoiseType(noiseType, volume));
-//
-//        scanner.nextLine();                 // skip rest of line
-//        scanner.nextLine();                 // skip header
-//
-//        // parse test information
-//        scanner.useDelimiter(",");
-//
-//        // disallow double-saving
-//        model.setResultsSaved(true);
-//
-//        try {
-//            while (scanner.hasNext()) {
-//                double nextFreq = scanner.nextDouble(), nextVol = scanner.nextDouble();
-//                int nextHeard = scanner.nextInt();
-//                int nextNotHeard = scanner.nextInt();
-//                for (int i = 0; i < nextHeard; i++) results.addResult((float) nextFreq, nextVol, true);
-//                for (int i = 0; i < nextNotHeard; i++) results.addResult((float) nextFreq, nextVol, false);
-//                if (scanner.hasNextLine()) scanner.nextLine();
-//            }
-//            model.calibrationTestResults = results;
-//        } catch (NoSuchElementException e) {
-//            Log.e("InitializeModel", "Error reading file: EOF reached before input finished");
-//            e.printStackTrace();
-//        } catch (RuntimeException e) {
-//            Log.e("InitializeModel", "Unknown error while reading file");
-//            e.printStackTrace();
-//        } finally { scanner.close(); }
-//    }
+    public static void initializeModelFromFile(Model model, File file) {
+        // "%s Subject %d, Test %s, Noise %s,"              this.getLineBeginning()
+        // "freq(Hz) %.1f, vol %.1f, %s, %d clicks: %s"     CalibrationTest.getLineEnd()
+
+        Scanner scanner;
+        CalibrationTestResults newResults = new CalibrationTestResults();
+        try {
+            scanner = new Scanner(file);
+            scanner.useDelimiter(",");
+        } catch (FileNotFoundException e) {
+            Log.e("initializeModel", "File not found");
+            e.printStackTrace();
+            return;
+        }
+
+        int subjectID = -1;
+
+        while (scanner.hasNext()) {
+            if (subjectID == -1) {  // set subject id if necessary
+                String nextToken = scanner.next();
+                Scanner subScanner = new Scanner(nextToken);
+                subScanner.useDelimiter(" ");
+                subScanner.next();
+                subScanner.next();
+                subjectID = subScanner.nextInt();
+                subScanner.close();
+            } else {
+                scanner.next();
+            }
+
+            String testName = scanner.next();  // skip test name
+            // skip if trial is from a ramp or reduce test
+            if (testName.contains("ramp") || testName.contains("reduce")) { scanner.nextLine(); continue; }
+            scanner.next();     // skip noise type
+
+            String freqToken = scanner.next();
+            Scanner subScanner = new Scanner(freqToken);
+            subScanner.useDelimiter(" ");
+            subScanner.next();  // skip "freq" label
+            float trialFreq = subScanner.nextFloat();
+
+            String volToken = scanner.next();
+            subScanner = new Scanner(volToken);
+            subScanner.next();  // skip "vol" label
+            double trialVol = subScanner.nextDouble();
+
+            String heardString = scanner.next();
+            boolean trialHeard;
+            if (heardString.toLowerCase().matches("\\s*heard")) trialHeard = true;
+            else if (heardString.toLowerCase().matches("\\s*notheard")) trialHeard = false;
+            else throw new RuntimeException("Unknown 'heard' indicator in file: " + heardString);
+
+            newResults.addResult(new FreqVolPair(trialFreq, trialVol), trialHeard);
+            scanner.nextLine();
+            subScanner.close();
+        }
+
+        model.setCalibrationTestResults(newResults);
+    }
 }
