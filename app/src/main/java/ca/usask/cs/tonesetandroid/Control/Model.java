@@ -41,7 +41,6 @@ public class Model {
 
     /////////////// Vars for file io ///////////////
     private int subjectId = -1;     // -1 indicates not set
-    private boolean resultsSaved = false;       // have hearing test results been saved since the model was initialized?
 
     /////////////// vars/values for confidence test ///////////////
     ArrayList<ConfidenceTestResults.StatsAnalysisResultsContainer> analysisResults;
@@ -55,12 +54,14 @@ public class Model {
     }
 
     /**
-     * Resets this model to its just-initialized state. Only resets calibrationTestResults if it is null - reset those
-     * with this.resetHearingTestResults
+     * Resets this model to its just-initialized state.
      */
     public void reset() {
         this.analysisResults = new ArrayList<>();
-        this.resultsSaved = false;
+        resetCalibrationTestResults();
+    }
+
+    public void resetCalibrationTestResults() {
         this.calibrationTestResults = null;
     }
 
@@ -79,11 +80,6 @@ public class Model {
         } catch (NullPointerException e) {
             return false;
         }
-    }
-
-    public void resetHearingTestResults() {
-        this.calibrationTestResults = new CalibrationTestResults();
-        this.resultsSaved = false;
     }
 
 // todo decide what to do with this
@@ -362,15 +358,6 @@ public class Model {
 
     public void setAudioManager(AudioManager audioManager) {
         this.audioManager = audioManager;
-    }
-
-    public void setResultsSaved(boolean b) {
-        this.resultsSaved = b;
-        this.notifySubscribers();
-    }
-
-    public boolean resultsSaved() {
-        return resultsSaved;
     }
 
     public void pauseAudio() {

@@ -73,9 +73,10 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
 
                     while (! isComplete()) {
 
-                        if (iModel.testPaused()) return;  // todo make sure test has right number of trials
+                        if (iModel.testPaused()) return;
                         iModel.resetAnswer();
                         T current = position.next();
+                        saveLine();
                         newCurrentTrial(current);
                         Log.i("CalibrationTest", "Testing tone: " + current.toString());
                         currentTrial.start();
@@ -85,7 +86,6 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                             return;
                         }
                         currentTrial.setCorrect(iModel.answered());
-                        saveLine();
                         results.addResult(current, currentTrial.wasCorrect());
                         sleepThread(1000, 3000);
                     }
@@ -95,7 +95,6 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
 
                 } finally {
                     iModel.setTestThreadActive(false);
-                    model.audioTrackCleanup();
                 }
             }
         }).start();

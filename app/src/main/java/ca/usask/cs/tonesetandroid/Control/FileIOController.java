@@ -100,7 +100,7 @@ public class FileIOController {
             startTime = Calendar.getInstance().getTime();
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-        String formattedDateTime = dateFormat.format(startTime);
+        String formattedDateTime = dateFormat.format(startTime);  // todo NullPointerException occurred here
         return String.format("%s Subject %d, Test %s, Noise %s,",
                 formattedDateTime, model.getSubjectId(), iModel.getCurrentTest().getTestTypeName(),
                 iModel.getCurrentTest().getBackgroundNoiseType().toString());

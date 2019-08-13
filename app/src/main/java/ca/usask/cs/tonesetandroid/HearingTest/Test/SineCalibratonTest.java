@@ -27,6 +27,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
                                    int nTrialsPerVol) {
 
         // todo boost volumes
+        // todo selects too many pairs?
         ArrayList<FreqVolPair> allTones = new ArrayList<>();
         for (float freq : STANDARD_FREQUENCIES) {
             double topVolEst = Tone.getVolForFreq(rampResults.getResults(), freq);

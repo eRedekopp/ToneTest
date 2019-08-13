@@ -25,7 +25,6 @@ public class HearingTestInteractionModel {
     private boolean testThreadActive;
     private boolean testPaused;
     private HearingTest currentTest;
-    private BackgroundNoiseType currentNoise;
 
     // variables for each stage of calibration test
     private RampTest rampTest;
@@ -41,7 +40,6 @@ public class HearingTestInteractionModel {
         this.testThreadActive = false;
         this.testPaused = false;
         this.currentTest = null;
-        this.currentNoise = null;
         this.rampTest = null;
         this.reduceTest = null;
         this.calibrationTest = null;
@@ -135,11 +133,7 @@ public class HearingTestInteractionModel {
     }
 
     public BackgroundNoiseType getCurrentNoise() {
-        return currentNoise;
-    }
-
-    public void setCurrentNoise(BackgroundNoiseType currentNoise) {
-        this.currentNoise = currentNoise;
+        return this.currentTest.getBackgroundNoiseType();
     }
 
     public RampTest getRampTest() {

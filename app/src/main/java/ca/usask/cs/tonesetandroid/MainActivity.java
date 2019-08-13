@@ -130,7 +130,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                model.resetHearingTestResults();
                 model.reset();
                 getBackgroundNoiseAndBeginTest(true);
             }
@@ -138,8 +137,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         confidenceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // todo
-                showErrorDialog("Confidence test not yet available");
+                getBackgroundNoiseAndBeginTest(false);
             }
         });
 
@@ -476,15 +474,16 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 AlertDialog.Builder infoBuilder = new AlertDialog.Builder(context);
                 infoBuilder.setTitle("Information");
                 infoBuilder.setMessage(message);
+                infoBuilder.setCancelable(false);
                 infoBuilder.setNeutralButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
+                        dialog.dismiss();
                     }
                 });
-                infoBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                infoBuilder.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
-                    public void onCancel(DialogInterface dialogInterface) {
+                    public void onDismiss(DialogInterface dialogInterface) {
                         iModel.setTestPaused(false);
                     }
                 });

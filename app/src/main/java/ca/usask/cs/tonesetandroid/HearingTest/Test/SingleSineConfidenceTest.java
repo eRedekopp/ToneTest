@@ -36,6 +36,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
         // todo add louder trials
 
+        this.testPairs = new ArrayList<>();
         ArrayList<Float> confFreqs = new ArrayList<>();
         for (float freq : DEFAULT_FREQUENCIES) confFreqs.add(freq);
 

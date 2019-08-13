@@ -217,7 +217,7 @@ public abstract class HearingTest<T extends Tone> {
      * Save the current trial to the output file with the default line-end formatting via the FileIOController
      */
     protected void saveLine() {
-        this.saveLine(this.getLineEnd(this.currentTrial));
+        if (this.currentTrial != null) this.saveLine(this.getLineEnd(this.currentTrial));
     }
 
     /**

@@ -1,11 +1,13 @@
 package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
+import android.util.Log;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 
 /**
@@ -36,12 +38,12 @@ public class HearingTestController {
      * test, use checkForHearingTestResume
      */
     public void calibrationTest() {
-        model.configureAudio();
-        iModel.setTestPaused(true);
-        iModel.setCurrentTest(iModel.getRampTest());
-        noiseController.playNoise(iModel.getRampTest().getBackgroundNoiseType());
-        fileController.startNewSaveFile(true);
-        view.showInformationDialog(iModel.getRampTest().getTestInfo());
+        this.model.configureAudio();
+        this.iModel.setTestPaused(true);
+        this.iModel.setCurrentTest(this.iModel.getRampTest());
+        this.noiseController.playNoise(this.iModel.getCurrentNoise());
+        this.fileController.startNewSaveFile(true);
+        this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
     }
 
     /**
@@ -52,6 +54,7 @@ public class HearingTestController {
         this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
         this.iModel.reset();
         this.model.printResultsToConsole();
+        this.model.audioTrackCleanup();
         this.iModel.notifySubscribers();
     }
 
@@ -61,11 +64,20 @@ public class HearingTestController {
      * input test information. To resume a test, use checkForHearingTestResume
      */
     public void confidenceTest() {
-        // todo
+        this.model.configureAudio();
+        this.iModel.setTestPaused(true);
+        this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
+        this.noiseController.playNoise(this.iModel.getCurrentNoise());
+        this.fileController.startNewSaveFile(false);
+        this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
     }
 
     public void confidenceTestComplete() {  // save results to model, write any necessary output to file, etc.
-        // todo
+        this.fileController.closeFile();
+        this.iModel.reset();
+        this.model.audioTrackCleanup();
+        this.iModel.notifySubscribers();
+        // todo some sort of summary statistics / analysis
     }
 
     //////////////////////////////////// click handlers ////////////////////////////////////////////
@@ -81,19 +93,37 @@ public class HearingTestController {
     }
 
     public void handleConfClick(BackgroundNoiseType noise) {
-        //todo
+        if (! model.hasResults()) throw new IllegalStateException("No results stored in model");
+        iModel.setConfidenceTest(new SingleSineConfidenceTest(model.getCalibrationTestResults(), noise));
+
+        this.confidenceTest();
     }
 
     public void handleUpClick() {
-        //todo
+        try {
+            this.iModel.addClick(HearingTest.ANSWER_UP);
+            this.iModel.setAnswer(HearingTest.ANSWER_UP);
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
     }
 
     public void handleDownClick() {
-        //todo
+        try {
+            this.iModel.addClick(HearingTest.ANSWER_DOWN);
+            this.iModel.setAnswer(HearingTest.ANSWER_DOWN);
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
     }
 
     public void handleFlatClick() {
-        //todo
+        try {
+            this.iModel.addClick(HearingTest.ANSWER_FLAT);
+            this.iModel.setAnswer(HearingTest.ANSWER_FLAT);
+        } catch (IllegalStateException e) {
+            e.printStackTrace();
+        }
     }
 
     public void handleHeardClick() {

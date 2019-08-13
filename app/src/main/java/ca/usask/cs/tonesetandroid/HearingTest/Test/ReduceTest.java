@@ -51,6 +51,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                         for (T trial : currentVolumes) {
                             if (iModel.testPaused()) return;
 
+                            saveLine();
                             newCurrentTrial(trial);
                             iModel.resetAnswer();
                             Log.i(testTypeName, "Testing " + trial.toString());
@@ -63,7 +64,6 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                             if (! iModel.answered())
                                 mapIncrement(timesNotHeardPerFreq, trial.freq());
                             currentTrial.setCorrect(iModel.answered());
-                            saveLine();
                             sleepThread(1000, 3000);
                         }
                         reduceCurrentVolumes();

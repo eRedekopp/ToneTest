@@ -34,7 +34,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
      *
      * @param direction An integer indicating the direction of samples to be played (ConfidenceTest.DIRECTION_*)
      */
-    public abstract void playSamples(int direction);
+    public abstract void playSamples(int direction);  // todo use this
 
     /**
      * Play a tone of the appropriate type for the subclass
@@ -53,7 +53,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
 
     @Override
     protected boolean isComplete() {
-        return this.position.hasNext();
+        return ! this.position.hasNext();
     }
 
     @Override
@@ -68,6 +68,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                     while (! isComplete() && ! iModel.testPaused()) {
                         iModel.resetAnswer();
                         T current = position.next();
+                        saveLine();
                         newCurrentTrial(current);
                         Log.i("ConfidenceTest", "Testing tone: " + current.toString());
                         currentTrial.start();
@@ -77,10 +78,11 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                             return;
                         }
                         currentTrial.setCorrect(wasCorrect());
-                        Log.i("ConfidenceTest", currentTrial.wasCorrect() ? "Tone Heard" : "Tone Not Heard");
-                        saveLine();
                         sleepThread(1000, 3000);
                     }
+
+                    controller.confidenceTestComplete();
+
                 } finally { iModel.setTestThreadActive(false); }
             }
         }).start();
