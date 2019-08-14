@@ -13,9 +13,10 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
 
-    private static final int DEFAULT_TRIALS_PER_TONE = 5; // todo reset this
+    protected static final int DEFAULT_TRIALS_PER_TONE = 5; // todo reset this
+    protected static final int DEFAULT_VOLS_PER_FREQ = 1;
     protected static final float[] DEFAULT_FREQUENCIES = {220, 440, 880, 1760, 3520};
-    private static final String DEFAULT_TEST_INFO =
+    protected static final String DEFAULT_TEST_INFO =
             "In this test, tones of various frequencies and volumes will be played at random times. " +
             "Please press the \"Heard Tone\" button each time that you hear a tone. " +
             "To hear a sample of the tones that will be played in this test, press the \"Play Samples\" button. Once " +
@@ -30,7 +31,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     /**
      * Configure testPairs to contain all the tones to be tested in this test
      */
-    protected abstract void configureTestPairs(int trialsPerTone);
+    protected abstract void configureTestPairs(int trialsPerTone, int volsPerFreq, float[] frequencies);
 
     /**
      * Play a sample of all testable tones of the given direction
@@ -55,7 +56,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
         this.testInfo = DEFAULT_TEST_INFO;
 
         this.calibResults = calibResults;
-        this.configureTestPairs(DEFAULT_TRIALS_PER_TONE);
+        this.configureTestPairs(DEFAULT_TRIALS_PER_TONE, DEFAULT_VOLS_PER_FREQ, DEFAULT_FREQUENCIES);
         this.position = this.testPairs.listIterator(0);
     }
 
