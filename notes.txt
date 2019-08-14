@@ -42,10 +42,24 @@ Big Refactor:
         - adjust reduce test to use SingleTrialResults
         - implement main ToneTest
         - make playTone() abstract method for confidence test
-    Next:
         - make CalibrationTestResults more generic
         - implement controller to run tests
         - fix FileNameController
         - adjust UI to make new test runnable
+    Next:
+        - Add analysis to confidence test
+        - Play sample tones before confidence test
+        - Boost volumes in ToneTest / Conf Test ( 3 "loud" ones in confidence test)
+        - Make sure that playSine plays notes clearly / without pops
+        - Generate model based on RampTest results alone
         - Normalize background noise types to same volume scale as sines/earcons
-        - keep picking off to-do items
+        - Decide whether to add extra grace period for entering response in puretone test
+        - Look into programmatically generating earcons via MIDI
+        - Look into whether internal mixer affects waveform
+
+    Confidence tests to add:
+        - Sine interval
+        - Sine earcon
+        - Wav earcon
+    Calibration tests to add:
+        - Piano

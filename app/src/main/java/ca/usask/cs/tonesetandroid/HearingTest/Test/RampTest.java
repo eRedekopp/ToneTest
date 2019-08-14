@@ -85,7 +85,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
     }
 
     @Override
-    boolean isComplete() {
+    public boolean isComplete() {
         return ! position.hasNext();
     }
 

@@ -105,7 +105,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     }
 
     @Override
-    protected boolean isComplete() {
+    public boolean isComplete() {
         return ! this.position.hasNext();
     }
 

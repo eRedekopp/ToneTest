@@ -57,8 +57,14 @@ public class FileIOController {
      *
      * @param lineEnd The end of the line, ie. information specific only to the trial being saved
      */
-    public synchronized void saveLine(final String lineEnd) {
+    public void saveLine(final String lineEnd) {
+        this.saveString(String.format("%s %s%n", this.getLineBeginning(), lineEnd));
+    }
 
+    /**
+     * Save the given string to the current file, and also write it to Log.i
+     */
+    public synchronized void saveString(final String string) {
         if (currentFile == null) throw new IllegalStateException("File not properly configured");
         else if (! currentFile.exists()) throw new IllegalStateException("Target file does not exist");
 
@@ -66,13 +72,10 @@ public class FileIOController {
             @Override
             public void run() {
                 try {
-                    Log.i("fileController", getLineBeginning() + " " + lineEnd);
-                    BufferedWriter out = new BufferedWriter(new FileWriter(currentFile, true));
-                    out.write(getLineBeginning());
-                    out.write(' ');
-                    out.write(lineEnd);
-                    out.newLine();
-
+                    Log.i("FileIOController", string);
+                    BufferedWriter out = new BufferedWriter(new FileWriter(currentFile, true)); // todo
+                                                                                // nullpointerexception happened here
+                    out.write(string);
                     out.close();
                 } catch (IOException e) {
                     e.printStackTrace();

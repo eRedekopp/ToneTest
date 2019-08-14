@@ -10,7 +10,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.RampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.ReduceTest;
 
 /**
- * A class for keeping track of interactions within a PureTone or RampUp test
+ * Handles the menu and current test being performed
  *
  * @author alexscott
  */
@@ -130,6 +130,14 @@ public class HearingTestInteractionModel {
     public void addClick(int answer) {
         if (this.currentTest == null) throw new IllegalStateException("There is no test currently stored");
         this.currentTest.handleAnswerClick(answer);
+    }
+
+    /**
+     * @return The results of the confidence test currently stored as a string, or an empty string if none stored
+     */
+    public String getConfResultsAsString() {
+        if (this.getConfidenceTest() == null || this.getConfidenceTest().isComplete()) return "";
+        return this.getConfidenceTest().summaryStatsAsString();
     }
 
     public BackgroundNoiseType getCurrentNoise() {

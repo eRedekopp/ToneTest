@@ -59,7 +59,7 @@ public class CalibrationTestResults {
     /**
      * @return  the model's estimate of the probability of hearing the given tone, given these calibration results
      */
-    public float getProbOfHearing(Tone tone) {
+    public float getProbOfHearing(Tone tone) throws IllegalArgumentException {
         Float[] testedFreqs = this.getTestedFreqs();
         float[] testedFreqsPrimitive = new float[testedFreqs.length];
         for (int i = 0; i < testedFreqs.length; i++) testedFreqsPrimitive[i] = testedFreqs[i];
@@ -77,7 +77,7 @@ public class CalibrationTestResults {
      * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
      */
     @SuppressWarnings("ConstantConditions")
-    public float getProbOfHearing(float freq, double vol, float[] subset) throws IllegalArgumentException{
+    public float getProbOfHearing(float freq, double vol, float[] subset) throws IllegalArgumentException {
         Float[] subsetAsObj = new Float[subset.length];
         for (int i = 0; i < subset.length; i++)
             if (! this.freqTested(subset[i]))
@@ -388,7 +388,6 @@ public class CalibrationTestResults {
         CalibrationTestResults newContainer = new CalibrationTestResults();
         for (HearingTestSingleFreqResult htsr : this.allResults.values())
             newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));
-        newContainer.setBackgroundNoise(this.backgroundNoise);
         return newContainer;
     }
 
@@ -400,14 +399,6 @@ public class CalibrationTestResults {
         HearingTestSingleFreqResult aResult = this.allResults.get(this.getTestedFreqs()[0]);
         double aVol = aResult.getVolumes().iterator().next();
         return aResult.getNumSamples(aVol);
-    }
-
-    public BackgroundNoiseType getBackgroundNoise() {
-        return backgroundNoise;
-    }
-
-    public void setBackgroundNoise(BackgroundNoiseType backgroundNoise) {
-        this.backgroundNoise = backgroundNoise;
     }
 
     @Override

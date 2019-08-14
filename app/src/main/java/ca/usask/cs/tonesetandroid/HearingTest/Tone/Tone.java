@@ -1,6 +1,5 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
-import java.util.List;
 
 /**
  * An interface for anything that can be used as a single trial for a tone test

@@ -30,7 +30,7 @@ public abstract class HearingTest<T extends Tone> {
     protected static HearingTestView view;
     protected static Context context; // todo memory leak?
     protected static HearingTestInteractionModel iModel;
-    protected static FileIOController fileController;  // todo memory leak in filecontroller?
+    protected static FileIOController fileController;
     protected static HearingTestController controller;
 
     // Identifiers for individual tests
@@ -60,7 +60,7 @@ public abstract class HearingTest<T extends Tone> {
         view = theView;
     }
 
-    public static void setContext(Context theContext) {  // todo add this to init
+    public static void setContext(Context theContext) {
         context = theContext;
     }
 
@@ -85,7 +85,7 @@ public abstract class HearingTest<T extends Tone> {
     /**
      * @return true if all trials in this hearing test have been completed, else false
      */
-    abstract boolean isComplete();
+    public abstract boolean isComplete();
 
     /**
      * @return A list of all possible answer values for this particular test (ie. HearingTest.ANSWER_*)
@@ -100,7 +100,7 @@ public abstract class HearingTest<T extends Tone> {
      */
     protected abstract String getLineEnd(SingleTrialResult result);
 
-    public HearingTest(BackgroundNoiseType backgroundNoiseType) {  // todo test the backgroundnoisecontroller
+    public HearingTest(BackgroundNoiseType backgroundNoiseType) {
         this.completedTrials = new ArrayList<>();
         this.backgroundNoiseType = backgroundNoiseType;
     }
@@ -128,7 +128,7 @@ public abstract class HearingTest<T extends Tone> {
     /**
      * Play a single sine wave via the model
      */
-    protected void playSine(float freq, double vol, int durationMs) {
+    protected void playSine(float freq, double vol, int durationMs) { // todo sounds horible
         try {
             byte[] buf = new byte[Model.MIN_AUDIO_BUF_SIZE];
             model.enforceMaxVolume();
@@ -225,9 +225,6 @@ public abstract class HearingTest<T extends Tone> {
      * @param lineEnd The String to be written after the header in the new line
      */
     protected void saveLine(String lineEnd) {
-
-        // todo "heard" and "notHeard" not always correct
-        // todo does this even work?
 
         if (this.backgroundNoiseType == null || this.testTypeName == null) // sanity check
             throw new IllegalStateException("Test not properly initialized: " +

@@ -67,17 +67,17 @@ public class HearingTestController {
         this.model.configureAudio();
         this.iModel.setTestPaused(true);
         this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
-        this.noiseController.playNoise(this.iModel.getCurrentNoise());
         this.fileController.startNewSaveFile(false);
-        this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
+        this.view.showSampleDialog( this.iModel.getConfidenceTest().sampleTones(),
+                                    this.iModel.getCurrentTest().getTestInfo());
     }
 
     public void confidenceTestComplete() {  // save results to model, write any necessary output to file, etc.
-        this.fileController.closeFile();
         this.iModel.reset();
         this.model.audioTrackCleanup();
         this.iModel.notifySubscribers();
-        // todo some sort of summary statistics / analysis
+        this.fileController.saveString(this.iModel.getConfResultsAsString());
+        this.fileController.closeFile();
     }
 
     //////////////////////////////////// click handlers ////////////////////////////////////////////

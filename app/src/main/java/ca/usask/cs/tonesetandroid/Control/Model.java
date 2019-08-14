@@ -14,10 +14,12 @@ import java.util.ArrayList;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.ConfidenceTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 /**
- * Contains information about the current/most recent tests as well as an interface for generating
- * sine wave audio
+ * Contains methods and values for audio output and stores/handles saved test results and the mathematical model for
+ * calculating probabilities
  *
  * @author redekopp, alexscott
  */
@@ -44,9 +46,6 @@ public class Model {
 
     /////////////// vars/values for confidence test ///////////////
     ArrayList<ConfidenceTestResults.StatsAnalysisResultsContainer> analysisResults;
-
-    public static final int[] CONF_SAMP_SIZES = {1, 3, 5};  // alternate values of NUMBER_OF_TESTS_PER_VOL
-                                                            // to be tested while analyzing data
 
     public Model() {
         subscribers = new ArrayList<>();
@@ -177,6 +176,28 @@ public class Model {
             Log.i("audioTrackCleanup", "IllegalStateException caused");
             e.printStackTrace();
         }
+    }
+
+    public int getNumCalibrationTrials() {
+        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
+        else return this.calibrationTestResults.getNumOfTrials();
+    }
+
+    public double getCalibProbability(SinglePitchTone tone, int n) throws IllegalArgumentException {
+        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
+        else return this.getCalibrationTestResults().getProbOfHearing(tone);
+    }
+
+    public double getCalibProbability(Tone tone, int n) throws IllegalArgumentException {
+        return 0.0; // todo
+    }
+
+    public double getRampProbability(SinglePitchTone tone) {
+        return 0.0; // todo
+    }
+
+    public double getRampProbability(Tone tone) {
+        return 0.0; // todo
     }
 
     // todo decide what to do with this

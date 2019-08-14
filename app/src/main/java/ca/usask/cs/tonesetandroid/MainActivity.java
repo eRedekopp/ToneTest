@@ -361,7 +361,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         if (this.dialogNoiseID == BackgroundNoiseType.NOISE_TYPE_NONE) {    // set volume to 0 and continue if no noise
             this.setDialogSelectedItem(0);
             this.setDialogVolume();
-            Log.d("mainActivity", "noise volume set as " + dialogNoiseID);
             getBackgroundNoiseAndBeginTest_3(isCalib);
         } else {                                                            // else get volume from user
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
@@ -485,6 +484,40 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
                         iModel.setTestPaused(false);
+                    }
+                });
+                infoBuilder.show();
+            }
+        });
+    }
+
+    public void showSampleDialog(final Runnable r, final String message) {
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+
+                // todo make custom "view" object that allows a Button and a message at the same time
+                // todo make sure that background noise actually starts
+
+
+                iModel.setTestPaused(true);
+                AlertDialog.Builder infoBuilder = new AlertDialog.Builder(context);
+                infoBuilder.setTitle("Information");
+                infoBuilder.setCancelable(false);
+                Button button = new Button(context);
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        new Thread(r).start();
+                    }
+                });
+                button.setText("Play Samples");
+                infoBuilder.setView(button);
+                infoBuilder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        showInformationDialog(message);
+                        noiseController.playNoise(iModel.getCurrentNoise());
                     }
                 });
                 infoBuilder.show();

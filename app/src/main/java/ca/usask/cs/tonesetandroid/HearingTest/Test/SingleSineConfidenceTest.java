@@ -3,11 +3,14 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
@@ -19,11 +22,16 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
     }
 
     @Override
-    public void playSamples(int direction) {
-        if (direction != ANSWER_FLAT)
-            throw new IllegalArgumentException("Found unexpected direction identifier: " + direction);
-
-        for (float freq : DEFAULT_FREQUENCIES) playSine(freq, 30, TONE_DURATION_MS);
+    public Runnable sampleTones() {
+        return new Runnable() {
+            @Override
+            public void run() {
+                for (float freq : DEFAULT_FREQUENCIES) {
+                    playSine(freq, 30, TONE_DURATION_MS);
+                    sleepThread(1500, 1500);
+                }
+            }
+        };
     }
 
     @Override
@@ -72,8 +80,9 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
     @Override
     public String getLineEnd(SingleTrialResult trial) {
         FreqVolPair fvp = (FreqVolPair) trial.tone;
-        return String.format("%s, heard? %b, %d clicks, click times: %s",
-                fvp.toString(), trial.wasCorrect(), trial.nClicks(), Arrays.toString(trial.clickTimes()));
+        return String.format("%s, %s, %d clicks: %s",
+                fvp.toString(), trial.wasCorrect() ? "Heard" : "notHeard", trial.nClicks(),
+                Arrays.toString(trial.clickTimes()));
     }
 
     @Override

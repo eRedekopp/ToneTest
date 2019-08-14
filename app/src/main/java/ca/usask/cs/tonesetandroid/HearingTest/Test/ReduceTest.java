@@ -83,7 +83,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
     }
 
     @Override
-    boolean isComplete() {
+    public boolean isComplete() {
         return this.currentVolumes.isEmpty();
     }
 
