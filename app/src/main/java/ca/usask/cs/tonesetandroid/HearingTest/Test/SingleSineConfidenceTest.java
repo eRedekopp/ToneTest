@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -70,6 +72,10 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
         }
         Collections.shuffle(allTrials);
         this.testPairs = allTrials;
+
+        if (this.testPairs.size() != trialsPerTone * DEFAULT_FREQUENCIES.length)
+            Log.e("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * DEFAULT_FREQUENCIES.length +
+                                        " test pairs but generated " + this.testPairs.size());
     }
 
     @Override

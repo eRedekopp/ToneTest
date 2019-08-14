@@ -73,11 +73,11 @@ public class HearingTestController {
     }
 
     public void confidenceTestComplete() {  // save results to model, write any necessary output to file, etc.
-        this.iModel.reset();
         this.model.audioTrackCleanup();
-        this.iModel.notifySubscribers();
         this.fileController.saveString(this.iModel.getConfResultsAsString());
         this.fileController.closeFile();
+        this.iModel.reset();
+        this.iModel.notifySubscribers();
     }
 
     //////////////////////////////////// click handlers ////////////////////////////////////////////

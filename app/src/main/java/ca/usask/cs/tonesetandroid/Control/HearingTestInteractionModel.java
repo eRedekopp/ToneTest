@@ -133,10 +133,12 @@ public class HearingTestInteractionModel {
     }
 
     /**
-     * @return The results of the confidence test currently stored as a string, or an empty string if none stored
+     * @return The results of the confidence test currently stored as a string, or the string "Confidence Statistics
+     * Unavailable" if none stored
      */
     public String getConfResultsAsString() {
-        if (this.getConfidenceTest() == null || this.getConfidenceTest().isComplete()) return "";
+        if (this.getConfidenceTest() == null || ! this.getConfidenceTest().isComplete())
+            return "Confidence Statistics Unavailable";
         return this.getConfidenceTest().summaryStatsAsString();
     }
 

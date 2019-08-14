@@ -46,16 +46,20 @@ Big Refactor:
         - implement controller to run tests
         - fix FileNameController
         - adjust UI to make new test runnable
-    Next:
         - Add analysis to confidence test
         - Play sample tones before confidence test
-        - Boost volumes in ToneTest / Conf Test ( 3 "loud" ones in confidence test)
-        - Make sure that playSine plays notes clearly / without pops
+        - Read Carl's paper outline
+        - Make sure that confidence statistics save/are calculated properly
+    Next:
+        - Figure out why playSine doesn't work anymore
+        - Boost volumes in ToneTest (boost top vol estimates?) / Conf Test ( 3 "loud" ones in confidence test)
         - Generate model based on RampTest results alone
+        - Figure out why FileIOController sometimes throws NullPointerException
         - Normalize background noise types to same volume scale as sines/earcons
         - Decide whether to add extra grace period for entering response in puretone test
         - Look into programmatically generating earcons via MIDI
         - Look into whether internal mixer affects waveform
+        - Improve aesthetics / code style / documentation / write developer guide
 
     Confidence tests to add:
         - Sine interval

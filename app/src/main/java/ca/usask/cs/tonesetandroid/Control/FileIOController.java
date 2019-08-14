@@ -58,7 +58,12 @@ public class FileIOController {
      * @param lineEnd The end of the line, ie. information specific only to the trial being saved
      */
     public void saveLine(final String lineEnd) {
-        this.saveString(String.format("%s %s%n", this.getLineBeginning(), lineEnd));
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                saveString(String.format("%s %s%n", getLineBeginning(), lineEnd));
+            }
+        }).start();
     }
 
     /**
@@ -67,21 +72,20 @@ public class FileIOController {
     public synchronized void saveString(final String string) {
         if (currentFile == null) throw new IllegalStateException("File not properly configured");
         else if (! currentFile.exists()) throw new IllegalStateException("Target file does not exist");
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Log.i("FileIOController", string);
-                    BufferedWriter out = new BufferedWriter(new FileWriter(currentFile, true)); // todo
-                                                                                // nullpointerexception happened here
-                    out.write(string);
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        else
+            try {
+                Log.i("FileIOController", string);
+                BufferedWriter out = new BufferedWriter(new FileWriter(currentFile, true)); // todo
+                                                                            // nullpointerexception happened here
+                out.write(string);
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (NullPointerException e) {
+                Log.e("FileIOController",
+                        "NullPointerException occurred when writing string to output file: string = " + string +
+                        " currentFile = " + (currentFile == null ? "null" : currentFile.getAbsolutePath()));
             }
-        }).start();
     }
 
     /**
@@ -96,17 +100,26 @@ public class FileIOController {
      * name, and background noise type/volume
      */
     private String getLineBeginning() {
-        Date startTime;
+        Date startTime = null;
+        SimpleDateFormat dateFormat = null;
         try {
-            startTime = this.iModel.getCurrentTest().getLastTrialStartTime();
+            try {
+                startTime = this.iModel.getCurrentTest().getLastTrialStartTime();
+            } catch (NullPointerException e) {
+                startTime = Calendar.getInstance().getTime();
+            }
+            dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+            String formattedDateTime = dateFormat.format(startTime);  // todo NullPointerException occurred here
+            return String.format("%s Subject %d, Test %s, Noise %s,",
+                    formattedDateTime, model.getSubjectId(), iModel.getCurrentTest().getTestTypeName(),
+                    iModel.getCurrentTest().getBackgroundNoiseType().toString());
         } catch (NullPointerException e) {
-            startTime = Calendar.getInstance().getTime();
+            Log.e("getLineBeginning", "Nullpointerexception caused - dateFormat = " +
+                    (dateFormat == null ? "null" : dateFormat.toPattern()) + " Date = " +
+                    (startTime == null ? "null" : startTime.toString()));
+            e.printStackTrace();
+            return "NULL_UNKNOWN";
         }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-        String formattedDateTime = dateFormat.format(startTime);  // todo NullPointerException occurred here
-        return String.format("%s Subject %d, Test %s, Noise %s,",
-                formattedDateTime, model.getSubjectId(), iModel.getCurrentTest().getTestTypeName(),
-                iModel.getCurrentTest().getBackgroundNoiseType().toString());
     }
 
     /**

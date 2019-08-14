@@ -2,9 +2,6 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
 import android.util.Log;
 
-import org.apache.commons.math3.analysis.function.Sin;
-
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ListIterator;
@@ -12,16 +9,15 @@ import java.util.ListIterator;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
 
-    private static final int DEFAULT_TRIALS_PER_TONE = 20;
+    private static final int DEFAULT_TRIALS_PER_TONE = 5; // todo reset this
     protected static final float[] DEFAULT_FREQUENCIES = {220, 440, 880, 1760, 3520};
     private static final String DEFAULT_TEST_INFO =
             "In this test, tones of various frequencies and volumes will be played at random times. " +
-                    "Please press the \"Heard Tone\" button each time that you hear a tone";
+            "Please press the \"Heard Tone\" button each time that you hear a tone";
 
     protected CalibrationTestResults calibResults;
 
@@ -38,8 +34,9 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
      * Play a sample of all testable tones of the given direction
      *
      * @param direction An integer indicating the direction of samples to be played (ConfidenceTest.DIRECTION_*)
+     * @return A runnable which plays a sample of all tones in this confidence test via the Model
      */
-    public abstract Runnable sampleTones();  // todo use this
+    public abstract Runnable sampleTones();
 
     /**
      * Play a tone of the appropriate type for the subclass

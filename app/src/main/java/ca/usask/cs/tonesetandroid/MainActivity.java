@@ -361,7 +361,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         if (this.dialogNoiseID == BackgroundNoiseType.NOISE_TYPE_NONE) {    // set volume to 0 and continue if no noise
             this.setDialogSelectedItem(0);
             this.setDialogVolume();
-            getBackgroundNoiseAndBeginTest_3(isCalib);
+            BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
+            if (isCalib) controller.handleCalibClick(noiseType);
+            else controller.handleConfClick(noiseType);
         } else {                                                            // else get volume from user
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             final EditText editText = new EditText(context);
@@ -401,7 +403,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     } else {
                         setDialogVolume();
                         dialogInterface.cancel();
-                        getBackgroundNoiseAndBeginTest_3(isCalib);
+                        BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
+                        if (isCalib) controller.handleCalibClick(noiseType);
+                        else controller.handleConfClick(noiseType);
                     }
                 }
             });
@@ -409,31 +413,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             builder.setNegativeButton("Cancel", null);
             builder.show();
         }
-    }
-
-    /**
-     * Setup for test and ask user to press OK to begin. This method should only be called by
-     * getBackgroundNoiseAndBeginTest_2
-     */
-    private void getBackgroundNoiseAndBeginTest_3(final boolean isCalib) {
-        // prompt user to press OK to begin test
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setMessage("Press the button when you are ready to begin the test");
-        builder.setCancelable(false);
-        builder.setPositiveButton("BEGIN", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.cancel();
-                BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
-                if (isCalib) {
-                    controller.handleCalibClick(noiseType);
-                }
-                else {
-                    controller.handleConfClick(noiseType);
-                }
-            }
-        });
-        builder.show();
     }
 
     /**
@@ -498,7 +477,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
                 // todo make custom "view" object that allows a Button and a message at the same time
                 // todo make sure that background noise actually starts
-
 
                 iModel.setTestPaused(true);
                 AlertDialog.Builder infoBuilder = new AlertDialog.Builder(context);
