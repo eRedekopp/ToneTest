@@ -27,6 +27,9 @@ public class HearingTestController {
 
     ////////////////////////////////////////// control /////////////////////////////////////////////
 
+    /**
+     * Resume or start the current hearing test, if necessary
+     */
     public void checkForHearingTestResume() {
         if (! iModel.testThreadActive() && iModel.getCurrentTest() != null && ! iModel.testPaused())
             iModel.getCurrentTest().checkForHearingTestResume();
@@ -49,7 +52,7 @@ public class HearingTestController {
     /**
      * Perform any final actions that need to be done before the calibration test is officially "complete"
      */
-    public void calibrationTestComplete() {  // save results to model, write any necessary output to file, etc.
+    public void calibrationTestComplete() {
         this.fileController.closeFile();
         this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
         this.iModel.reset();
@@ -72,7 +75,10 @@ public class HearingTestController {
                                     this.iModel.getCurrentTest().getTestInfo());
     }
 
-    public void confidenceTestComplete() {  // save results to model, write any necessary output to file, etc.
+    /**
+     * Perform any final actions that need to be done before the confidence test is officially "complete"
+     */
+    public void confidenceTestComplete() {
         this.model.audioTrackCleanup();
         this.fileController.saveString(this.iModel.getConfResultsAsString());
         this.fileController.closeFile();

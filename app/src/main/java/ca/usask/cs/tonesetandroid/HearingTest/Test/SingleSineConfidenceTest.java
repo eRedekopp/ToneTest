@@ -5,14 +5,11 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
@@ -28,9 +25,17 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
         return new Runnable() {
             @Override
             public void run() {
-                for (float freq : DEFAULT_FREQUENCIES) {
-                    playSine(freq, 30, TONE_DURATION_MS);
-                    sleepThread(1500, 1500);
+                if (! iModel.sampleThreadActive()) {
+                    try {
+                        iModel.setSampleThreadActive(true);
+                        for (float freq : DEFAULT_FREQUENCIES) {
+                            if (!iModel.testPaused()) return;  // stop if user un-pauses during tones
+                            playSine(freq, 70, TONE_DURATION_MS);
+                            sleepThread(800, 800);
+                        }
+                    } finally {
+                        iModel.setSampleThreadActive(false);
+                    }
                 }
             }
         };

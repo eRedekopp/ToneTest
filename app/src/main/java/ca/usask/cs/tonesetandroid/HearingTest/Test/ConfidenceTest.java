@@ -17,7 +17,9 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     protected static final float[] DEFAULT_FREQUENCIES = {220, 440, 880, 1760, 3520};
     private static final String DEFAULT_TEST_INFO =
             "In this test, tones of various frequencies and volumes will be played at random times. " +
-            "Please press the \"Heard Tone\" button each time that you hear a tone";
+            "Please press the \"Heard Tone\" button each time that you hear a tone. " +
+            "To hear a sample of the tones that will be played in this test, press the \"Play Samples\" button. Once " +
+            "you are familiar with the tones, press the \"Done\" button";
 
     protected CalibrationTestResults calibResults;
 
@@ -76,7 +78,9 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
             public void run() {
                 try {
                     iModel.setTestThreadActive(true);
-                    while (!isComplete() && !iModel.testPaused()) {
+                    while (!isComplete()) {
+                        if (iModel.testPaused() || ! iModel.testing()) return;
+
                         iModel.resetAnswer();
                         T current = position.next();
                         saveLine();

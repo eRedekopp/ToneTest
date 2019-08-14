@@ -50,11 +50,12 @@ Big Refactor:
         - Play sample tones before confidence test
         - Read Carl's paper outline
         - Make sure that confidence statistics save/are calculated properly
-    Next:
         - Figure out why playSine doesn't work anymore
+        - Figure out why FileIOController sometimes throws NullPointerException (Done, I think)
+    Next:
         - Boost volumes in ToneTest (boost top vol estimates?) / Conf Test ( 3 "loud" ones in confidence test)
         - Generate model based on RampTest results alone
-        - Figure out why FileIOController sometimes throws NullPointerException
+            - Adjust RampTest and FileIOController as necessary
         - Normalize background noise types to same volume scale as sines/earcons
         - Decide whether to add extra grace period for entering response in puretone test
         - Look into programmatically generating earcons via MIDI

@@ -303,7 +303,18 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
         this.model.reset();
         this.model.setSubjectId(subjectID);
-        if (!pathName.equals("")) FileIOController.initializeModelFromFile(this.model, new File(pathName));
+        if (!pathName.equals(""))
+            try {
+                FileIOController.initializeModelFromFile(this.model, new File(pathName));
+            } catch (RuntimeException e) {
+                showErrorDialog("Unable to read file", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        goToInit();
+                    }
+                });
+                e.printStackTrace();
+            }
 
         model.printResultsToConsole();
         this.model.notifySubscribers();
@@ -475,29 +486,27 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void run() {
 
-                // todo make custom "view" object that allows a Button and a message at the same time
                 // todo make sure that background noise actually starts
 
                 iModel.setTestPaused(true);
                 AlertDialog.Builder infoBuilder = new AlertDialog.Builder(context);
                 infoBuilder.setTitle("Information");
                 infoBuilder.setCancelable(false);
-                Button button = new Button(context);
-                button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        new Thread(r).start();
-                    }
-                });
-                button.setText("Play Samples");
-                infoBuilder.setView(button);
+                MessageButtonView mesBut = new MessageButtonView(context);
+                mesBut.setButtonAction(r);
+                mesBut.setButtonText("Play Samples");
+                mesBut.setMessageText(message);
+
                 infoBuilder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        showInformationDialog(message);
+                        iModel.setTestPaused(false);
+                        while (iModel.sampleThreadActive()) continue;  // idle until sample finishes playing
                         noiseController.playNoise(iModel.getCurrentNoise());
                     }
                 });
+
+                infoBuilder.setView(mesBut);
                 infoBuilder.show();
             }
         });

@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
@@ -25,13 +27,10 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
                                    ReduceTest.ReduceTestResults reduceResults,
                                    int nVolsPerFreq,
                                    int nTrialsPerVol) {
-
-        // todo boost volumes
-        // todo selects too many pairs?
         ArrayList<FreqVolPair> allTones = new ArrayList<>();
         for (float freq : STANDARD_FREQUENCIES) {
-            double topVolEst = Tone.getVolForFreq(rampResults.getResults(), freq);
-            double bottomVolEst = Tone.getVolForFreq(reduceResults.getResults(), freq);
+            double topVolEst = Tone.getVolForFreq(rampResults.getResults(), freq) * 1.3; // boost volumes
+            double bottomVolEst = Tone.getVolForFreq(reduceResults.getResults(), freq) * 1.3;
             for (double vol = bottomVolEst;
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / nVolsPerFreq) {
@@ -41,5 +40,9 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
         // fill CurrentVolumes with one freqvolpair for each individual tone that will be played in the test
         this.testTones = new ArrayList<>();
         for (int i = 0; i < nTrialsPerVol; i++) this.testTones.addAll(allTones);
+
+        if (this.testTones.size() != nVolsPerFreq * nTrialsPerVol) // sanity check
+            Log.e("SineCalibration", "Error configuring test tones: should have generated "
+                    + nVolsPerFreq * nTrialsPerVol + " trials but generated " + this.testTones.size());
     }
 }

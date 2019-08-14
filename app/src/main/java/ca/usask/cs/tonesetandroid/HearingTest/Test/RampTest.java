@@ -36,7 +36,8 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
                     iModel.setTestThreadActive(true);
                     double heardVol;
 
-                    while (! iModel.testPaused() && ! isComplete()) {
+                    while (! isComplete()) {
+                        if (iModel.testPaused() || ! iModel.testing()) return;
                         float currentFreq = position.next();
 
                         // test frequency, ramp up quickly

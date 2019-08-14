@@ -129,25 +129,18 @@ public abstract class HearingTest<T extends Tone> {
      * Play a single sine wave via the model
      */
     protected void playSine(float freq, double vol, int durationMs) { // todo sounds horible
-        try {
-            byte[] buf = new byte[Model.MIN_AUDIO_BUF_SIZE];
-            model.enforceMaxVolume();
-            model.startAudio();
+        model.enforceMaxVolume();
+        model.startAudio();
+        byte[] buf = new byte[2];
+        for (int i = 0; i < durationMs * (float) 44100 / 1000; i++) {
             float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
-            for (int i = 0; i < durationMs * (float) Model.OUTPUT_SAMPLE_RATE / 1000; ) {
-                for (int j = 0; j < Model.MIN_AUDIO_BUF_SIZE; j++, i++) {
-                    for (int k = 0; k < 2 && j+k < Model.MIN_AUDIO_BUF_SIZE; k++) {
-                        double angle = 2 * i / (period) * Math.PI;
-                        short a = (short) (Math.sin(angle) * vol);
-                        buf[j+k] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
-                        buf[j+k] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
-                    }
-                }
-                model.lineOut.write(buf, 0, Model.MIN_AUDIO_BUF_SIZE);
-            }
-        } finally {
-            model.pauseAudio();
+            double angle = 2 * i / (period) * Math.PI;
+            short a = (short) (Math.sin(angle) * vol);
+            buf[0] = (byte) (a & 0xFF); // write lower 8bits (________WWWWWWWW) out of 16
+            buf[1] = (byte) (a >> 8);   // write upper 8bits (WWWWWWWW________) out of 16
+            model.lineOut.write(buf, 0, 2);
         }
+        model.pauseAudio();
     }
 
     protected void playSine(FreqVolPair fvp, int durationMs) {

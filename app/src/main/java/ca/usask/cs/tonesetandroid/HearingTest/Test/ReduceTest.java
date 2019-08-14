@@ -49,7 +49,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
 
                     while (! isComplete()) {
                         for (T trial : currentVolumes) {
-                            if (iModel.testPaused()) return;
+                            if (iModel.testPaused() || ! iModel.testing()) return;
 
                             saveLine();
                             newCurrentTrial(trial);

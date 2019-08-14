@@ -23,6 +23,7 @@ public class HearingTestInteractionModel {
 
     // current state of test
     private boolean testThreadActive;
+    private boolean sampleThreadActive;
     private boolean testPaused;
     private HearingTest currentTest;
 
@@ -51,6 +52,14 @@ public class HearingTestInteractionModel {
 
     public void setTestThreadActive(boolean testThreadActive) {
         this.testThreadActive = testThreadActive;
+    }
+
+    public boolean sampleThreadActive() {
+        return sampleThreadActive;
+    }
+
+    public void setSampleThreadActive(boolean sampleThreadActive) {
+        this.sampleThreadActive = sampleThreadActive;
     }
 
     public void setTestPaused(boolean paused) {
