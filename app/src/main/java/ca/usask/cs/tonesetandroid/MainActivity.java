@@ -297,7 +297,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         super.onActivityResult(requestCode, resultCode, data);
 
         int subjectID = data.getIntExtra("subjectID", -1);
-        String pathName = data.getStringExtra("pathName");
+        final String pathName = data.getStringExtra("pathName");
 
         if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
 
@@ -305,7 +305,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.model.setSubjectId(subjectID);
         if (!pathName.equals(""))
             try {
-                FileIOController.initializeModelFromFile(this.model, new File(pathName));
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        FileIOController.initializeModelFromFile(model, new File(pathName));
+                    }
+                }).start();
+                waitUntilLoadingComplete();
             } catch (RuntimeException e) {
                 showErrorDialog("Unable to read file", new DialogInterface.OnClickListener() {
                     @Override
@@ -315,9 +321,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 });
                 e.printStackTrace();
             }
-
-        model.printResultsToConsole();
-        this.model.notifySubscribers();
     }
 
     @Override
@@ -486,8 +489,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             @Override
             public void run() {
 
-                // todo make sure that background noise actually starts
-
                 iModel.setTestPaused(true);
                 AlertDialog.Builder infoBuilder = new AlertDialog.Builder(context);
                 infoBuilder.setTitle("Information");
@@ -510,6 +511,34 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 infoBuilder.show();
             }
         });
+    }
+
+    /**
+     * Show an un-cancelable AlertDialog that says "loading" and automatically dismisses itself when model.hasResults()
+     * becomes true
+     */
+    public void waitUntilLoadingComplete() {
+        final AlertDialog alertDialog;
+
+        AlertDialog.Builder waitBuilder = new AlertDialog.Builder(this);
+        waitBuilder.setTitle("Please Wait");
+        waitBuilder.setMessage("Loading...");
+        waitBuilder.setCancelable(false);
+
+        alertDialog = waitBuilder.create();
+
+        Thread listener = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (! model.hasResults()) continue;
+                alertDialog.cancel();
+                model.printResultsToConsole();
+                model.notifySubscribers();
+            }
+        });
+
+        alertDialog.show();
+        listener.start();
     }
 
     /**

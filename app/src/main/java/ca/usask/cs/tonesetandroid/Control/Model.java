@@ -35,6 +35,7 @@ public class Model {
 
     /////////////// Vars/values for audio ///////////////
     public AudioTrack lineOut;
+    public static byte[] buf = new byte[64];  // a byte buffer that will always be in memory
     public static final int OUTPUT_SAMPLE_RATE  = 44100;  // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     public int duration_ms; // how long to play each tone in a test
@@ -183,7 +184,7 @@ public class Model {
         else return this.calibrationTestResults.getNumOfTrials();
     }
 
-    public double getCalibProbability(SinglePitchTone tone, int n) throws IllegalArgumentException {
+    public double getCalibProbability(SinglePitchTone tone, int n) throws IllegalArgumentException {  // todo
         if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
         else return this.getCalibrationTestResults().getProbOfHearing(tone);
     }

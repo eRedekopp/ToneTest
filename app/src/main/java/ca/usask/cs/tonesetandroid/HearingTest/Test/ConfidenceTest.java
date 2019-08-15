@@ -13,7 +13,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
 
-    protected static final int DEFAULT_TRIALS_PER_TONE = 5; // todo reset this
+    protected static final int DEFAULT_TRIALS_PER_TONE = 20;
     protected static final int DEFAULT_VOLS_PER_FREQ = 1;
     protected static final float[] DEFAULT_FREQUENCIES = {220, 440, 880, 1760, 3520};
     protected static final String DEFAULT_TEST_INFO =
@@ -148,7 +148,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                 } catch (NullPointerException e) {
                     incorrect = 0;
                 }
-                double confProb = (double) correct / (double) (correct + incorrect),
+                double  confProb = (double) correct / (double) (correct + incorrect),
                         calibProb,
                         rampProb;
                 calibProb = model.getCalibProbability(t, n);

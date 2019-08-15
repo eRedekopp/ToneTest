@@ -61,6 +61,7 @@ Big Refactor:
         - Look into programmatically generating earcons via MIDI
         - Look into whether internal mixer affects waveform
         - Improve aesthetics / code style / documentation / write developer guide
+        - Find a way to eliminate break in crowd noise (low priority) (silence at end of wav?)
 
     Confidence tests to add:
         - Sine interval

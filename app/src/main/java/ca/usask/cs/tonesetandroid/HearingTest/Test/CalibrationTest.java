@@ -17,8 +17,8 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
 
     protected static final float[] STANDARD_FREQUENCIES = {200, 500, 1000, 2000, 4000};
 
-    protected static final int DEFAULT_N_VOL_PER_FREQ = 2;  // todo reset these
-    protected static final int DEFAULT_N_TRIAL_PER_VOL = 2;
+    protected static final int DEFAULT_N_VOL_PER_FREQ  = 5;
+    protected static final int DEFAULT_N_TRIAL_PER_VOL = 5;
 
     // The tones that will be tested in this calibration test
     protected ArrayList<T> testTones;
@@ -74,7 +74,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                     while (! isComplete()) {
                         if (iModel.testPaused() || ! iModel.testing()) return;
 
-                        sleepThread(1000, 3000);
+                        sleepThread(1800, 3000);
                         iModel.resetAnswer();
                         T current = position.next();
                         saveLine();

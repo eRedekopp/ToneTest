@@ -3,6 +3,7 @@ package ca.usask.cs.tonesetandroid.Control;
 import android.content.Context;
 import android.media.MediaScannerConnection;
 import android.os.Environment;
+import android.renderscript.ScriptGroup;
 import android.util.Log;
 
 import java.io.BufferedWriter;
@@ -17,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Scanner;
 
@@ -102,24 +104,23 @@ public class FileIOController {
     private String getLineBeginning() {
         Date startTime = null;
         SimpleDateFormat dateFormat = null;
+        String formattedDateTime = null;
+
         try {
-            try {
-                startTime = this.iModel.getCurrentTest().getLastTrialStartTime();
-            } catch (NullPointerException e) {
-                startTime = Calendar.getInstance().getTime();
-            }
+            startTime = this.iModel.getCurrentTest().getLastTrialStartTime();
             dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-            String formattedDateTime = dateFormat.format(startTime);  // todo NullPointerException occurred here
-            return String.format("%s Subject %d, Test %s, Noise %s,",
-                    formattedDateTime, model.getSubjectId(), iModel.getCurrentTest().getTestTypeName(),
-                    iModel.getCurrentTest().getBackgroundNoiseType().toString());
+            formattedDateTime = dateFormat.format(startTime);
         } catch (NullPointerException e) {
             Log.e("getLineBeginning", "Nullpointerexception caused - dateFormat = " +
                     (dateFormat == null ? "null" : dateFormat.toPattern()) + " Date = " +
                     (startTime == null ? "null" : startTime.toString()));
             e.printStackTrace();
-            return "NULL_UNKNOWN";
+            formattedDateTime = "TimeFetchError";
         }
+
+        return String.format("%s Subject %d, Test %s, Noise %s,",
+                formattedDateTime, model.getSubjectId(), iModel.getCurrentTest().getTestTypeName(),
+                iModel.getCurrentTest().getBackgroundNoiseType().toString());
     }
 
     /**
@@ -342,63 +343,79 @@ public class FileIOController {
         }
     }
 
-    public static void initializeModelFromFile(Model model, File file) {
+    /**
+     * Given a model and a file, set model.calibrationTestResults to a new CalibrationTestResults containing the data
+     * in the file
+     * @throws InputMismatchException If the given file was not formatted correctly
+     */
+    public static void initializeModelFromFile(Model model, File file) throws InputMismatchException {
         // "%s Subject %d, Test %s, Noise %s,"              this.getLineBeginning()
         // "freq(Hz) %.1f, vol %.1f, %s, %d clicks: %s"     CalibrationTest.getLineEnd()
 
-        Scanner scanner;
-        CalibrationTestResults newResults = new CalibrationTestResults();
+        // todo very expensive (Scannners?)
+
+        Scanner scanner = null, subScanner = null;
+
         try {
-            scanner = new Scanner(file);
-            scanner.useDelimiter(",");
-        } catch (FileNotFoundException e) {
-            Log.e("initializeModel", "File not found");
-            e.printStackTrace();
-            return;
-        }
 
-        int subjectID = -1;
-
-        while (scanner.hasNext()) {
-            if (subjectID == -1) {  // set subject id if necessary
-                String nextToken = scanner.next();
-                Scanner subScanner = new Scanner(nextToken);
-                subScanner.useDelimiter(" ");
-                subScanner.next();
-                subScanner.next();
-                subjectID = subScanner.nextInt();
-                subScanner.close();
-            } else {
-                scanner.next();
+            CalibrationTestResults newResults = new CalibrationTestResults();
+            try {
+                scanner = new Scanner(file);
+                scanner.useDelimiter(",");
+            } catch (FileNotFoundException e) {
+                Log.e("initializeModel", "File not found");
+                e.printStackTrace();
+                return;
             }
 
-            String testName = scanner.next();  // skip test name
-            // skip if trial is from a ramp or reduce test
-            if (testName.contains("ramp") || testName.contains("reduce")) { scanner.nextLine(); continue; }
-            scanner.next();     // skip noise type
+            int subjectID = -1;
 
-            String freqToken = scanner.next();
-            Scanner subScanner = new Scanner(freqToken);
-            subScanner.useDelimiter(" ");
-            subScanner.next();  // skip "freq" label
-            float trialFreq = subScanner.nextFloat();
+            while (scanner.hasNext()) {
 
-            String volToken = scanner.next();
-            subScanner = new Scanner(volToken);
-            subScanner.next();  // skip "vol" label
-            double trialVol = subScanner.nextDouble();
+                if (subjectID == -1) {  // set subject id if necessary
+                    String nextToken = scanner.next();
+                    subScanner = new Scanner(nextToken);
+                    subScanner.useDelimiter(" ");
+                    subScanner.next();
+                    subScanner.next();
+                    subjectID = subScanner.nextInt();
+                    subScanner.close();
+                } else {
+                    scanner.next();
+                }
 
-            String heardString = scanner.next();
-            boolean trialHeard;
-            if (heardString.toLowerCase().matches("\\s*heard")) trialHeard = true;
-            else if (heardString.toLowerCase().matches("\\s*notheard")) trialHeard = false;
-            else throw new RuntimeException("Unknown 'heard' indicator in file: " + heardString);
+                String testName = scanner.next();  // skip test name
+                // skip if trial is from a ramp or reduce test
+                if (testName.contains("ramp") || testName.contains("reduce")) { scanner.nextLine(); continue; }
+                scanner.next();     // skip noise type
 
-            newResults.addResult(new FreqVolPair(trialFreq, trialVol), trialHeard);
-            scanner.nextLine();
-            subScanner.close();
+                String freqToken = scanner.next();
+                subScanner = new Scanner(freqToken);
+                subScanner.useDelimiter(" ");
+                subScanner.next();  // skip "freq" label
+                float trialFreq = subScanner.nextFloat();
+
+                String volToken = scanner.next();
+                subScanner = new Scanner(volToken);
+                subScanner.next();  // skip "vol" label
+                double trialVol = subScanner.nextDouble();
+
+                String heardString = scanner.next();
+                boolean trialHeard;
+                if (heardString.toLowerCase().matches("\\s*heard")) trialHeard = true;
+                else if (heardString.toLowerCase().matches("\\s*notheard")) trialHeard = false;
+                else throw new RuntimeException("Unknown 'heard' indicator in file: " + heardString);
+
+                newResults.addResult(new FreqVolPair(trialFreq, trialVol), trialHeard);
+                scanner.nextLine();
+                subScanner.close();
+            }
+
+            model.setCalibrationTestResults(newResults);
+
+        } finally {
+            if (subScanner != null) subScanner.close();
+            if (scanner != null) scanner.close();
         }
-
-        model.setCalibrationTestResults(newResults);
     }
 }

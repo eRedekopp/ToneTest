@@ -488,6 +488,7 @@ public class CalibrationTestResults {
         public void addResult(double vol, boolean heard) {
             // update testResultsPerVol
             if (!testResultsPerVol.containsKey(vol)) testResultsPerVol.put(vol, new ArrayList<Boolean>());
+
             testResultsPerVol.get(vol).add(heard);
             // update to timesHeard / timesNotHeard
             if (heard)
