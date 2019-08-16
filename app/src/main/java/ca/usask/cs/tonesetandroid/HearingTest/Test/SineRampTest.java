@@ -22,7 +22,7 @@ public class SineRampTest extends RampTest<FreqVolPair> {
 
     protected double rampUp(double rateOfRamp, float freq, double startingVol) {
 
-        byte[] buf = new byte[2];
+        byte[] buf = Model.buf;
 
         model.enforceMaxVolume();
         model.startAudio();
@@ -34,8 +34,8 @@ public class SineRampTest extends RampTest<FreqVolPair> {
                 if (iModel.answered()) {
                     return volume;
                 }
-                model.duration_ms = 50; //play the tone at this volume for 0.05s
-                for (int i = 0; i < model.duration_ms * (float) 44100 / 1000; i++) { //1000 ms in 1 second
+
+                for (int i = 0; i < TIME_PER_VOL_MS * (float) 44100 / 1000; i++) { //1000 ms in 1 second
                     float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
                     double angle = 2 * i / (period) * Math.PI;
                     short a = (short) (Math.sin(angle) * volume);

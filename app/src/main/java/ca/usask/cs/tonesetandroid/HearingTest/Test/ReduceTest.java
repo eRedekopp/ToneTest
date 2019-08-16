@@ -90,7 +90,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
     @Override
     protected final String getLineEnd(SingleTrialResult result) {
         return String.format("%s, %s, %d clicks: %s",
-                this.currentTrial.tone.toString(),
+                this.currentTrial.tone().toString(),
                 this.currentTrial.wasCorrect() ? "Heard" : "NotHeard", this.currentTrial.nClicks(),
                 Arrays.toString(this.currentTrial.clickTimes()));
     }

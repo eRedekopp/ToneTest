@@ -4,19 +4,40 @@ import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
-public class SingleTrialResult {
+/**
+ * A class to store information about one specific trial of a HearingTest
+ * @param <T> The tone type of this trial's associated HearingTest
+ */
+public class SingleTrialResult<T extends Tone> {
 
-    private Date startTime;
+    /**
+     * The time in seconds since 1970 at which start() was called
+     */
+    private long startTime;
+
+    /**
+     * A list of all Clicks that were registered during this trial
+     */
     private ArrayList<Click> clicks;
-    public final Tone tone;
+
+    /**
+     * The tone being played for this trial
+     */
+    private final T tone;
+
+    /**
+     * Did the user hear the tone / discern the direction correctly?
+     */
     private boolean wasCorrect = false;
 
-    public SingleTrialResult(Tone tone) {
+    /**
+     * @param tone The tone being played for this trial
+     */
+    public SingleTrialResult(T tone) {
         this.clicks = new ArrayList<>();
         this.tone = tone;
     }
@@ -34,7 +55,7 @@ public class SingleTrialResult {
      * in a test
      */
     public void start() {
-        this.startTime = Calendar.getInstance().getTime();
+        this.startTime = Calendar.getInstance().getTime().getTime();
     }
 
     /**
@@ -43,6 +64,10 @@ public class SingleTrialResult {
      */
     public void addClick(Click click) {
         this.clicks.add(click);
+    }
+
+    public T tone() {
+        return tone;
     }
 
     /**
@@ -72,7 +97,7 @@ public class SingleTrialResult {
      */
     public long[] clickTimes() {
         long[] newArr = new long[this.clicks.size()];
-        for (int i = 0; i < this.clicks.size(); i++) newArr[i] = this.clicks.get(i).time - this.startTime.getTime();
+        for (int i = 0; i < this.clicks.size(); i++) newArr[i] = this.clicks.get(i).time - this.startTime;
         return newArr;
     }
 
@@ -86,13 +111,13 @@ public class SingleTrialResult {
         for (Click click : this.clicks) {
             builder.append(HearingTest.answerAsString(click.answer));
             builder.append(' ');
-            builder.append(click.time - this.startTime.getTime());
+            builder.append(click.time - this.startTime);
             builder.append(", ");
         }
         return builder.toString();
     }
 
-    public Date getStartTime() {
+    public long getStartTime() {
         return this.startTime;
     }
 

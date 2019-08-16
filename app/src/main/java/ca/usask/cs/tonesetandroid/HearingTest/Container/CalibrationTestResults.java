@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
@@ -401,6 +402,14 @@ public class CalibrationTestResults {
         return aResult.getNumSamples(aVol);
     }
 
+    public int getNumOfTrials(Tone tone) {
+        try {
+            return this.allResults.get(tone.freq()).getNumSamples(tone.vol());
+        } catch (NullPointerException e) {
+            return 0;
+        }
+    }
+
     @Override
     @NonNull
     public String toString() {
@@ -611,15 +620,24 @@ public class CalibrationTestResults {
          */
         @SuppressWarnings("ConstantConditions")
         public HearingTestSingleFreqResult getSubsetResult(int n) {
-            HearingTestSingleFreqResult newResult = new HearingTestSingleFreqResult(this.freq);
-            for (Double vol : this.getVolumes()) {
-                // addResult for the first n responses in the hearing test
-                ListIterator<Boolean> iter = this.testResultsPerVol.get(vol).listIterator();
-                for (int i = 0; i < n; i++) {
-                    newResult.addResult(vol, iter.next());
+            ListIterator<Boolean> iter = null;
+            HearingTestSingleFreqResult newResult = null;
+            double curvol = -1;
+                newResult = new HearingTestSingleFreqResult(this.freq);
+                for (Double vol : this.getVolumes()) {
+                    curvol = vol;
+                    // addResult for the first n responses in the hearing test
+                    iter  = this.testResultsPerVol.get(vol).listIterator();
+                        for (int i = 0; i < n; i++) {
+                            try {
+                                newResult.addResult(vol, iter.next());
+                            } catch (NoSuchElementException e) {
+                                break;  // if not enough trials for volume, use as many samples
+                                        // as possible
+                            }
+                        }
                 }
-            }
-            return newResult;
+                return newResult;
         }
 
         @Override

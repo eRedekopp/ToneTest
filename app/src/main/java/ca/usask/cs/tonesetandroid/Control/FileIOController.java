@@ -102,7 +102,7 @@ public class FileIOController {
      * name, and background noise type/volume
      */
     private String getLineBeginning() {
-        Date startTime = null;
+        Long startTime = null;
         SimpleDateFormat dateFormat = null;
         String formattedDateTime = null;
 

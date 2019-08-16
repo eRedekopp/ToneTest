@@ -2,14 +2,23 @@ package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 import java.util.Calendar;
 
+/**
+ * A class to store information about a specific button press
+ */
 public class Click {
 
-    public final long time;  // the time in milliseconds since 1970 at which the click was registered
-    public final int answer; // the response value associated with this click
+    /**
+     * the time in milliseconds since 1970 at which the click was registered
+     */
+    public final long time;
 
-    public Click(int direction) {
+    /**
+     * the response value associated with this click
+     */
+    public final int answer;
+
+    public Click(int answer) {
         this.time = Calendar.getInstance().getTime().getTime();
-        this.answer = direction;
+        this.answer = answer;
     }
-
 }

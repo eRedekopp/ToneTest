@@ -12,7 +12,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.ReducibleTone;
 
 public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
-    protected static final int TIME_PER_VOL = 50;
+    protected static final int TIME_PER_VOL_MS = 50;
     protected static final double RAMP_RATE_1 = 1.05;
     protected static final double RAMP_RATE_2 = 1.025;
     protected static final double STARTING_VOL = 0.5;

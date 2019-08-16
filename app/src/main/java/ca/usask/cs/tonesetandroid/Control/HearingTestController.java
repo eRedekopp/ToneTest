@@ -31,7 +31,7 @@ public class HearingTestController {
      * Resume or start the current hearing test, if necessary
      */
     public void checkForHearingTestResume() {
-        if (! iModel.testThreadActive() && iModel.getCurrentTest() != null && ! iModel.testPaused())
+        if (! iModel.testThreadActive() && iModel.testing() && ! iModel.testPaused())
             iModel.getCurrentTest().checkForHearingTestResume();
     }
 
@@ -100,7 +100,9 @@ public class HearingTestController {
 
     public void handleConfClick(BackgroundNoiseType noise) {
         if (! model.hasResults()) throw new IllegalStateException("No results stored in model");
-        iModel.setConfidenceTest(new SingleSineConfidenceTest(model.getCalibrationTestResults(), noise));
+        SingleSineConfidenceTest newtest = new SingleSineConfidenceTest(model.getCalibrationTestResults(), noise);
+        newtest.initialize();
+        iModel.setConfidenceTest(newtest);
 
         this.confidenceTest();
     }

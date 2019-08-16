@@ -12,7 +12,6 @@ import com.paramsen.noise.NoiseOptimized;
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.ConfidenceTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -30,23 +29,22 @@ public class Model {
 
     private AudioManager audioManager;
 
-    /////////////// vars/values for hearing test ///////////////
+    /////////////// Stored hearing test results ///////////////
     CalibrationTestResults calibrationTestResults;   // final results of test
 
     /////////////// Vars/values for audio ///////////////
     public AudioTrack lineOut;
-    public static byte[] buf = new byte[64];  // a byte buffer that will always be in memory
     public static final int OUTPUT_SAMPLE_RATE  = 44100;  // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     public int duration_ms; // how long to play each tone in a test
-    public static int MIN_AUDIO_BUF_SIZE = AudioTrack.getMinBufferSize(44100, AudioFormat.CHANNEL_OUT_MONO,
+    public static int MIN_AUDIO_BUF_SIZE = AudioTrack.getMinBufferSize(OUTPUT_SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
                                                                          AudioFormat.ENCODING_PCM_16BIT);
+    public static byte[] buf = new byte[MIN_AUDIO_BUF_SIZE];    // a byte buffer that will always be in memory
+                                                                // For some reason, using a buf saved in a function's
+                                                                // scope will occasionally crash the entire app
 
     /////////////// Vars for file io ///////////////
     private int subjectId = -1;     // -1 indicates not set
-
-    /////////////// vars/values for confidence test ///////////////
-    ArrayList<ConfidenceTestResults.StatsAnalysisResultsContainer> analysisResults;
 
     public Model() {
         subscribers = new ArrayList<>();
@@ -57,7 +55,6 @@ public class Model {
      * Resets this model to its just-initialized state.
      */
     public void reset() {
-        this.analysisResults = new ArrayList<>();
         resetCalibrationTestResults();
     }
 
@@ -72,90 +69,6 @@ public class Model {
         if (this.calibrationTestResults == null) return false;
         else return ! this.calibrationTestResults.isEmpty();
     }
-
-
-    public boolean hasAnalysisResults() {
-        try {
-            return ! this.analysisResults.isEmpty();
-        } catch (NullPointerException e) {
-            return false;
-        }
-    }
-
-// todo decide what to do with this
-
-//    /**
-//     * Populate model.confidenceTestIntervals with all freqvolpairs that will be tested in the next confidence test
-//     */
-//    @SuppressWarnings("ConstantConditions")
-//    public void configureConfidenceTestEarcons() {
-//
-//       ///////////////////////////////////////////////////
-//       ////// Earcon selection gets adjusted here ////////
-//       ///////////////////////////////////////////////////
-//
-//        // select frequencies / build earcon maps
-//        Float[] confFreqs = {523f, 1046f, 2093f, 3136f};
-//        ArrayList<Float> freqList = new ArrayList<>(Arrays.asList(confFreqs));
-//        HashMap<Float, Integer> earconsUp   = new HashMap<>(),          // set resource IDs for each earcon
-//                                earconsDown = new HashMap<>(),
-//                                earconsFlat = new HashMap<>();
-//        earconsUp.put(523f, R.raw.ec523hzmaritriadupshort);
-//        earconsUp.put(1046f, R.raw.ec1046hzmaritriadupshort);
-//        earconsUp.put(2093f, R.raw.ec2093hzmaritriadupshort);
-//        earconsUp.put(3136f, R.raw.ec3136hzmaritriadupshort);
-//        earconsDown.put(523f, R.raw.ec523hzmaritriaddownshort);
-//        earconsDown.put(1046f, R.raw.ec1046hzmaritriaddownshort);
-//        earconsDown.put(2093f, R.raw.ec2093hzmaritriaddownshort);
-//        earconsDown.put(3136f, R.raw.ec3136hzmaritriaddownshort);
-//        earconsFlat.put(523f, R.raw.ec523hzclavneg);
-//        earconsFlat.put(1046f, R.raw.ec1046hzclavneg);
-//        earconsFlat.put(2093f, R.raw.ec2093hzclavneg);
-//        earconsFlat.put(3136f, R.raw.ec3136hzclavneg);
-//
-//        // set list to contain 2 copies of each frequency
-//        freqList.addAll(Arrays.asList(confFreqs));
-//        // randomize the order of test frequencies
-//        Collections.shuffle(freqList);
-//
-//        int numEarconsToTest = 6;
-//
-//        // create list to randomize order of up/down/flat earcons
-//        ArrayList<Integer> directionList = new ArrayList<>();
-//        for (int i = 0; i < 2; i++) directionList.addAll(Arrays.asList(
-//                                    Earcon.DIRECTION_UP, Earcon.DIRECTION_DOWN, Earcon.DIRECTION_FLAT));
-//        Collections.shuffle(directionList);
-//
-//        // for each frequency, add an upward, downward, and flat earcon at a volume some percentage of the way
-//        // between estimates for "completely inaudible" and "completely audible" volumes.
-//        float pct = 0;  // percentage of the way between volFloor and volCeiling at which trial should be conducted
-//        float jumpSize = 1f / numEarconsToTest;
-//        for (int i = 0; i < numEarconsToTest; i++) {
-//            float freq = freqList.get(i);
-//            int direction = directionList.get(i);
-//            HashMap<Float, Integer> earconIdMap;
-//            switch (direction) {
-//                case Earcon.DIRECTION_DOWN: earconIdMap = earconsDown; break;
-//                case Earcon.DIRECTION_UP:   earconIdMap = earconsUp; break;
-//                case Earcon.DIRECTION_FLAT: earconIdMap = earconsFlat; break;
-//                default: throw new RuntimeException("Unknown direction value found : " + direction);
-//            }
-//
-//            double volFloor   = this.calibrationTestResults.getVolFloorEstimateForEarcon(earconIdMap.get(freq));
-//            double volCeiling = this.calibrationTestResults.getVolCeilingEstimateForEarcon(earconIdMap.get(freq));
-//            Log.d("configureConfEarcons", "volFloor = " + volFloor + " volCeiling = " + volCeiling);
-//            double testVol = volFloor + pct * (volCeiling - volFloor);
-//            this.confidenceTestEarcons.add(new Earcon(freq, earconIdMap.get(freq), testVol, direction));
-//
-//            pct += jumpSize;
-//        }
-//
-//        // populate list of all trials
-//        ArrayList<Earcon> allTrials = new ArrayList<>();
-//        for (int i = 0; i < CONF_NUMBER_OF_TRIALS_PER_EARCON; i++) allTrials.addAll(this.confidenceTestEarcons);
-//        Collections.shuffle(allTrials);
-//        this.confidenceTestEarcons = allTrials;
-//    }
 
     /**
      * Configure the audio in preparation for a hearing test - only call directly before a test
@@ -184,20 +97,32 @@ public class Model {
         else return this.calibrationTestResults.getNumOfTrials();
     }
 
-    public double getCalibProbability(SinglePitchTone tone, int n) throws IllegalArgumentException {  // todo
+    public double getCalibProbability(SinglePitchTone tone, int n) throws IllegalArgumentException {
         if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
-        else return this.getCalibrationTestResults().getProbOfHearing(tone);
+        else {
+            CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
+            return newCalibResults.getProbOfHearing(tone);
+        }
     }
 
+    /**
+     * Get the probability of hearing or differentiating the given tone, given the results stored in this model
+     *
+     * @param tone The tone whose probability is to be determined
+     * @param n The number of trials to use for the sample size (ie. will calculate probabilities based on the first
+     *          n trials of each tone from the confidence test), n <= confidence test sample size
+     * @return The probability of hearing or differentiating the given tone
+     * @throws IllegalArgumentException If n > confidence test sample size
+     */
     public double getCalibProbability(Tone tone, int n) throws IllegalArgumentException {
-        return 0.0; // todo
+        return this.getCalibProbability(new FreqVolPair(tone.freq(), tone.vol()), n);
     }
 
-    public double getRampProbability(SinglePitchTone tone) {
-        return 0.0; // todo
+    public double getRampProbability(SinglePitchTone tone, int n) {
+        return 0.010; // todo
     }
 
-    public double getRampProbability(Tone tone) {
+    public double getRampProbability(Tone tone, int n) {
         return 0.0; // todo
     }
 
@@ -406,7 +331,20 @@ public class Model {
         Log.i("printResultsToConsole", String.format("Subject ID: %d", this.subjectId));
         if (calibrationTestResults == null || calibrationTestResults.isEmpty())
             Log.i("printResultsToConsole", "No results stored in model");
-        else Log.i("printResultsToConsole", calibrationTestResults.toString());
+        else {
+            Log.i("printResultsToConsole", calibrationTestResults.toString());
+
+            for (float freq : this.calibrationTestResults.getTestedFreqs()) {
+                for (double vol : this.calibrationTestResults.getTestedVolumesForFreq(freq)) {
+                    Log.d("delete me", String.format("freq %.2f vol %.4f loaded %d tests", freq,
+                            vol,
+                            this.calibrationTestResults.getNumOfTrials(new FreqVolPair(freq, vol))));
+                }
+            }
+
+
+            Log.d("calibrationTestResults", "");
+        }
     }
 
     public CalibrationTestResults getCalibrationTestResults() {

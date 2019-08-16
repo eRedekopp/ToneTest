@@ -52,8 +52,10 @@ Big Refactor:
         - Make sure that confidence statistics save/are calculated properly
         - Figure out why playSine doesn't work anymore
         - Figure out why FileIOController sometimes throws NullPointerException (Done, I think)
-    Next:
         - Boost volumes in ToneTest (boost top vol estimates?) / Conf Test ( 3 "loud" ones in confidence test)
+    Next:
+        - Figure out how to call correct getProbability() method given the type of the tone, or use some other solution
+          that isn't method overloading
         - Generate model based on RampTest results alone
             - Adjust RampTest and FileIOController as necessary
         - Normalize background noise types to same volume scale as sines/earcons

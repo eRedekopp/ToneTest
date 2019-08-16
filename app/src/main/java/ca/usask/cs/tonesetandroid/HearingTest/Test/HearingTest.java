@@ -35,16 +35,29 @@ public abstract class HearingTest<T extends Tone> {
 
     // Identifiers for individual tests
     protected BackgroundNoiseType backgroundNoiseType;
-    protected String testTypeName;  // a unique string identifying the type of test, to be used in save files and logs.
-                                    // all ramp tests must contain the word "ramp", reduce tests must contain the
-                                    // word "reduce", confidence tests must contain the word "confidence"
+
+    /**
+     * A unique string identifying the type of test, to be used in save files and logs.
+     * All ramp tests must contain the word "ramp", reduce tests must contain the
+     * word "reduce", confidence tests must contain the word "confidence"
+     */
+    protected String testTypeName;
+
+    /**
+     * Human-readable info about the format of this test
+     */
     protected String testInfo; // info about this test to be displayed for user
 
-    // elements representing current state
-    protected SingleTrialResult currentTrial;
-    protected ArrayList<SingleTrialResult> completedTrials;
+    /**
+     * The current trial being performed in this test, or null if test not running
+     */
+    protected SingleTrialResult<T> currentTrial = null;
 
-    // Integers representing the possible answers in a hearing test
+    /**
+     * All trials that have been completed in this test so far
+     */
+    protected ArrayList<SingleTrialResult<T>> completedTrials;
+
     public static final int ANSWER_NULL = 0;
     public static final int ANSWER_UP = 1;
     public static final int ANSWER_DOWN = 2;
@@ -52,11 +65,11 @@ public abstract class HearingTest<T extends Tone> {
     public static final int ANSWER_HEARD = 4;
 
 
-    public static void setModel(Model theModel) {  // todo add this to init
+    public static void setModel(Model theModel) {
         model = theModel;
     }
 
-    public static void setView(HearingTestView theView) {  // todo add this to init
+    public static void setView(HearingTestView theView) {
         view = theView;
     }
 
@@ -64,11 +77,11 @@ public abstract class HearingTest<T extends Tone> {
         context = theContext;
     }
 
-    public static void setIModel(HearingTestInteractionModel theIModel) {  // todo add this to init
+    public static void setIModel(HearingTestInteractionModel theIModel) {
         iModel = theIModel;
     }
 
-    public static void setFileController(FileIOController theFileController) {  // todo add this to init
+    public static void setFileController(FileIOController theFileController) {
         fileController = theFileController;
     }
 
@@ -122,7 +135,7 @@ public abstract class HearingTest<T extends Tone> {
      */
     protected void newCurrentTrial(T tone) {
         if (this.currentTrial != null) this.completedTrials.add(this.currentTrial);
-        this.currentTrial = new SingleTrialResult(tone);
+        this.currentTrial = new SingleTrialResult<>(tone);
     }
 
     /**
@@ -250,7 +263,10 @@ public abstract class HearingTest<T extends Tone> {
         return this.testTypeName;
     }
 
-    public Date getLastTrialStartTime() {
+    /**
+     * @return The time in seconds since 1970 at which the current trial was started
+     */
+    public long getLastTrialStartTime() {
         return this.currentTrial.getStartTime();
     }
 
