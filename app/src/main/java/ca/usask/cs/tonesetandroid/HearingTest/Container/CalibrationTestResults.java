@@ -20,8 +20,9 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.MainActivity;
 import ca.usask.cs.tonesetandroid.Control.Model;
+import ca.usask.cs.tonesetandroid.UtilFunctions;
 
-public class CalibrationTestResults {
+public class CalibrationTestResults implements HearingTestResults {
 
     // each frequency tested mapped to its corresponding SingleFreqResult
     private HashMap<Float, HearingTestSingleFreqResult> allResults;
@@ -60,11 +61,11 @@ public class CalibrationTestResults {
     /**
      * @return  the model's estimate of the probability of hearing the given tone, given these calibration results
      */
-    public float getProbOfHearing(Tone tone) throws IllegalArgumentException {
+    public double getProbability(Tone tone) throws IllegalArgumentException {
         Float[] testedFreqs = this.getTestedFreqs();
         float[] testedFreqsPrimitive = new float[testedFreqs.length];
         for (int i = 0; i < testedFreqs.length; i++) testedFreqsPrimitive[i] = testedFreqs[i];
-        return getProbOfHearing(tone.freq(), tone.vol(), testedFreqsPrimitive);
+        return getProbability(tone.freq(), tone.vol(), testedFreqsPrimitive);
     }
 
     /**
@@ -78,7 +79,7 @@ public class CalibrationTestResults {
      * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
      */
     @SuppressWarnings("ConstantConditions")
-    public float getProbOfHearing(float freq, double vol, float[] subset) throws IllegalArgumentException {
+    public float getProbability(float freq, double vol, float[] subset) throws IllegalArgumentException {
         Float[] subsetAsObj = new Float[subset.length];
         for (int i = 0; i < subset.length; i++)
             if (! this.freqTested(subset[i]))
@@ -86,8 +87,8 @@ public class CalibrationTestResults {
             else subsetAsObj[i] = subset[i];
 
         // find subset frequencies just above and below requested frequency
-        float freqAbove = findNearestAbove(freq, subsetAsObj);
-        float freqBelow = findNearestBelow(freq, subsetAsObj);
+        float freqAbove = UtilFunctions.findNearestAbove(freq, subsetAsObj);
+        float freqBelow = UtilFunctions.findNearestBelow(freq, subsetAsObj);
 
         // if freq is higher than the highest or lower than the lowest, return the probability of the nearest
         if (freqAbove == -1) return this.allResults.get(freqBelow).getProbOfHearing(vol);
@@ -129,9 +130,9 @@ public class CalibrationTestResults {
         for (int i = 0; i < nAudioSamples; i++)
             for (int j = 0; j < nFreqsPerSample; j++)
                 if (topFreqs[i] != null && topFreqs[i][j] > 100)
-                    probEstimates.add(getProbOfHearing(topFreqs[i][j], earcon.volume, subset));
+                    probEstimates.add(getProbability(topFreqs[i][j], earcon.volume, subset));
 
-        return mean(probEstimates);
+        return UtilFunctions.mean(probEstimates);
     }
 
     /**
@@ -202,8 +203,8 @@ public class CalibrationTestResults {
     public double getVolFloorEstimateForFreq(float freq) {
         if (this.freqTested(freq)) return this.allResults.get(freq).getVolFloor();
 
-        float nearestBelow = findNearestBelow(freq, this.getTestedFreqs());
-        float nearestAbove = findNearestAbove(freq, this.getTestedFreqs());
+        float nearestBelow = UtilFunctions.findNearestBelow(freq, this.getTestedFreqs());
+        float nearestAbove = UtilFunctions.findNearestAbove(freq, this.getTestedFreqs());
 
         if (nearestAbove == -1 || nearestBelow == -1)
             return this.allResults.get(this.getNearestTestedFreq(freq)).getVolFloor();
@@ -225,8 +226,8 @@ public class CalibrationTestResults {
     public double getVolCeilingEstimateForFreq(float freq) {
         if (this.freqTested(freq)) return this.allResults.get(freq).getVolCeiling();
 
-        float nearestBelow = findNearestBelow(freq, this.getTestedFreqs());
-        float nearestAbove = findNearestAbove(freq, this.getTestedFreqs());
+        float nearestBelow = UtilFunctions.findNearestBelow(freq, this.getTestedFreqs());
+        float nearestAbove = UtilFunctions.findNearestAbove(freq, this.getTestedFreqs());
 
         if (nearestAbove == -1 || nearestBelow == -1)
             return this.allResults.get(this.getNearestTestedFreq(freq)).getVolCeiling();
@@ -251,7 +252,7 @@ public class CalibrationTestResults {
 
         for (int i = 0; i < nAudioSamples; i++) floorEstimates[i] = this.getVolFloorEstimateForFreq(topFreqs[i]);
 
-        return mean(floorEstimates);
+        return UtilFunctions.mean(floorEstimates);
     }
 
     public double getVolCeilingEstimateForEarcon(int wavResId) {
@@ -267,7 +268,7 @@ public class CalibrationTestResults {
 
         for (int i = 0; i < nAudioSamples; i++) ceilingEstimates[i] = this.getVolCeilingEstimateForFreq(topFreqs[i]);
 
-        return mean(ceilingEstimates);
+        return UtilFunctions.mean(ceilingEstimates);
     }
 
     /**
@@ -418,52 +419,6 @@ public class CalibrationTestResults {
         return builder.toString();
     }
 
-    /**
-     * Given a list of floats, return the number closest to f while being greater than f, or -1 if none found
-     */
-    public static float findNearestAbove(float f, Float[] lst) {
-        float closest = -1;
-        float distance = Float.MAX_VALUE;
-        for (float freq : lst) {
-            if (0 < freq - f && freq - f < distance) {
-                closest = freq;
-                distance = freq - f;
-            }
-        }
-        return closest;
-    }
-
-    /**
-     * Given a list of floats, return the number closest to f while being less than f, or -1 if none found
-     */
-    public static float findNearestBelow(float f, Float[] lst) {
-        float closest = -1f;
-        float distance = Float.MAX_VALUE;
-        for (float freq : lst) {
-            if (0 < f - freq && f - freq < distance) {
-                closest = freq;
-                distance = f - freq;
-            }
-        }
-        return closest;
-    }
-
-    /**
-     * @param arr An array of doubles
-     * @return The mean of the array - does not include any values under 100
-     */
-    public static double mean(double[] arr) {
-        double total = 0;
-        for (double d : arr) total += d;
-        return total / arr.length;
-    }
-
-    public static double mean(List<Float> lst) {
-        Float total = 0f;
-        for (Float n : lst) total += n;
-        return total / lst.size();
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -525,14 +480,14 @@ public class CalibrationTestResults {
             // largest, then return the probability of the nearest volume
             double volBelow, volAbove;
             try {
-                volBelow = findNearestBelow(vol, this.getVolumes());
+                volBelow = UtilFunctions.findNearestBelow(vol, this.getVolumes());
             } catch (IllegalArgumentException e) {
-                return this.getActualProb(findNearestAbove(vol, this.getVolumes()));
+                return this.getActualProb(UtilFunctions.findNearestAbove(vol, this.getVolumes()));
             }
             try {
-                volAbove = findNearestAbove(vol, this.getVolumes());
+                volAbove = UtilFunctions.findNearestAbove(vol, this.getVolumes());
             } catch (IllegalArgumentException e) {
-                return this.getActualProb(findNearestBelow(vol, this.getVolumes()));
+                return this.getActualProb(UtilFunctions.findNearestBelow(vol, this.getVolumes()));
             }
 
             // what percentage of the way between volBelow and volAbove is vol?
@@ -698,42 +653,6 @@ public class CalibrationTestResults {
 
         public Collection<Double> getVolumes() {
             return this.testResultsPerVol.keySet();
-        }
-
-        /**
-         * Given a collection of doubles, find the double nearest to d which is also less than d
-         * Only intended for use with collections of positive numbers
-         * @throws IllegalArgumentException if d is smaller than the smallest element of the collection
-         */
-        public double findNearestBelow(double d, Collection<Double> dbls) {
-            double closest = -1.0;
-            double distance = Double.MAX_VALUE;
-            for (double dbl : dbls) {
-                if (0 < d - dbl && d - dbl < distance) {
-                    closest = dbl;
-                    distance = d - dbl;
-                }
-            }
-            if (closest == -1) throw new IllegalArgumentException("No elements less than d found");
-            else return closest;
-        }
-
-        /**
-         * Given a collection of doubles, find the double nearest to d which is also greater than d
-         * Only intended for use with collections of positive numbers
-         * @throws IllegalArgumentException if d is larger than the largest element of the collection
-         */
-        public double findNearestAbove(double d, Collection<Double> dbls) throws IllegalArgumentException {
-            double closest = -1.0;
-            double distance = Double.MAX_VALUE;
-            for (double dbl : dbls) {
-                if (0 < dbl - d && dbl - d < distance) {
-                    closest = dbl;
-                    distance = dbl - d;
-                }
-            }
-            if (closest == -1) throw new IllegalArgumentException("No elements greater than d found");
-            else return closest;
         }
     }
 }

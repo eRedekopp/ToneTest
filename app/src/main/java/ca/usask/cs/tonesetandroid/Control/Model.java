@@ -101,7 +101,7 @@ public class Model {
         if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
         else {
             CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
-            return newCalibResults.getProbOfHearing(tone);
+            return newCalibResults.getProbability(tone);
         }
     }
 

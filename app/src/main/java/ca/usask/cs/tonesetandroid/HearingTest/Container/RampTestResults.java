@@ -1,8 +1,11 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
+import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 public class RampTestResults implements HearingTestResults {
 
@@ -14,7 +17,7 @@ public class RampTestResults implements HearingTestResults {
      * A mapping of each frequency tested to the first and second volumes selected by the user at
      * that frequency
      */
-    private HashMap<Float, VolPair> allResults;
+    protected HashMap<Float, VolPair> allResults;
 
     public RampTestResults() {
         this.allResults = new HashMap<>();
@@ -29,42 +32,90 @@ public class RampTestResults implements HearingTestResults {
 
     /**
      * Return the probability of hearing the tone given these hearing test results, using the
-     * modeling equation y = x
+     * modeling equation y = x, where x is the estimated distance between "perfectly audible"
+     * and "perfectly inaudible" volumes for tone.freq()
      *
      * @param tone The tone whose probability is to be determined
      * @return The probability of hearing the tone, modeling using the equation y = x
      * @throws IllegalStateException If there are no results stored in this container
      */
     protected double getProbabilityLinear(Tone tone) throws IllegalStateException {
-        return 0.0; // todo
+        // get floor/ceiling estimates
+        double volFloor = this.getVolFloorEstimate(tone.freq());
+        double volCeiling = this.getVolCeilingEstimate(tone.freq());
+
+        // Return 1 or 0 if above/below ceiling/floor
+        if (tone.vol() < volFloor) return 0.0;
+        if (tone.vol() > volCeiling) return 1.0;
+
+        // Return the percentage of the way between floor and ceiling that tone.vol() is
+        return (tone.vol() - volFloor) / (volCeiling - volFloor);
     }
 
     /**
      * Return the probability of hearing the tone given these hearing test results, using the
-     * modeling equation y = ln((e - 1)x + 1)
+     * modeling equation y = ln((e - 1)x + 1), where x is the estimated distance between "perfectly audible"
+     * and "perfectly inaudible" volumes for tone.freq()
      *
      * @param tone The tone whose probability is to be determined
      * @return The probability of hearing the tone, modeling using the equation y = ln((e - 1)x + 1)
      * @throws IllegalStateException If there are no results stored in this container
      */
     protected double getProbabilityLogarithmic(Tone tone) throws IllegalStateException {
-        return 0.0; // todo
+        // get floor/ceiling estimates
+        double volFloor = this.getVolFloorEstimate(tone.freq());
+        double volCeiling = this.getVolCeilingEstimate(tone.freq());
+
+        // Return 1 or 0 if above/below ceiling/floor
+        if (tone.vol() < volFloor) return 0.0;
+        if (tone.vol() > volCeiling) return 1.0;
+
+        // How much of the way between floor and ceiling is tone.vol()?
+        double pctBetween = (tone.vol() - volFloor) / (volCeiling - volFloor);
+
+        // Return
+        return Math.log((Math.E - 1) * pctBetween + 1);
     }
 
     /**
      * Return an estimate for the volume floor (loudest volume which will be heard 0% of the
-     * time) for the given frequency
+     * time) for the given frequency - must have results stored to call this method
      */
     protected double getVolFloorEstimate(float freq) {
-        return 0.0; // todo
+        return this.getVolCeilingEstimate(freq) / 2.2;  // floor tends to be about 1/2 ceiling
     }
 
     /**
      * Return an estimate for the volume ceiling (quietest volume which will be heard 100% of the
-     * time) for the given frequency
+     * time) for the given frequency - must have results stored to call this method
      */
+    @SuppressWarnings("ConstantConditions")
     protected double getVolCeilingEstimate(float freq) {
-        return 0.0; // todo
+
+        // NOTE : this uses the highest ramp volume to generate ceiling estimates. Consider using the lowest one for
+        // different results
+
+        // Return max ramp vol if freq tested
+        if (this.allResults.containsKey(freq)) return this.allResults.get(freq).max();
+
+        // If freq is higher than highest or lower than lowest, return max ramp vol of nearest
+        float maxFreq = Collections.max(this.getTestedFreqs()),
+              minFreq = Collections.min(this.getTestedFreqs());
+        if (freq > maxFreq) return this.allResults.get(maxFreq).max();
+        if (freq < minFreq) return this.allResults.get(minFreq).max();
+
+        // Get max ramp vols of nearest tested frequencies
+        float freqAbove = UtilFunctions.findNearestAbove(freq, this.getTestedFreqs());
+        float freqBelow = UtilFunctions.findNearestBelow(freq, this.getTestedFreqs());
+
+        // How far between freqBelow and freqAbove is freq?
+        double pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
+
+        // Estimate vol ceiling linearly
+        double volBelow = this.allResults.get(freqBelow).max();
+        double volAbove = this.allResults.get(freqAbove).max();
+
+        return volBelow + pctBetween * (volAbove - volBelow);
     }
 
     /**
@@ -82,6 +133,9 @@ public class RampTestResults implements HearingTestResults {
         throw new IllegalArgumentException("Invalid equation ID number");
     }
 
+    public Collection<Float> getTestedFreqs() {
+        return this.allResults.keySet();
+    }
 
     /**
      * Add a single trial result to these test results
@@ -94,7 +148,7 @@ public class RampTestResults implements HearingTestResults {
         allResults.put(freq, new VolPair(vol1, vol2));
     }
 
-    private class VolPair {
+    protected class VolPair {
 
         private final double vol1;
         private final double vol2;
@@ -110,6 +164,13 @@ public class RampTestResults implements HearingTestResults {
 
         public double vol2() {
             return vol2;
+        }
+
+        /**
+         * @return max(vol1, vol2)
+         */
+        public double max() {
+            return Math.max(vol1, vol2);
         }
     }
 }

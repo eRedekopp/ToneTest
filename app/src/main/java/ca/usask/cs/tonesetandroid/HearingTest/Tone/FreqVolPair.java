@@ -83,4 +83,14 @@ public class FreqVolPair extends ReducibleTone implements Cloneable {
         for (FreqVolPair fvp : arr) if (fvp.vol > curMax.vol) curMax = fvp;
         return curMax;
     }
+
+    /**
+     * @param arr An array of freqvolpairs
+     * @return An array of each pair's frequency in the same order
+     */
+    public static Float[] getFreqsFromPairs(FreqVolPair[] arr) {
+        Float[] outArr = new Float[arr.length];
+        for (int i = 0; i < arr.length; i++) outArr[i] = arr[i].freq();
+        return outArr;
+    }
 }

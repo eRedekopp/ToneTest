@@ -22,4 +22,8 @@ public abstract class Tone {
         for (Tone tone : list) if (tone.freq() == freq) return tone.vol();
         throw new IllegalArgumentException("Requested frequency not present in list");
     }
+
+    public boolean equals(Tone other) {
+        return this.vol() == other.vol() && this.freq() == other.freq();
+    }
 }
