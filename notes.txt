@@ -54,6 +54,8 @@ Big Refactor:
         - Figure out why FileIOController sometimes throws NullPointerException (Done, I think)
         - Boost volumes in ToneTest (boost top vol estimates?) / Conf Test ( 3 "loud" ones in confidence test)
     Next:
+	- Add calibration info to confidence test file
+	- Save calibration analysis in different file than test results
         - Figure out how to call correct getProbability() method given the type of the tone, or use some other solution
           that isn't method overloading
         - Generate model based on RampTest results alone

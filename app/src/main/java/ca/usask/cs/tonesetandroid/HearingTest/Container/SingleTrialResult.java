@@ -9,7 +9,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 /**
- * A class to store information about one specific trial of a HearingTest
+ * A class to store information about one specific trial of a Hearing Test
  * @param <T> The tone type of this trial's associated HearingTest
  */
 public class SingleTrialResult<T extends Tone> {
