@@ -44,7 +44,6 @@ public class SineRampTest extends RampTest<FreqVolPair> {
                     model.lineOut.write(buf, 0, 2);
                 }
             }
-
             return Short.MAX_VALUE;
         } finally {
             model.pauseAudio();

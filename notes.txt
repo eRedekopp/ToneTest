@@ -53,13 +53,14 @@ Big Refactor:
         - Figure out why playSine doesn't work anymore
         - Figure out why FileIOController sometimes throws NullPointerException (Done, I think)
         - Boost volumes in ToneTest (boost top vol estimates?) / Conf Test ( 3 "loud" ones in confidence test)
-    Next:
-	- Add calibration info to confidence test file
-	- Save calibration analysis in different file than test results
-        - Figure out how to call correct getProbability() method given the type of the tone, or use some other solution
-          that isn't method overloading
         - Generate model based on RampTest results alone
             - Adjust RampTest and FileIOController as necessary
+    Next:
+        - Full self-test - make sure ramp results are reasonable
+        - Choppy audio?
+        - Add remaining sine tests
+	    - Add calibration info to confidence test file
+	    - Save calibration analysis in different file than test results
         - Normalize background noise types to same volume scale as sines/earcons
         - Decide whether to add extra grace period for entering response in puretone test
         - Look into programmatically generating earcons via MIDI

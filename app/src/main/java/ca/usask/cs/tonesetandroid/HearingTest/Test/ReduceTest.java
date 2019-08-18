@@ -56,7 +56,6 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                             saveLine();
                             newCurrentTrial(trial);
                             iModel.resetAnswer();
-                            Log.i(testTypeName, "Testing " + trial.toString());
                             currentTrial.start();
                             playTone(trial);
                             if (iModel.testPaused()) {  // return without doing anything if user paused during tone

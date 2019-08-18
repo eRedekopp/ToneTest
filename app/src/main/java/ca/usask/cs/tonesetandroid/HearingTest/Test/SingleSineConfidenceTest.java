@@ -120,9 +120,4 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
     public int[] getRequiredButtons() {
         return new int[]{ANSWER_HEARD};
     }
-
-    @Override
-    protected double getCalibProbFromModel(FreqVolPair tone, int n) {
-        return model.getCalibProbability(tone, n);
-    }
 }

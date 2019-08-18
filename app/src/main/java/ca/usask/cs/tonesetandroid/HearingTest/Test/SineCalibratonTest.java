@@ -44,6 +44,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
         if (this.testTones.size() != STANDARD_FREQUENCIES.length * nVolsPerFreq * nTrialsPerVol) // sanity check
             Log.e("SineCalibration", "Error configuring test tones: should have generated "
-                    + nVolsPerFreq * nTrialsPerVol + " trials but generated " + this.testTones.size());
+                    + nVolsPerFreq * nTrialsPerVol * STANDARD_FREQUENCIES.length + " trials but generated "
+                    + this.testTones.size());
     }
 }

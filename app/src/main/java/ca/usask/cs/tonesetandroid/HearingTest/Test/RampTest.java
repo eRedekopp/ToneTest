@@ -64,6 +64,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
                         // save result
                         currentTrial = new SingleRampTrialResult(new FreqVolPair(currentFreq, vol1),
                                                                  new FreqVolPair(currentFreq, heardVol));
+                        currentTrial.start();
                         saveLine();
                         results.addResult(currentFreq, vol1, heardVol);
                     }

@@ -321,6 +321,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 });
                 e.printStackTrace();
             }
+        this.modelChanged();
     }
 
     @Override

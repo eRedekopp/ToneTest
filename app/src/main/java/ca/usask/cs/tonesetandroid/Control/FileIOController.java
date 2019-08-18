@@ -393,6 +393,7 @@ public class FileIOController {
                     subScanner = new Scanner(scanner.nextLine());
                     subScanner.useDelimiter(" ");
                     String s;
+                    subScanner.next();
                     subScanner.next();  // skip "freq" label
                     s = subScanner.next();
                     s = s.substring(0, s.length() - 2);  // remove comma
@@ -415,6 +416,7 @@ public class FileIOController {
                     subScanner = new Scanner(scanner.nextLine());
                     subScanner.useDelimiter(" ");
                     String s;
+                    subScanner.next();
                     subScanner.next();  // skip "freq" label
                     s = subScanner.next();
                     s = s.substring(0, s.length() - 2);  // remove comma

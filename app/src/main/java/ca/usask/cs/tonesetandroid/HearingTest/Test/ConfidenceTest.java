@@ -17,7 +17,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     /**
      * The default number of times to test each tone
      */
-    protected static final int DEFAULT_TRIALS_PER_TONE = 3;
+    protected static final int DEFAULT_TRIALS_PER_TONE = 2; // todo reset
 
     /**
      * The default number of volumes at which to test each frequency
@@ -150,22 +150,6 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                 }
             }
         }).start();
-    }
-
-    /**
-     * @return model.getCalibProbability(tone, n). Override this method to cast T as its particular type and call the
-     * appropriate overloaded method
-     */
-    protected double getCalibProbFromModel(T tone, int n) {
-        return model.getCalibProbability(tone, n);
-    }
-
-    /**
-     * @return model.getRampProbability(tone). Override this method to cast T as its particular type and call the
-     * appropriate overloaded method
-     */
-    protected double getRampProbFromModel(T tone) {
-        return model.getRampProbability(tone);
     }
 
     /**
