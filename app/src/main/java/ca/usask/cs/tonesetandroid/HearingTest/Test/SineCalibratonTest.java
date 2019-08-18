@@ -5,6 +5,7 @@ import android.util.Log;
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -23,13 +24,13 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
     }
 
     @Override
-    protected void configureTestTones(RampTest.RampTestResults rampResults,
-                                   ReduceTest.ReduceTestResults reduceResults,
-                                   int nVolsPerFreq,
-                                   int nTrialsPerVol) {
+    protected void configureTestTones(RampTestResults rampResults,
+                                      ReduceTest.ReduceTestResults reduceResults,
+                                      int nVolsPerFreq,
+                                      int nTrialsPerVol) {
         ArrayList<FreqVolPair> allTones = new ArrayList<>();
         for (float freq : STANDARD_FREQUENCIES) {
-            double topVolEst = Tone.getVolForFreq(rampResults.getResults(), freq) * 1.2; // boost volumes
+            double topVolEst = Tone.getVolForFreq(rampResults.getResultsArray(), freq) * 1.2; // boost volumes
             double bottomVolEst = Tone.getVolForFreq(reduceResults.getResults(), freq) * 1.2;
             for (double vol = bottomVolEst;
                  vol < topVolEst;

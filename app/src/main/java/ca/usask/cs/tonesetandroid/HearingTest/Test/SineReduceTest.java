@@ -3,6 +3,7 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test;
 import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -18,8 +19,8 @@ public class SineReduceTest extends ReduceTest<FreqVolPair> {
     }
 
     @Override
-    public void initialize(RampTest.RampTestResults rampResults) {
-        for (FreqVolPair fvp : rampResults.getResults()) {
+    public void initialize(RampTestResults rampResults) {
+        for (FreqVolPair fvp : rampResults.getResultsArray()) {
             this.currentVolumes.add(fvp);
             this.timesNotHeardPerFreq.put(fvp.freq(), 0);
         }

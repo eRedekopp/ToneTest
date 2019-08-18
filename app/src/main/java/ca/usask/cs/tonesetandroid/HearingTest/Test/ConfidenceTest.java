@@ -8,6 +8,7 @@ import java.util.ListIterator;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -160,11 +161,11 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     }
 
     /**
-     * @return model.getRampProbability(tone, n). Override this method to cast T as its particular type and call the
+     * @return model.getRampProbability(tone). Override this method to cast T as its particular type and call the
      * appropriate overloaded method
      */
-    protected double getRampProbFromModel(T tone, int n) {
-        return model.getRampProbability(tone, n);
+    protected double getRampProbFromModel(T tone) {
+        return model.getRampProbability(tone);
     }
 
     /**
@@ -174,10 +175,11 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     @SuppressWarnings("ConstantConditions")
     public String summaryStatsAsString() {
         StringBuilder builder = new StringBuilder();
-        HashMap<T, Integer> correctMap = new HashMap<>(), incorrectMap = new HashMap<>();
-        ArrayList<T> allTones = new ArrayList<>();
+        HashMap<Tone, Integer> correctMap = new HashMap<>(), incorrectMap = new HashMap<>();
+        ArrayList<Tone> allTones = new ArrayList<>();
+        RampTestResults regularResults = model.getRampResults().getRegularRampResults();
 
-        for (SingleTrialResult<T> t : this.completedTrials) {  // count the number of in/correct responses for each tone
+        for (SingleTrialResult t : this.completedTrials) {  // count the number of in/correct responses for each tone
             if (t.wasCorrect()) {
                 if (!correctMap.containsKey(t.tone())) correctMap.put(t.tone(), 1);
                 else {
@@ -200,8 +202,10 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
             builder.append("########## n = ");
             builder.append(n);
             builder.append(" ##########\n");
-            builder.append("Tone confidenceProbability toneProbability rampProbability\n");
-            for (T t : allTones) {
+            builder.append( "Tone confidenceProbability toneProbability rampProbabilityLinearWithReduceData " +
+                            "rampProbabilityLinearWithoutReduceData rampProbabilityLogWithReduceData " +
+                            "rampProbabilityLogWithoutReduceData\n");
+            for (Tone t : allTones) {
                 int correct, incorrect;
                 try {
                     correct = correctMap.get(t);
@@ -215,12 +219,27 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                 }
                 double  confProb = (double) correct / (double) (correct + incorrect),
                         calibProb,
-                        rampProb;
-                calibProb = this.getCalibProbFromModel(t, n);
-                rampProb = this.getRampProbFromModel(t, n);
+                        rampProbLinFloor,
+                        rampProbLinReg,
+                        rampProbLogFloor,
+                        rampProbLogReg;
 
-                builder.append(String.format("%s %.4f %.4f %.4f%n",
-                        t.toString(), confProb, calibProb, rampProb));
+                // get all 4 ramp estimates
+                regularResults.setModelEquation(0);
+                model.getRampResults().setModelEquation(0);
+                rampProbLinFloor = model.getRampProbability(t);
+                rampProbLinReg = regularResults.getProbability(t);
+                regularResults.setModelEquation(1);
+                model.getRampResults().setModelEquation(1);
+                rampProbLogFloor = model.getRampProbability(t);
+                rampProbLogReg = regularResults.getProbability(t);
+
+                // get calib estimate
+                calibProb = model.getCalibProbability(t, n);
+
+                builder.append(String.format("%s %.4f %.4f %.4f %.4f %.4f %.4f%n",
+                        t.toString(), confProb, calibProb, rampProbLinFloor, rampProbLinReg, rampProbLogFloor,
+                        rampProbLogReg));
             }
         }
 

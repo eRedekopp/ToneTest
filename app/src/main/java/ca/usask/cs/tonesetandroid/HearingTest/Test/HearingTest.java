@@ -11,6 +11,7 @@ import java.util.Date;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.HearingTestController;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.Click;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.Control.FileIOController;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
@@ -49,14 +50,19 @@ public abstract class HearingTest<T extends Tone> {
     protected String testInfo; // info about this test to be displayed for user
 
     /**
+     * A container to store the results of this test
+     */
+    HearingTestResults results;
+
+    /**
      * The current trial being performed in this test, or null if test not running
      */
-    protected SingleTrialResult<T> currentTrial = null;
+    protected SingleTrialResult currentTrial = null;
 
     /**
      * All trials that have been completed in this test so far
      */
-    protected ArrayList<SingleTrialResult<T>> completedTrials;
+    protected ArrayList<SingleTrialResult> completedTrials;
 
     public static final int ANSWER_NULL = 0;
     public static final int ANSWER_UP = 1;
@@ -135,7 +141,7 @@ public abstract class HearingTest<T extends Tone> {
      */
     protected void newCurrentTrial(T tone) {
         if (this.currentTrial != null) this.completedTrials.add(this.currentTrial);
-        this.currentTrial = new SingleTrialResult<>(tone);
+        this.currentTrial = new SingleTrialResult(tone);
     }
 
     /**

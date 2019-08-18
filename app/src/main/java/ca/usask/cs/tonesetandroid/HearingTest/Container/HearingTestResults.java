@@ -11,6 +11,8 @@ public interface HearingTestResults {
      * @return The estimated probability of hearing the tone, given these results
      * @throws IllegalStateException If there is no data stored in these results
      */
-    public double getProbability(Tone tone) throws IllegalStateException;
+    double getProbability(Tone tone) throws IllegalStateException;
+
+    boolean isEmpty();
 
 }

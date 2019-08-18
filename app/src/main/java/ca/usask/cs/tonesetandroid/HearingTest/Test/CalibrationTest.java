@@ -9,6 +9,7 @@ import java.util.ListIterator;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -57,7 +58,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     /**
      * Configure the tones that will be tested in this calibration test
      */
-    protected abstract void configureTestTones(RampTest.RampTestResults rampResults,
+    protected abstract void configureTestTones(RampTestResults rampResults,
                                             ReduceTest.ReduceTestResults reduceResults,
                                             int nVolsPerFreq,
                                             int nTrialsPerVol);
@@ -78,7 +79,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
      * @param nVolsPerFreq The number of volumes at which to test each frequency
      * @param nTrialsPerVol The number of times to test each tone
      */
-    public void initialize(RampTest.RampTestResults rampResults,
+    public void initialize(RampTestResults rampResults,
                            ReduceTest.ReduceTestResults reduceResults,
                            int nVolsPerFreq,
                            int nTrialsPerVol) {
@@ -90,7 +91,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     /**
      * Initialize with default values
      */
-    public void initialize(RampTest.RampTestResults rampResults, ReduceTest.ReduceTestResults reduceResults) {
+    public void initialize(RampTestResults rampResults, ReduceTest.ReduceTestResults reduceResults) {
         initialize(rampResults, reduceResults, DEFAULT_N_VOL_PER_FREQ, DEFAULT_N_TRIAL_PER_VOL);
     }
 

@@ -12,7 +12,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
  * A class to store information about one specific trial of a Hearing Test
  * @param <T> The tone type of this trial's associated HearingTest
  */
-public class SingleTrialResult<T extends Tone> {
+public class SingleTrialResult {
 
     /**
      * The time in seconds since 1970 at which start() was called
@@ -27,7 +27,7 @@ public class SingleTrialResult<T extends Tone> {
     /**
      * The tone being played for this trial
      */
-    private final T tone;
+    private final Tone tone;
 
     /**
      * Did the user hear the tone / discern the direction correctly?
@@ -37,7 +37,7 @@ public class SingleTrialResult<T extends Tone> {
     /**
      * @param tone The tone being played for this trial
      */
-    public SingleTrialResult(T tone) {
+    public SingleTrialResult(Tone tone) {
         this.clicks = new ArrayList<>();
         this.tone = tone;
     }
@@ -66,7 +66,7 @@ public class SingleTrialResult<T extends Tone> {
         this.clicks.add(click);
     }
 
-    public T tone() {
+    public Tone tone() {
         return tone;
     }
 

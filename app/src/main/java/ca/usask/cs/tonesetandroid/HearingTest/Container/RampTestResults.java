@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
@@ -137,6 +138,16 @@ public class RampTestResults implements HearingTestResults {
         return this.allResults.keySet();
     }
 
+    @SuppressWarnings("ConstantConditions")
+    public FreqVolPair[] getResultsArray() {
+        FreqVolPair[] outArr = new FreqVolPair[this.allResults.size()];
+        int i = 0;
+        for (float freq : this.allResults.keySet()) {
+            outArr[i++] = new FreqVolPair(freq, allResults.get(freq).vol2());
+        }
+        return outArr;
+    }
+
     /**
      * Add a single trial result to these test results
      *
@@ -146,6 +157,21 @@ public class RampTestResults implements HearingTestResults {
      */
     public void addResult(float freq, double vol1, double vol2) {
         allResults.put(freq, new VolPair(vol1, vol2));
+    }
+
+    @Override
+    @SuppressWarnings("ConstantConditions")
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        for (float freq : this.getTestedFreqs())
+            builder.append(String.format("Freq: %.1f, vol1 = %.3f, vol2 = %.3f%n",
+                    freq, this.allResults.get(freq).vol1(), this.allResults.get(freq).vol2()));
+        return builder.toString();
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return this.allResults.isEmpty();
     }
 
     protected class VolPair {

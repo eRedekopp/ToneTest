@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.ReducibleTone;
@@ -34,7 +36,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
 
     protected abstract void playTone(Tone tone);
 
-    public abstract void initialize(RampTest.RampTestResults rampResults);
+    public abstract void initialize(RampTestResults rampResults);
 
     @Override
     protected void run() {
@@ -69,7 +71,11 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                         reduceCurrentVolumes();
                     }
 
-                    // test complete: set up CalibrationTest to run next
+                    // todo move this to method in HearingTestController
+                    // add these results to RampTest
+                    iModel.getRampTest().getResults().setReduceResults(results);
+
+                    // set up CalibrationTest to run next
                     iModel.getCalibrationTest().initialize(iModel.getRampTest().getResults(), results);
                     iModel.setCurrentTest(iModel.getCalibrationTest());
                     iModel.setTestThreadActive(false);
@@ -89,8 +95,8 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
 
     @Override
     protected final String getLineEnd(SingleTrialResult result) {
-        return String.format("%s, %s, %d clicks: %s",
-                this.currentTrial.tone().toString(),
+        return String.format("freq: %.2f, vol: %.2f, %s, %d clicks: %s",
+                this.currentTrial.tone().freq(), this.currentTrial.tone().vol(),
                 this.currentTrial.wasCorrect() ? "Heard" : "NotHeard", this.currentTrial.nClicks(),
                 Arrays.toString(this.currentTrial.clickTimes()));
     }
@@ -147,7 +153,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
         }
     }
 
-    public class ReduceTestResults {
+    public static class ReduceTestResults {
         ArrayList<FreqVolPair> results;
 
         public ReduceTestResults() {
@@ -160,6 +166,36 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
 
         public FreqVolPair[] getResults() {
             return results.toArray(new FreqVolPair[]{});
+        }
+    }
+
+    /**
+     * A class for building a ReduceTestResults from file data - add all data with addResult(), then use build()
+     * to get a ReduceTestResults containing each frequency and its lowest volume seen
+     */
+    public static class ResultsBuilder {
+        private HashMap<Float, Double> curLowest;
+
+        public ResultsBuilder() {
+            curLowest = new HashMap<>();
+        }
+
+        /**
+         * If vol is the lowest or first volume seen for the given frequency, update curLowest, else do nothing
+         */
+        @SuppressWarnings("ConstantConditions")
+        public void addResult(float freq, double vol) {
+            if (! curLowest.containsKey(freq) || curLowest.get(freq) > vol) curLowest.put(freq, vol);
+        }
+
+        /**
+         * @return A ReduceTestResults containing each frequency and its lowest volume seen
+         */
+        @SuppressWarnings("ConstantConditions")
+        public ReduceTestResults build() {
+            ReduceTestResults newResults = new ReduceTestResults();
+            for (float f : this.curLowest.keySet()) newResults.results.add(new FreqVolPair(f, this.curLowest.get(f)));
+            return newResults;
         }
     }
 }

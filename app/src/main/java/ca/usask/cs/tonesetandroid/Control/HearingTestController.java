@@ -55,6 +55,7 @@ public class HearingTestController {
     public void calibrationTestComplete() {
         this.fileController.closeFile();
         this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
+        this.model.setRampResults(this.iModel.getRampTest().getResults());
         this.iModel.reset();
         this.model.printResultsToConsole();
         this.model.audioTrackCleanup();

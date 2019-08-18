@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.ListIterator;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResultsWithFloorInfo;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.ReducibleTone;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
@@ -19,11 +21,11 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
     protected ArrayList<Float> freqs;
     protected ListIterator<Float> position;
-    protected RampTestResults results;
+    protected RampTestResultsWithFloorInfo results;
 
     public RampTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.results = new RampTestResults();
+        this.results = new RampTestResultsWithFloorInfo();
     }
 
     @Override
@@ -41,14 +43,13 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
                         float currentFreq = position.next();
 
                         // test frequency, ramp up quickly
-                        Log.i(testTypeName, "Testing frequency: " + currentFreq);
                         iModel.resetAnswer();
                         heardVol = rampUp(RAMP_RATE_1, currentFreq, STARTING_VOL);
                         if (heardVol == -1 || iModel.testPaused()) {
                             position.previous(); // move cursor back to starting location and return without doing
                             return;              // anything if user paused
                         }
-                        saveLine(new FreqVolPair(currentFreq, heardVol).toString() + " first");
+                        double vol1 = heardVol;
 
                         sleepThread(1000, 1000);  // sleep 1 second
 
@@ -61,10 +62,13 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
                         }
 
                         // save result
-                        saveLine(new FreqVolPair(currentFreq, heardVol).toString() + " second");
-                        results.addResult(currentFreq, heardVol);
+                        currentTrial = new SingleRampTrialResult(new FreqVolPair(currentFreq, vol1),
+                                                                 new FreqVolPair(currentFreq, heardVol));
+                        saveLine();
+                        results.addResult(currentFreq, vol1, heardVol);
                     }
 
+                    // todo move this to function in HearingTestController
                     // ramp test complete: configureTestTones reduce test with these results and setup to begin next
                     iModel.getReduceTest().initialize(results);
                     iModel.setCurrentTest(iModel.getReduceTest());
@@ -91,8 +95,11 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected final String getLineEnd(SingleTrialResult result) {
-        throw new RuntimeException("Operation not supported for ramp test");
+        SingleRampTrialResult rampResult = (SingleRampTrialResult) result;
+        return String.format("Freq: %.1f, vol1: %.4f, vol2: %.4f",
+                rampResult.tone().freq(), rampResult.tone().vol(), rampResult.tone2().vol());
     }
 
     @Override
@@ -100,7 +107,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
         // RampTests have no need for this method because they do not track click times
     }
 
-    public RampTestResults getResults() {
+    public RampTestResultsWithFloorInfo getResults() {
         return this.results;
     }
 
@@ -116,21 +123,18 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
      */
     protected abstract double rampUp(double rateOfRamp, float freq, double startingVol);
 
-    public class RampTestResults {
 
-        ArrayList<FreqVolPair> results;
+    private class SingleRampTrialResult extends SingleTrialResult {
 
-        public RampTestResults() {
-            this.results = new ArrayList<>();
+        private FreqVolPair tone2;
+
+        public SingleRampTrialResult(Tone tone1, Tone tone2) {
+            super(new FreqVolPair(tone1.freq(), tone1.vol()));
+            this.tone2 = new FreqVolPair(tone2.freq(), tone2.vol());
         }
 
-        public void addResult(float freq, double vol) {
-            results.add(new FreqVolPair(freq, vol));
+        public Tone tone2() {
+            return this.tone2;
         }
-
-        public FreqVolPair[] getResults() {
-            return results.toArray(new FreqVolPair[]{});
-        }
-
     }
 }

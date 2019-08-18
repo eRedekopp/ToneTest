@@ -12,6 +12,7 @@ import com.paramsen.noise.NoiseOptimized;
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResultsWithFloorInfo;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -30,7 +31,8 @@ public class Model {
     private AudioManager audioManager;
 
     /////////////// Stored hearing test results ///////////////
-    CalibrationTestResults calibrationTestResults;   // final results of test
+    CalibrationTestResults calibrationTestResults;  // final results of calibration test
+    RampTestResultsWithFloorInfo rampResults;       // results from ramp test
 
     /////////////// Vars/values for audio ///////////////
     public AudioTrack lineOut;
@@ -66,8 +68,8 @@ public class Model {
      * @return True if this model has hearing test results saved to it, else false
      */
     public boolean hasResults() {
-        if (this.calibrationTestResults == null) return false;
-        else return ! this.calibrationTestResults.isEmpty();
+        return (this.calibrationTestResults != null && ! this.calibrationTestResults.isEmpty()
+               && this.rampResults != null && ! this.rampResults.isEmpty());
     }
 
     /**
@@ -106,7 +108,8 @@ public class Model {
     }
 
     /**
-     * Get the probability of hearing or differentiating the given tone, given the results stored in this model
+     * Get the probability of hearing or differentiating the given tone, given the calibration results stored in this
+     * model
      *
      * @param tone The tone whose probability is to be determined
      * @param n The number of trials to use for the sample size (ie. will calculate probabilities based on the first
@@ -118,13 +121,20 @@ public class Model {
         return this.getCalibProbability(new FreqVolPair(tone.freq(), tone.vol()), n);
     }
 
-    public double getRampProbability(SinglePitchTone tone, int n) {
-        return 0.010; // todo
+    public double getRampProbability(SinglePitchTone tone) {
+        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
+        else {
+            return this.rampResults.getProbability(tone);
+        }
     }
 
-    public double getRampProbability(Tone tone, int n) {
-        return 0.0; // todo
+    /**
+     * Get the probability of hearing or differentiating the given tone, given the ramp results stored in this model
+     */
+    public double getRampProbability(Tone tone) {
+        return this.getRampProbability(new FreqVolPair(tone.freq(), tone.vol()));
     }
+
 
     // todo decide what to do with this
 
@@ -329,26 +339,25 @@ public class Model {
      */
     public void printResultsToConsole() {
         Log.i("printResultsToConsole", String.format("Subject ID: %d", this.subjectId));
-        if (calibrationTestResults == null || calibrationTestResults.isEmpty())
+        if (calibrationTestResults == null || calibrationTestResults.isEmpty()
+            || rampResults == null || rampResults.isEmpty())
             Log.i("printResultsToConsole", "No results stored in model");
         else {
-            Log.i("printResultsToConsole", calibrationTestResults.toString());
-
-            for (float freq : this.calibrationTestResults.getTestedFreqs()) {
-                for (double vol : this.calibrationTestResults.getTestedVolumesForFreq(freq)) {
-                    Log.d("delete me", String.format("freq %.2f vol %.4f loaded %d tests", freq,
-                            vol,
-                            this.calibrationTestResults.getNumOfTrials(new FreqVolPair(freq, vol))));
-                }
-            }
-
-
-            Log.d("calibrationTestResults", "");
+            Log.i("printResultsToConsole", String.format("Calibration Test Results:%n%s%nRamp Test " +
+                    "Results:%n%s", this.calibrationTestResults.toString(), this.rampResults.toString()));
         }
     }
 
     public CalibrationTestResults getCalibrationTestResults() {
         return this.calibrationTestResults;
+    }
+
+    public RampTestResultsWithFloorInfo getRampResults() {
+        return rampResults;
+    }
+
+    public void setRampResults(RampTestResultsWithFloorInfo rampResults) {
+        this.rampResults = rampResults;
     }
 
     public void notifySubscribers() {
