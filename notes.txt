@@ -55,9 +55,10 @@ Big Refactor:
         - Boost volumes in ToneTest (boost top vol estimates?) / Conf Test ( 3 "loud" ones in confidence test)
         - Generate model based on RampTest results alone
         - Adjust RampTest and FileIOController as necessary
-    Next:
         - Full self-test - make sure ramp results are reasonable
-        - Choppy audio?
+        - Choppy audio? (problem fixed itself ???? maybe something to do with the tablet itself)
+
+    Next:
         - Add remaining sine tests
 	    - Add calibration info to confidence test file
 	    - Save calibration analysis in different file than test results
