@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
+import android.util.Log;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,6 +68,11 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
         // Estimate vol floor linearly
         double volBelow = UtilFunctions.get(results, freqBelow).vol();
         double volAbove = UtilFunctions.get(results, freqAbove).vol();
+
+        Log.d("getVolFloorEstimate", String.format("freq = %.2f, freqAbove = %.2f, freqBelow = %" +
+                ".2f, volAbove = %.2f, volBelow = %.2f, pctBetween = %.2f, return %.2f", freq,
+                freqAbove, freqBelow, volAbove, volBelow, pctBetween,
+                volBelow + pctBetween * (volAbove - volBelow)));
 
         return volBelow + pctBetween * (volAbove - volBelow);
     }

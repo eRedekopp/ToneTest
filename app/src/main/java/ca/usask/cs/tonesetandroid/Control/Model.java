@@ -39,9 +39,11 @@ public class Model {
     public static final int OUTPUT_SAMPLE_RATE  = 44100;  // output samples at 44.1 kHz always
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
     public int duration_ms; // how long to play each tone in a test
-    public static int MIN_AUDIO_BUF_SIZE = AudioTrack.getMinBufferSize(OUTPUT_SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
-                                                                         AudioFormat.ENCODING_PCM_16BIT);
-    public static byte[] buf = new byte[MIN_AUDIO_BUF_SIZE];    // a byte buffer that will always be in memory
+    public static int MIN_AUDIO_BUF_SIZE =
+                AudioTrack.getMinBufferSize(OUTPUT_SAMPLE_RATE,
+                                                AudioFormat.CHANNEL_OUT_MONO,
+                                                AudioFormat.ENCODING_PCM_16BIT);
+    public static byte[] buf = new byte[2 * MIN_AUDIO_BUF_SIZE];// a byte buffer that will always be in memory
                                                                 // For some reason, using a buf saved in a function's
                                                                 // scope will occasionally crash the entire app
 

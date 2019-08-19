@@ -1,5 +1,8 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
+import android.support.annotation.NonNull;
+import android.util.Log;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,6 +52,11 @@ public class RampTestResults implements HearingTestResults {
         if (tone.vol() < volFloor) return 0.0;
         if (tone.vol() > volCeiling) return 1.0;
 
+        Log.d("getProbabilityLin",
+                "Floor results ? " + (this instanceof RampTestResultsWithFloorInfo));
+        Log.d("getProbabilityLin", String.format("floor = %.2f, ceiling = %.2f, return %.2f",
+                volFloor, volCeiling, (tone.vol() - volFloor) / (volCeiling - volFloor)));
+
         // Return the percentage of the way between floor and ceiling that tone.vol() is
         return (tone.vol() - volFloor) / (volCeiling - volFloor);
     }
@@ -74,6 +82,12 @@ public class RampTestResults implements HearingTestResults {
         // How much of the way between floor and ceiling is tone.vol()?
         double pctBetween = (tone.vol() - volFloor) / (volCeiling - volFloor);
 
+//        Log.d("getProbabilityLog",
+//                "Floor results ? " + (this instanceof RampTestResultsWithFloorInfo));
+//        Log.d("getProbabilityLog", String.format("floor = %.2f, ceiling = %.2f, pctBetween = %" +
+//                ".2f, return %.2f",
+//                volFloor, volCeiling, pctBetween, Math.log(Math.E - 1) * pctBetween + 1));
+
         // Return
         return Math.log((Math.E - 1) * pctBetween + 1);
     }
@@ -83,7 +97,7 @@ public class RampTestResults implements HearingTestResults {
      * time) for the given frequency - must have results stored to call this method
      */
     protected double getVolFloorEstimate(float freq) {
-        return this.getVolCeilingEstimate(freq) / 2.2;  // floor tends to be about 1/2 ceiling
+        return this.getVolCeilingEstimate(freq) / 1.9;  // floor tends to be about 1/2 ceiling
     }
 
     /**
@@ -97,13 +111,13 @@ public class RampTestResults implements HearingTestResults {
         // different results
 
         // Return max ramp vol if freq tested
-        if (this.allResults.containsKey(freq)) return this.allResults.get(freq).max();
+        if (this.allResults.containsKey(freq)) return this.allResults.get(freq).min();
 
         // If freq is higher than highest or lower than lowest, return max ramp vol of nearest
         float maxFreq = Collections.max(this.getTestedFreqs()),
               minFreq = Collections.min(this.getTestedFreqs());
-        if (freq > maxFreq) return this.allResults.get(maxFreq).max();
-        if (freq < minFreq) return this.allResults.get(minFreq).max();
+        if (freq > maxFreq) return this.allResults.get(maxFreq).min();
+        if (freq < minFreq) return this.allResults.get(minFreq).min();
 
         // Get max ramp vols of nearest tested frequencies
         float freqAbove = UtilFunctions.findNearestAbove(freq, this.getTestedFreqs());
@@ -113,8 +127,8 @@ public class RampTestResults implements HearingTestResults {
         double pctBetween = (freq - freqBelow) / (freqAbove - freqBelow);
 
         // Estimate vol ceiling linearly
-        double volBelow = this.allResults.get(freqBelow).max();
-        double volAbove = this.allResults.get(freqAbove).max();
+        double volBelow = this.allResults.get(freqBelow).min();
+        double volAbove = this.allResults.get(freqAbove).min();
 
         return volBelow + pctBetween * (volAbove - volBelow);
     }
@@ -160,6 +174,7 @@ public class RampTestResults implements HearingTestResults {
     }
 
     @Override
+    @NonNull
     @SuppressWarnings("ConstantConditions")
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -197,6 +212,13 @@ public class RampTestResults implements HearingTestResults {
          */
         public double max() {
             return Math.max(vol1, vol2);
+        }
+
+        /**
+         * @return min(vol1, vol2)
+         */
+        public double min() {
+            return Math.min(vol1, vol2);
         }
     }
 }

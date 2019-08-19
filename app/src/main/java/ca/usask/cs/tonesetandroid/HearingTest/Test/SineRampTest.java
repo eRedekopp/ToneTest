@@ -22,6 +22,9 @@ public class SineRampTest extends RampTest<FreqVolPair> {
 
     protected double rampUp(double rateOfRamp, float freq, double startingVol) {
 
+        // todo sometimes this method writes crackling audio to line out for no discernible reason, then stops. Does
+        //  not happen with playSine()
+
         byte[] buf = Model.buf;
 
         model.enforceMaxVolume();

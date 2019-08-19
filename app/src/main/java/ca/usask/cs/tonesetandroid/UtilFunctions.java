@@ -1,5 +1,8 @@
 package ca.usask.cs.tonesetandroid;
 
+import android.util.Log;
+
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -74,11 +77,25 @@ public final class UtilFunctions {
         return closest;
     }
 
-    public static Tone findNearestAbove(float freq, Tone[] lst) {
+    /*    public static double findNearestAbove(double d, Collection<Double> dbls) throws IllegalArgumentException {
+        double closest = -1.0;
+        double distance = Double.MAX_VALUE;
+        for (double dbl : dbls) {
+            if (0 < dbl - d && dbl - d < distance) {
+                closest = dbl;
+                distance = dbl - d;
+            }
+        }
+        if (closest == -1) throw new IllegalArgumentException("No elements greater than d found");
+        else return closest;
+    }*/
+
+
+    public static Tone findNearestAbove(float f, Tone[] lst) {
         Tone closest = null;
-        float distance = Float.MAX_VALUE;
+        double distance = Double.MAX_VALUE;
         for (Tone t : lst) {
-            float f = t.freq();
+            float freq = t.freq();
             if (0 < freq - f && freq - f < distance) {
                 closest = t;
                 distance = freq - f;
@@ -89,12 +106,12 @@ public final class UtilFunctions {
 
     public static Tone findNearestBelow(float f, Tone[] lst) {
         Tone closest = null;
-        float distance = Float.MAX_VALUE;
+        double distance = Double.MAX_VALUE;
         for (Tone t : lst) {
-            float freq = t.freq();
-            if (0 < f - freq && f - freq < distance) {
+            float curFloat = t.freq();
+            if (0 < f - curFloat && f - curFloat < distance) {
                 closest = t;
-                distance = f - freq;
+                distance = f-curFloat;
             }
         }
         return closest;

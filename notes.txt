@@ -54,7 +54,7 @@ Big Refactor:
         - Figure out why FileIOController sometimes throws NullPointerException (Done, I think)
         - Boost volumes in ToneTest (boost top vol estimates?) / Conf Test ( 3 "loud" ones in confidence test)
         - Generate model based on RampTest results alone
-            - Adjust RampTest and FileIOController as necessary
+        - Adjust RampTest and FileIOController as necessary
     Next:
         - Full self-test - make sure ramp results are reasonable
         - Choppy audio?
