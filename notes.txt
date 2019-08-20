@@ -60,9 +60,9 @@ Big Refactor:
         - Add calibration info to confidence test file
         - Add test type options before test
         - Overload probability methods for different tones
+       - Add remaining sine tests
 
     Next:
-        - Add remaining sine tests
         - Look into programmatically generating earcons via MIDI
         - Save calibration analysis in different file than test results
         - Look into whether internal mixer affects waveform
@@ -73,7 +73,16 @@ Big Refactor:
 
     Confidence tests to add:
         - <DONE> Sine interval
-        - Sine earcon
+        - <DONE> Sine earcon
         - Wav earcon
     Calibration tests to add:
         - Piano
+
+
+Notes on audio synthesis:
+    - see "High-Performance Audio" page on developer.android.com - improve playSine?
+        - use native c++ code?
+        - Math.sin() has bad performance with large x - if still using java, maybe force x to stay small
+    - PureData (libpd) for complex tone synthesis?
+        - For all synthesis?
+    - Other ARM synthesis libraries?
