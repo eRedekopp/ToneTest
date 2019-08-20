@@ -27,7 +27,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     /**
      * The default number of volumes at which to test each frequency in a calibration test
      */
-    protected static final int DEFAULT_N_VOL_PER_FREQ  = 5;  // todo reset
+    protected static final int DEFAULT_N_VOL_PER_FREQ  = 5;
 
     /**
      * The default number of trials to perform for each frequency-volume combination in this test

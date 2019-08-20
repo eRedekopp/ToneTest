@@ -69,14 +69,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
                         results.addResult(currentFreq, vol1, heardVol);
                     }
 
-                    // todo move this to function in HearingTestController
-                    // ramp test complete: configureTestTones reduce test with these results and setup to begin next
-                    iModel.getReduceTest().initialize(results);
-                    iModel.setCurrentTest(iModel.getReduceTest());
-                    iModel.setTestThreadActive(false);
-                    iModel.notifySubscribers();
-                    iModel.setTestPaused(true);
-                    view.showInformationDialog(iModel.getReduceTest().getTestInfo());
+                    controller.rampTestComplete();
 
                 } finally {
                     iModel.setTestThreadActive(false);

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
@@ -50,7 +51,10 @@ public class RampTestResults implements HearingTestResults {
 
     @Override
     public double getProbability(Melody tone) {
-        return -1.0; // todo
+        FreqVolDurTrio[] tones = tone.getTones();
+        double[] probs = new double[tones.length];
+        for (int i = 0; i < tones.length; i++) probs[i] = this.getProbability(tones[i]);
+        return UtilFunctions.mean(probs);
     }
 
     /**

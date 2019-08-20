@@ -93,6 +93,7 @@ public class BackgroundNoiseController {
      * @param volume The volume at which the noise is to be played, 0 <= volume <= MAX_VOL
      */
     private void playWhiteNoise(final int volume) {
+        // todo make this event-based
         if (volume > MAX_VOL) throw new IllegalArgumentException("Volume out of range : " + volume);
         new Thread(new Runnable() {
             @Override

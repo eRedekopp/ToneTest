@@ -97,8 +97,36 @@ public class Melody extends Tone implements Cloneable {
         }
     }
 
+    /**
+     * @return All FreqVolDurTrios in this melody
+     */
     public FreqVolDurTrio[] getNotes() {
         return this.notes.toArray(new FreqVolDurTrio[this.notes.size()]);
+    }
+
+    /**
+     * @return The total number of FreqVolDurTrios in this melody
+     */
+    public int nNotes() {
+        return this.notes.size();
+    }
+
+    /**
+     * @return All FreqVolDurTrios in this melody with volume != 0
+     */
+    public FreqVolDurTrio[] getTones() {
+        ArrayList<FreqVolDurTrio> nonRestNotes = new ArrayList<>();
+        for (FreqVolDurTrio note : this.notes) if (note.vol() != 0) nonRestNotes.add(note);
+        return nonRestNotes.toArray(new FreqVolDurTrio[nonRestNotes.size()]);
+    }
+
+    /**
+     * @return The number of freqVolDurTrios in this melody, ignoring rests (tones with volume = 0)
+     */
+    public int nTones() {
+        int tally = 0;
+        for (FreqVolDurTrio note : this.notes) if (note.vol() != 0) tally++;
+        return tally;
     }
 
     /**

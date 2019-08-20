@@ -70,15 +70,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
                         reduceCurrentVolumes();
                     }
 
-                    // todo move this to method in HearingTestController
-                    // add these results to RampTest
-                    iModel.getRampTest().getResults().setReduceResults(results);
-
-                    // set up CalibrationTest to run next
-                    iModel.getCalibrationTest().initialize(iModel.getRampTest().getResults(), results);
-                    iModel.setCurrentTest(iModel.getCalibrationTest());
-                    iModel.setTestThreadActive(false);
-                    iModel.notifySubscribers();
+                    controller.reduceTestComplete();
 
                 } finally {
                     iModel.setTestThreadActive(false);

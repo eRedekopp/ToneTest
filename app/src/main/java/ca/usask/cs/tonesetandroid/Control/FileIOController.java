@@ -75,8 +75,7 @@ public class FileIOController {
         else
             try {
                 Log.i("FileIOController", string);
-                BufferedWriter out = new BufferedWriter(new FileWriter(currentFile, true)); // todo
-                                                                            // nullpointerexception happened here
+                BufferedWriter out = new BufferedWriter(new FileWriter(currentFile, true));
                 out.write(string);
                 out.close();
             } catch (IOException e) {
@@ -350,7 +349,7 @@ public class FileIOController {
         // "%s Subject %d, Test %s, Noise %s,"              this.getLineBeginning()
         // "freq(Hz) %.1f, vol %.1f, %s, %d clicks: %s"     CalibrationTest.getLineEnd()
 
-        // todo very expensive (Scanners?)
+        // very expensive (Scanners?) Redo this later if you have time
 
         Scanner scanner = null, subScanner = null;
 

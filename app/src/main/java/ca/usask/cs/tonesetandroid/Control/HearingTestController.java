@@ -57,6 +57,29 @@ public class HearingTestController {
     }
 
     /**
+     * Prepare for a reduce test. Must only be called immediately after the ramp test is completed
+     */
+    public void rampTestComplete() {
+        iModel.getReduceTest().initialize(iModel.getRampTest().getResults());
+        iModel.setCurrentTest(iModel.getReduceTest());
+        iModel.setTestThreadActive(false);
+        iModel.notifySubscribers();
+        iModel.setTestPaused(true);
+        view.showInformationDialog(iModel.getReduceTest().getTestInfo());
+    }
+
+    public void reduceTestComplete() {
+        // add these results to RampTest
+        iModel.getRampTest().getResults().setReduceResults(iModel.getReduceTest().getResults());
+
+        // set up CalibrationTest to run next
+        iModel.getCalibrationTest().initialize(iModel.getRampTest().getResults(), iModel.getReduceTest().getResults());
+        iModel.setCurrentTest(iModel.getCalibrationTest());
+        iModel.setTestThreadActive(false);
+        iModel.notifySubscribers();
+    }
+
+    /**
      * Perform any final actions that need to be done before the calibration test is officially "complete"
      */
     public void calibrationTestComplete() {
