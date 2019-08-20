@@ -3,7 +3,6 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
@@ -12,7 +11,6 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 /**
@@ -125,17 +123,17 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
              */
             @Override
             public void run() {
-                try {
-                    iModel.setSampleThreadActive(true);
-                    for (Melody melody : sampleTones) {
-                        if (!iModel.testPaused()) return;  // stop if user un-pauses
-                        playTone(new Melody(Arrays.asList(melody.getNotes()), 120));
-                        sleepThread(500, 500);
+                if (! iModel.sampleThreadActive())
+                    try {
+                        iModel.setSampleThreadActive(true);
+                        for (Melody melody : sampleTones) {
+                            if (!iModel.testPaused()) return;  // stop if user un-pauses
+                            playTone(melody.newVol(70));
+                            sleepThread(500, 500);
+                        }
+                    } finally {
+                        iModel.setSampleThreadActive(false);
                     }
-
-                } finally {
-                    iModel.setSampleThreadActive(false);
-                }
             }
         };
     }

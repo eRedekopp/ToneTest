@@ -536,9 +536,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 infoBuilder.setPositiveButton("Done", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        iModel.setTestPaused(false);
                         while (iModel.sampleThreadActive()) continue;  // idle until sample finishes playing
                         noiseController.playNoise(iModel.getCurrentNoise());
-                        iModel.setTestPaused(false);
                     }
                 });
 

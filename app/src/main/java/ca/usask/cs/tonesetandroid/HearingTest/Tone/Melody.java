@@ -7,7 +7,7 @@ import java.util.List;
  * A class for storing the pitches and their associated durations in a melody. "Melody" in this case is defined as
  * any group of 2 or more pitches with associated durations
  */
-public class Melody extends Tone implements Cloneable {
+public class Melody extends ReducibleTone implements Cloneable {
 
     /**
      * How long should each melody last in total?
@@ -145,6 +145,14 @@ public class Melody extends Tone implements Cloneable {
             case Earcon.DIRECTION_UP:   return "up";
             default: throw new RuntimeException("Unknown direction identifier: " + this.direction);
         }
+    }
+
+    @Override
+    public Melody newVol(double newVol) {
+        if (newVol == this.vol()) return this.clone();
+        List<FreqVolDurTrio> newNotes = new ArrayList<>();
+        for (FreqVolDurTrio note : this.notes) newNotes.add((FreqVolDurTrio) note.newVol(newVol));
+        return new Melody(newNotes, vol);
     }
 
     /**

@@ -100,19 +100,20 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
         return new Runnable() {
             @Override
             public void run() {
-                try {
-                    iModel.setSampleThreadActive(true);
-                    for (float freq : DEFAULT_FREQUENCIES) {
-                        if (!iModel.testPaused()) return; // stop if user un-pauses
-                        playTone(new Interval(freq, freq * INTERVAL_FREQ_RATIO, 70));
-                        sleepThread(500, 500);  // sleep 1/2 second
-                        if (!iModel.testPaused()) return; // stop if user un-pauses
-                        playTone(new Interval(freq, freq / INTERVAL_FREQ_RATIO, 70));
-                        sleepThread(500, 500);  // sleep 1/2 second
+                if (! iModel.sampleThreadActive())
+                    try {
+                        iModel.setSampleThreadActive(true);
+                        for (float freq : DEFAULT_FREQUENCIES) {
+                            if (!iModel.testPaused()) return; // stop if user un-pauses
+                            playTone(new Interval(freq, freq * INTERVAL_FREQ_RATIO, 70));
+                            sleepThread(500, 500);  // sleep 1/2 second
+                            if (!iModel.testPaused()) return; // stop if user un-pauses
+                            playTone(new Interval(freq, freq / INTERVAL_FREQ_RATIO, 70));
+                            sleepThread(500, 500);  // sleep 1/2 second
+                        }
+                    } finally {
+                        iModel.setSampleThreadActive(false);
                     }
-                } finally {
-                    iModel.setSampleThreadActive(false);
-                }
             }
         };
     }

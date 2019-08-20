@@ -18,4 +18,9 @@ public class FreqVolDurTrio extends FreqVolPair {
     public int durationMs() {
         return this.durationMs;
     }
+
+    @Override
+    public ReducibleTone newVol(double vol) {
+        return new FreqVolDurTrio(this.freq, vol, this.durationMs);
+    }
 }
