@@ -78,6 +78,9 @@ public class HearingTestController {
         this.iModel.setTestPaused(true);
         this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
         this.fileController.startNewSaveFile(false);
+        this.fileController.saveString(String.format("Calibration Results:%n%s%nRamp Results:%n%s%n",
+                                    this.model.calibrationTestResults.toString(), this.model.rampResults.toString()));
+
         this.view.showSampleDialog( this.iModel.getConfidenceTest().sampleTones(),
                                     this.iModel.getCurrentTest().getTestInfo());
     }

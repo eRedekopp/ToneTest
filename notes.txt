@@ -57,20 +57,22 @@ Big Refactor:
         - Adjust RampTest and FileIOController as necessary
         - Full self-test - make sure ramp results are reasonable
         - Choppy audio? (problem fixed itself ???? maybe something to do with the tablet itself)
+        - Add calibration info to confidence test file
+        - Add test type options before test
+        - Overload probability methods for different tones
 
     Next:
         - Add remaining sine tests
-	    - Add calibration info to confidence test file
-	    - Save calibration analysis in different file than test results
-        - Normalize background noise types to same volume scale as sines/earcons
-        - Decide whether to add extra grace period for entering response in puretone test
         - Look into programmatically generating earcons via MIDI
+        - Save calibration analysis in different file than test results
         - Look into whether internal mixer affects waveform
         - Improve aesthetics / code style / documentation / write developer guide
         - Find a way to eliminate break in crowd noise (low priority) (silence at end of wav?)
+        - Normalize background noise types to same volume scale as sines/earcons (wait to hear from Carl about final
+            test format - don't bother if we aren't using the background noise generator in the real thing)
 
     Confidence tests to add:
-        - Sine interval
+        - <DONE> Sine interval
         - Sine earcon
         - Wav earcon
     Calibration tests to add:
