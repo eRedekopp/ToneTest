@@ -33,6 +33,7 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
     @SuppressWarnings("unchecked")
     public RampTestResults getRegularRampResults() {
         RampTestResults newResults = new RampTestResults();
+        newResults.equationID = this.equationID;
         newResults.allResults = (HashMap<Float, VolPair>) this.allResults.clone();
         return newResults;
     }
@@ -68,11 +69,6 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
         // Estimate vol floor linearly
         double volBelow = UtilFunctions.get(results, freqBelow).vol();
         double volAbove = UtilFunctions.get(results, freqAbove).vol();
-
-        Log.d("getVolFloorEstimate", String.format("freq = %.2f, freqAbove = %.2f, freqBelow = %" +
-                ".2f, volAbove = %.2f, volBelow = %.2f, pctBetween = %.2f, return %.2f", freq,
-                freqAbove, freqBelow, volAbove, volBelow, pctBetween,
-                volBelow + pctBetween * (volAbove - volBelow)));
 
         return volBelow + pctBetween * (volAbove - volBelow);
     }

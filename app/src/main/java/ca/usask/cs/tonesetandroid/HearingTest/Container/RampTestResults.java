@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
@@ -15,7 +17,7 @@ public class RampTestResults implements HearingTestResults {
 
     public static final int[] EQUATION_ID_NUMS = {0, 1};
 
-    private int equationID = 0;
+    protected int equationID = 0;
 
     /**
      * A mapping of each frequency tested to the first and second volumes selected by the user at
@@ -32,6 +34,18 @@ public class RampTestResults implements HearingTestResults {
         if (equationID == 0) return getProbabilityLinear(tone);
         if (equationID == 1) return getProbabilityLogarithmic(tone);
         else throw new IllegalStateException("Equation ID set to invalid value: " + equationID);
+    }
+
+    @Override
+    public double getProbability(SinglePitchTone tone) throws IllegalStateException {
+        return getProbability((Tone) tone);
+    }
+
+    @Override
+    public double getProbability(Interval tone) throws IllegalStateException {
+        double f1Prob = this.getProbability(new FreqVolPair(tone.freq(), tone.vol()));
+        double f2Prob = this.getProbability(new FreqVolPair(tone.freq2(), tone.vol()));
+        return UtilFunctions.mean(new double[]{f1Prob, f2Prob});
     }
 
     /**
@@ -51,11 +65,6 @@ public class RampTestResults implements HearingTestResults {
         // Return 1 or 0 if above/below ceiling/floor
         if (tone.vol() < volFloor) return 0.0;
         if (tone.vol() > volCeiling) return 1.0;
-
-        Log.d("getProbabilityLin",
-                "Floor results ? " + (this instanceof RampTestResultsWithFloorInfo));
-        Log.d("getProbabilityLin", String.format("floor = %.2f, ceiling = %.2f, return %.2f",
-                volFloor, volCeiling, (tone.vol() - volFloor) / (volCeiling - volFloor)));
 
         // Return the percentage of the way between floor and ceiling that tone.vol() is
         return (tone.vol() - volFloor) / (volCeiling - volFloor);
@@ -82,12 +91,6 @@ public class RampTestResults implements HearingTestResults {
         // How much of the way between floor and ceiling is tone.vol()?
         double pctBetween = (tone.vol() - volFloor) / (volCeiling - volFloor);
 
-//        Log.d("getProbabilityLog",
-//                "Floor results ? " + (this instanceof RampTestResultsWithFloorInfo));
-//        Log.d("getProbabilityLog", String.format("floor = %.2f, ceiling = %.2f, pctBetween = %" +
-//                ".2f, return %.2f",
-//                volFloor, volCeiling, pctBetween, Math.log(Math.E - 1) * pctBetween + 1));
-
         // Return
         return Math.log((Math.E - 1) * pctBetween + 1);
     }
@@ -97,7 +100,7 @@ public class RampTestResults implements HearingTestResults {
      * time) for the given frequency - must have results stored to call this method
      */
     protected double getVolFloorEstimate(float freq) {
-        return this.getVolCeilingEstimate(freq) / 1.9;  // floor tends to be about 1/2 ceiling
+        return this.getVolCeilingEstimate(freq) / 2.0;  // floor tends to be about 1/2 ceiling
     }
 
     /**
@@ -106,9 +109,6 @@ public class RampTestResults implements HearingTestResults {
      */
     @SuppressWarnings("ConstantConditions")
     protected double getVolCeilingEstimate(float freq) {
-
-        // NOTE : this uses the highest ramp volume to generate ceiling estimates. Consider using the lowest one for
-        // different results
 
         // Return max ramp vol if freq tested
         if (this.allResults.containsKey(freq)) return this.allResults.get(freq).min();

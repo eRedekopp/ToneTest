@@ -31,7 +31,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
                         for (float freq : DEFAULT_FREQUENCIES) {
                             if (!iModel.testPaused()) return;  // stop if user un-pauses during tones
                             playSine(freq, 70, TONE_DURATION_MS);
-                            sleepThread(800, 800);
+                            sleepThread(500, 500);
                         }
                     } finally {
                         iModel.setSampleThreadActive(false);
@@ -104,16 +104,15 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
     }
 
     @Override
-    protected void playTone(FreqVolPair tone) {
-        this.playSine(tone, TONE_DURATION_MS);
+    public String getLineEnd(SingleTrialResult trial) {
+        return String.format("%s, %s, %d clicks: %s",
+                trial.tone().toString(), trial.wasCorrect() ? "Heard" : "NotHeard", trial.nClicks(),
+                Arrays.toString(trial.clickTimes()));
     }
 
     @Override
-    public String getLineEnd(SingleTrialResult trial) {
-        FreqVolPair fvp = (FreqVolPair) trial.tone();
-        return String.format("%s, %s, %d clicks: %s",
-                fvp.toString(), trial.wasCorrect() ? "Heard" : "notHeard", trial.nClicks(),
-                Arrays.toString(trial.clickTimes()));
+    protected void playTone(FreqVolPair tone) {
+        this.playSine(tone, TONE_DURATION_MS);
     }
 
     @Override

@@ -10,12 +10,15 @@ import com.paramsen.noise.Noise;
 import com.paramsen.noise.NoiseOptimized;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResultsWithFloorInfo;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
+import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 /**
  * Contains methods and values for audio output and stores/handles saved test results and the mathematical model for
@@ -101,14 +104,6 @@ public class Model {
         else return this.calibrationTestResults.getNumOfTrials();
     }
 
-    public double getCalibProbability(SinglePitchTone tone, int n) throws IllegalArgumentException {
-        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
-        else {
-            CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
-            return newCalibResults.getProbability(tone);
-        }
-    }
-
     /**
      * Get the probability of hearing or differentiating the given tone, given the calibration results stored in this
      * model
@@ -123,81 +118,45 @@ public class Model {
         return this.getCalibProbability(new FreqVolPair(tone.freq(), tone.vol()), n);
     }
 
-    public double getRampProbability(SinglePitchTone tone) {
+    public double getCalibProbability(SinglePitchTone tone, int n) throws IllegalArgumentException {
         if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
         else {
+            CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
+            return newCalibResults.getProbability(tone);
+        }
+    }
+
+    public double getCalibProbability(Interval tone, int n) {
+        if (! this.hasResults()) throw new IllegalStateException();
+        else {
+            CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
+            return newCalibResults.getProbability(tone);
+        }
+    }
+
+    public double getRampProbability(SinglePitchTone tone, boolean withFloorResults) {
+        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
+        else if (withFloorResults) {
             return this.rampResults.getProbability(tone);
+        }
+        else {
+            return this.rampResults.getRegularRampResults().getProbability(tone);
         }
     }
 
     /**
      * Get the probability of hearing or differentiating the given tone, given the ramp results stored in this model
      */
-    public double getRampProbability(Tone tone) {
-        return this.getRampProbability(new FreqVolPair(tone.freq(), tone.vol()));
+    public double getRampProbability(Tone tone, boolean withFloorResults) {
+        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
+        return this.getRampProbability(new FreqVolPair(tone.freq(), tone.vol()), withFloorResults);
     }
 
-
-    // todo decide what to do with this
-
-//    /**
-//     * Gets a short clip of audio from the microphone and returns it as an array of floats
-//     *
-//     * @param size The number of samples in the clip
-//     * @return A float array of the given size representing the PCM values of the recorded clip
-//     */
-//    public float[] getAudioSample(int size) {
-//
-//        int MIN_AUDIO_BUF_SIZE = AudioRecord.getMinBufferSize(
-//                INPUT_SAMPLE_RATE,
-//                AudioFormat.CHANNEL_IN_MONO,
-//                AudioFormat.ENCODING_PCM_16BIT
-//        );
-//        if (size < MIN_AUDIO_BUF_SIZE)
-//            throw new IllegalArgumentException("Audio sample size must have length >= " + MIN_AUDIO_BUF_SIZE);
-//
-//        // build AudioRecord: input from mic and output as floats
-//        AudioRecord recorder;
-//        if (Build.VERSION.SDK_INT >= 23)
-//            recorder = new AudioRecord.Builder()
-//                    .setAudioSource(MediaRecorder.AudioSource.MIC)
-//                    .setAudioFormat(new AudioFormat.Builder()
-//                            .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-//                            .setSampleRate(INPUT_SAMPLE_RATE)
-//                            .setChannelMask(AudioFormat.CHANNEL_IN_MONO)
-//                            .build())
-//                    .setBufferSizeInBytes(size)
-//                    .build();
-//        else
-//            recorder = new AudioRecord(
-//                    MediaRecorder.AudioSource.MIC,
-//                    INPUT_SAMPLE_RATE,
-//                    AudioFormat.CHANNEL_IN_MONO,
-//                    AudioFormat.ENCODING_PCM_16BIT,
-//                    size
-//            );
-//        if (recorder.getState() == AudioRecord.STATE_UNINITIALIZED)
-//            throw new IllegalStateException("AudioRecord not properly initialized");
-//
-//        // Record the audio
-//        short[] lineData = new short[size];
-//        recorder.startRecording();
-//        for (int i = 0; i < size; i++) {
-//            recorder.read(lineData, i, 1);
-//        }
-//        recorder.stop();
-//        recorder.release();
-//
-//        // convert to float[]
-//        float[] lineDataFloat = new float[size];
-//        for (int i = 0; i < size; i++) {
-//            lineDataFloat[i] = (float) lineData[i] / (float) Short.MAX_VALUE;
-//            if (lineDataFloat[i] > 1) lineDataFloat[i] = 1;
-//            else if (lineDataFloat[i] < -1) lineDataFloat[i] = -1;
-//        }
-//
-//        return lineDataFloat;
-//    }
+    public double getRampProbability(Interval interval, boolean withFloorResults) {
+        if (! this.hasResults()) throw new IllegalArgumentException("No results stored in model");
+        else if (withFloorResults) return this.rampResults.getProbability(interval);
+        else return this.rampResults.getRegularRampResults().getProbability(interval);
+    }
 
     /**
      * Applies a Hann Window to the data set to improve the overall accuracy

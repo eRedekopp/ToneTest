@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Container;
+package ca.usask.cs.tonesetandroid;
 
 import java.util.Calendar;
 

@@ -3,6 +3,7 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.ListIterator;
 
@@ -25,6 +26,21 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     protected static final int DEFAULT_VOLS_PER_FREQ = 1;
 
     /**
+     * How long will responses be accepted after the tone finishes playing?
+     */
+    protected int GRACE_PERIOD_MS = 0;  // no grace period by default
+
+    /**
+     * Minimum time between end of one trial and start of another. MIN_WAIT_TIME_MS >= GRACE_PERIOD_MS
+     */
+    protected int MIN_WAIT_TIME_MS = 1000;
+
+    /**
+     * Maximum time between end of one trial and start of another
+     */
+    protected int MAX_WAIT_TIME_MS = 3000;
+
+    /**
      * The default frequencies to be used in confidence tests
      */
     protected static final float[] DEFAULT_FREQUENCIES = {220, 440, 880, 1760, 3520};
@@ -34,9 +50,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
      */
     protected static final String DEFAULT_TEST_INFO =
             "In this test, tones of various frequencies and volumes will be played at random times. " +
-            "Please press the \"Heard Tone\" button each time that you hear a tone. " +
-            "To hear a sample of the tones that will be played in this test, press the \"Play Samples\" button. Once " +
-            "you are familiar with the tones, press the \"Done\" button";
+            "Please press the \"Heard Tone\" button each time that you hear a tone. ";
 
     /**
      * The results of the calibration test associated with this confidence test
@@ -107,11 +121,6 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     }
 
     @Override
-    public String getLineEnd(SingleTrialResult result) {
-        return result.toString();  // default for conf test
-    }
-
-    @Override
     public boolean isComplete() {
         return ! this.position.hasNext();
     }
@@ -119,6 +128,8 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     @Override
     protected void run() {
         if (this.testTones.isEmpty()) throw new IllegalStateException("Test pairs not yet configured");
+        else if (MIN_WAIT_TIME_MS < GRACE_PERIOD_MS) throw new RuntimeException("Grace period = " + GRACE_PERIOD_MS +
+                " is greater than the minimum wait time = " + MIN_WAIT_TIME_MS);
 
         new Thread(new Runnable() {
             @Override
@@ -132,15 +143,15 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                         T current = position.next();
                         saveLine();
                         newCurrentTrial(current);
-                        Log.i("ConfidenceTest", "Testing tone: " + current.toString());
                         currentTrial.start();
                         playTone(current);
                         if (iModel.testPaused()) {  // return without doing anything if user paused during tone
                             currentTrial = null;    // remove current trial so it isn't added to list
                             return;
                         }
+                        sleepThread(GRACE_PERIOD_MS, GRACE_PERIOD_MS);
                         currentTrial.setCorrect(wasCorrect());
-                        sleepThread(1000, 3000);
+                        sleepThread(MIN_WAIT_TIME_MS - GRACE_PERIOD_MS, MAX_WAIT_TIME_MS - GRACE_PERIOD_MS);
                     }
 
                     controller.confidenceTestComplete();
@@ -152,11 +163,35 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
         }).start();
     }
 
+    @Override
+    public String getLineEnd(SingleTrialResult trial) {
+        return String.format("%s, %s, %d clicks: %s",
+                trial.tone().toString(), trial.wasCorrect() ? "Correct" : "Incorrect", trial.nClicks(),
+                Arrays.toString(trial.clickTimes()));
+    }
+
+    /**
+     * Call model.getRampProbability for the given tone. Overload this method to get the appropriate overloaded
+     * method from the Model. Gets the results from the ramp test that stores volume floor results if
+     * withFloorResults == true, else gets them from the regular RampTestResults
+     */
+    protected double getModelRampProbability(T t, boolean withFloorResults) {
+        return model.getRampProbability(t, withFloorResults);
+    }
+
+    /**
+     * Call model.getCalibProbabliity for the given tone. Overload this method to get the appropriate overloaded
+     * method from the model
+     */
+    protected double getModelCalibProbability(T t, int n) {
+        return model.getCalibProbability(t, n);
+    }
+
     /**
      * @return The basic statistics of this confidence test as a string - including values
      * estimated by calibration and ramp models
      */
-    @SuppressWarnings("ConstantConditions")
+    @SuppressWarnings({"ConstantConditions", "unchecked"})
     public String summaryStatsAsString() {
         StringBuilder builder = new StringBuilder();
         HashMap<Tone, Integer> correctMap = new HashMap<>(), incorrectMap = new HashMap<>();
@@ -211,15 +246,14 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                 // get all 4 ramp estimates
                 regularResults.setModelEquation(0);
                 model.getRampResults().setModelEquation(0);
-                rampProbLinFloor = model.getRampProbability(t);
-                rampProbLinReg = regularResults.getProbability(t);
-                regularResults.setModelEquation(1);
+                rampProbLinFloor = this.getModelRampProbability((T) t, true);
+                rampProbLinReg = this.getModelRampProbability((T) t, false);
                 model.getRampResults().setModelEquation(1);
-                rampProbLogFloor = model.getRampProbability(t);
-                rampProbLogReg = regularResults.getProbability(t);
+                rampProbLogFloor = this.getModelRampProbability((T) t, true);
+                rampProbLogReg = this.getModelRampProbability((T) t, false);
 
                 // get calib estimate
-                calibProb = model.getCalibProbability(t, n);
+                calibProb = this.getModelCalibProbability((T) t, n);
 
                 builder.append(String.format("%s %.4f %.4f %.4f %.4f %.4f %.4f%n",
                         t.toString(), confProb, calibProb, rampProbLinFloor, rampProbLinReg, rampProbLogFloor,

@@ -17,6 +17,8 @@ import java.util.NoSuchElementException;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.MainActivity;
 import ca.usask.cs.tonesetandroid.Control.Model;
@@ -63,9 +65,21 @@ public class CalibrationTestResults implements HearingTestResults {
      */
     public double getProbability(Tone tone) throws IllegalArgumentException {
         Float[] testedFreqs = this.getTestedFreqs();
-        float[] testedFreqsPrimitive = new float[testedFreqs.length];
+        float[] testedFreqsPrimitive = new float[testedFreqs.length];  // JAVA WHY???
         for (int i = 0; i < testedFreqs.length; i++) testedFreqsPrimitive[i] = testedFreqs[i];
         return getProbability(tone.freq(), tone.vol(), testedFreqsPrimitive);
+    }
+
+    @Override
+    public double getProbability(SinglePitchTone tone) throws IllegalStateException {
+        return (getProbability((Tone) tone));
+    }
+
+    @Override
+    public double getProbability(Interval tone) throws IllegalStateException {
+        double f1Prob = getProbability(new FreqVolPair(tone.freq(), tone.vol()));
+        double f2Prob = getProbability(new FreqVolPair(tone.freq2(), tone.vol()));
+        return UtilFunctions.mean(new double[]{f1Prob, f2Prob});
     }
 
     /**
@@ -387,6 +401,8 @@ public class CalibrationTestResults implements HearingTestResults {
         if (n > this.getNumOfTrials())
             throw new IllegalArgumentException(
                     "n = " + n + " is larger than the actual sample size = " + this.getNumOfTrials());
+        else if (n == this.getNumOfTrials()) return this;
+
         CalibrationTestResults newContainer = new CalibrationTestResults();
         for (HearingTestSingleFreqResult htsr : this.allResults.values())
             newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));

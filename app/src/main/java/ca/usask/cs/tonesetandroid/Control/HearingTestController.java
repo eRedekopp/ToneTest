@@ -3,7 +3,9 @@ package ca.usask.cs.tonesetandroid.Control;
 import android.content.Context;
 import android.util.Log;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Test.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.IntervalSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineReduceTest;
@@ -24,6 +26,10 @@ public class HearingTestController {
     FileIOController fileController;
 
     Context context;
+
+    public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine"};
+
+    public static final String[] CONF_TEST_OPTIONS = {"Single Tone Sine", "Interval Sine"};
 
     ////////////////////////////////////////// control /////////////////////////////////////////////
 
@@ -89,22 +95,55 @@ public class HearingTestController {
 
     //////////////////////////////////// click handlers ////////////////////////////////////////////
 
-    public void handleCalibClick(BackgroundNoiseType noise) {
+    /**
+     * Set up the iModel for a new calibration test of the appropriate type with the appropriate background noise,
+     * then start the test
+     *
+     * @param noise The background noise to be played during this test
+     * @param testTypeID The type of test to begin: given as an index of CALIB_TEST_OPTIONS
+     */
+    public void handleCalibClick(BackgroundNoiseType noise, int testTypeID) {
 
         iModel.reset();
-        iModel.setRampTest(new SineRampTest(noise));
-        iModel.setReduceTest(new SineReduceTest(noise));
-        iModel.setCalibrationTest(new SineCalibratonTest(noise));
+
+        switch (testTypeID) {
+            case 0:
+                iModel.setRampTest(new SineRampTest(noise));
+                iModel.setReduceTest(new SineReduceTest(noise));
+                iModel.setCalibrationTest(new SineCalibratonTest(noise));
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
+        }
 
         this.calibrationTest();
     }
 
-    public void handleConfClick(BackgroundNoiseType noise) {
+    /**
+     * Set up the iModel for a new confidence test of the appropriate type with the appropriate background noise,
+     * then start the test
+     *
+     * @param noise The background noise to be played during this test
+     * @param testTypeID The type of test to begin: given as an index of CONF_TEST_OPTIONS
+     */
+    public void handleConfClick(BackgroundNoiseType noise, int testTypeID) {
         if (! model.hasResults()) throw new IllegalStateException("No results stored in model");
-        SingleSineConfidenceTest newtest = new SingleSineConfidenceTest(model.getCalibrationTestResults(), noise);
-        newtest.initialize();
-        iModel.setConfidenceTest(newtest);
 
+        ConfidenceTest newTest;
+
+        switch (testTypeID) {
+            case 0:
+                newTest = new SingleSineConfidenceTest(model.getCalibrationTestResults(), noise);
+                break;
+            case 1:
+                newTest = new IntervalSineConfidenceTest(model.getCalibrationTestResults(), noise);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
+        }
+
+        newTest.initialize();
+        iModel.setConfidenceTest(newTest);
         this.confidenceTest();
     }
 

@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public interface HearingTestResults {
@@ -12,6 +14,10 @@ public interface HearingTestResults {
      * @throws IllegalStateException If there is no data stored in these results
      */
     double getProbability(Tone tone) throws IllegalStateException;
+
+    double getProbability(SinglePitchTone tone) throws IllegalStateException;
+
+    double getProbability(Interval tone) throws IllegalStateException;
 
     boolean isEmpty();
 
