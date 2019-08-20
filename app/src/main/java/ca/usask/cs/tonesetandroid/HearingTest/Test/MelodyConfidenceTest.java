@@ -2,11 +2,11 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 
-public class EarconSineConfidenceTest extends ConfidenceTest {
+public class MelodyConfidenceTest extends ConfidenceTest<Melody> {
 
-    public EarconSineConfidenceTest(CalibrationTestResults calibResults, BackgroundNoiseType noiseType) {
+    public MelodyConfidenceTest(CalibrationTestResults calibResults, BackgroundNoiseType noiseType) {
         super(calibResults, noiseType);
     }
 
@@ -21,7 +21,7 @@ public class EarconSineConfidenceTest extends ConfidenceTest {
     }
 
     @Override
-    protected void playTone(Tone tone) {
+    protected void playTone(Melody tone) {
 
     }
 
