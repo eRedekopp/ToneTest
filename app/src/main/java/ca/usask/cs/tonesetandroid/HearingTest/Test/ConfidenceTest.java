@@ -18,7 +18,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     /**
      * The default number of times to test each tone
      */
-    protected static final int DEFAULT_TRIALS_PER_TONE = 2; // todo reset
+    protected static final int DEFAULT_TRIALS_PER_TONE = 20;
 
     /**
      * The default number of volumes at which to test each frequency

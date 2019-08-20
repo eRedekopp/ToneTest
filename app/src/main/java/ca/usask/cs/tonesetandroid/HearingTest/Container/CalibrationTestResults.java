@@ -18,6 +18,7 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.MainActivity;
@@ -80,6 +81,11 @@ public class CalibrationTestResults implements HearingTestResults {
         double f1Prob = getProbability(new FreqVolPair(tone.freq(), tone.vol()));
         double f2Prob = getProbability(new FreqVolPair(tone.freq2(), tone.vol()));
         return UtilFunctions.mean(new double[]{f1Prob, f2Prob});
+    }
+
+    @Override
+    public double getProbability(Melody tone) {
+        return -1.0; // todo
     }
 
     /**

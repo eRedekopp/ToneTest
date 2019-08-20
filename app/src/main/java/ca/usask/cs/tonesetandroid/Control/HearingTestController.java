@@ -6,6 +6,7 @@ import android.util.Log;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.IntervalSineConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.MelodySineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineReduceTest;
@@ -29,7 +30,7 @@ public class HearingTestController {
 
     public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine"};
 
-    public static final String[] CONF_TEST_OPTIONS = {"Single Tone Sine", "Interval Sine"};
+    public static final String[] CONF_TEST_OPTIONS = {"Single Tone Sine", "Interval Sine", "Melody Sine"};
 
     ////////////////////////////////////////// control /////////////////////////////////////////////
 
@@ -140,6 +141,9 @@ public class HearingTestController {
                 break;
             case 1:
                 newTest = new IntervalSineConfidenceTest(model.getCalibrationTestResults(), noise);
+                break;
+            case 2:
+                newTest = new MelodySineConfidenceTest(model.getCalibrationTestResults(), noise);
                 break;
             default:
                 throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);

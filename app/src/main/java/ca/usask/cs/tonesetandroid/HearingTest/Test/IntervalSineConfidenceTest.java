@@ -12,7 +12,7 @@ import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
 
-    private static final float INTERVAL_FREQ_RATIO = 1.5f;  // freq ratio 3/2 = major third
+    private static final float INTERVAL_FREQ_RATIO = 1.25f;  // freq ratio 5:4 = major third
 
     private static final int INTERVAL_DURATION_MS = 1500;
 
@@ -44,7 +44,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
 
             testTones.add(createNewInterval(        // add an interval that will likely be heard every time
                         confFreqs.get(0),
-                        this.getCeilingestimateAvg(confFreqs.get(0), upward),
+                        this.getCeilingEstimateAvg(confFreqs.get(0), upward),
                         upward
             ));
 
@@ -58,14 +58,14 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
             if (frequencies.length > 2)             // add an interval that will very likely be heard every time
                 testTones.add(createNewInterval(
                         confFreqs.get(2),
-                        this.getCeilingestimateAvg(confFreqs.get(2), upward) * 1.25,
+                        this.getCeilingEstimateAvg(confFreqs.get(2), upward) * 1.25,
                         upward
                 ));
 
             if (frequencies.length > 3)             // add an interval that will extremely likely be heard every time
                 testTones.add(createNewInterval(
                         confFreqs.get(3),
-                        this.getCeilingestimateAvg(confFreqs.get(2), upward) * 1.5,
+                        this.getCeilingEstimateAvg(confFreqs.get(2), upward) * 1.5,
                         upward
                 ));
 
@@ -78,7 +78,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
             for (int i = hardCodedCases; i < frequencies.length; i++, pct += jumpSize) {
                 float freq = confFreqs.get(i);
                 double volFloor = this.getFloorEstimateAvg(freq, upward);
-                double volCeiling = this.getCeilingestimateAvg(freq, upward);
+                double volCeiling = this.getCeilingEstimateAvg(freq, upward);
                 double testVol = volFloor + pct * (volCeiling - volFloor);
                 this.testTones.add(createNewInterval(freq, testVol, upward));
             }
@@ -91,7 +91,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
         this.testTones = allTrials;
 
         if (this.testTones.size() != trialsPerTone * frequencies.length * volsPerFreq * 2)  // sanity check
-            Log.e("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length +
+            Log.e("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length * volsPerFreq * 2 +
                     " test pairs but generated " + this.testTones.size());
     }
 
@@ -103,10 +103,10 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
                 try {
                     iModel.setSampleThreadActive(true);
                     for (float freq : DEFAULT_FREQUENCIES) {
-                        if (!iModel.testPaused()) return; // stop if user pauses
+                        if (!iModel.testPaused()) return; // stop if user un-pauses
                         playTone(new Interval(freq, freq * INTERVAL_FREQ_RATIO, 70));
                         sleepThread(500, 500);  // sleep 1/2 second
-                        if (!iModel.testPaused()) return; // stop if user pauses
+                        if (!iModel.testPaused()) return; // stop if user un-pauses
                         playTone(new Interval(freq, freq / INTERVAL_FREQ_RATIO, 70));
                         sleepThread(500, 500);  // sleep 1/2 second
                     }
@@ -156,7 +156,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
     /**
      * @return The mean of CalibrationTestResults.getVolFloorEstimateForFreq for each frequency in freqs
      */
-    public double getFloorEstimateAvg(float freq1, boolean isUpward) {
+    protected double getFloorEstimateAvg(float freq1, boolean isUpward) {
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] floorEstimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++) floorEstimates[i] = calibResults.getVolFloorEstimateForFreq(freqs[i]);
@@ -166,7 +166,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
     /**
      * @return The mean of CalibrationTestResults.getVolCeilingestimateForFreq for each frequency in freqs
      */
-    public double getCeilingestimateAvg(float freq1, boolean isUpward) {
+    protected double getCeilingEstimateAvg(float freq1, boolean isUpward) {
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] ceilingEstimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++)

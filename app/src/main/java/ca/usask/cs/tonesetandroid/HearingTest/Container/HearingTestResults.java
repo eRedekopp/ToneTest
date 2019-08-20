@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -18,6 +19,8 @@ public interface HearingTestResults {
     double getProbability(SinglePitchTone tone) throws IllegalStateException;
 
     double getProbability(Interval tone) throws IllegalStateException;
+
+    double getProbability(Melody tone) throws IllegalStateException;
 
     boolean isEmpty();
 
