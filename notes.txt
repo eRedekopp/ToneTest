@@ -84,5 +84,10 @@ Notes on audio synthesis:
         - use native c++ code?
         - Math.sin() has bad performance with large x - if still using java, maybe force x to stay small
     - PureData (libpd) for complex tone synthesis?
-        - For all synthesis?
+        - FM synthesis only 
     - Other ARM synthesis libraries?
+    - built in sonivox EAS synth 
+        - android.google.com search for sonivox
+        - https://github.com/billthefarmer/mididriver eas midi driver
+        - Can we know the exact waveform?
+            -  Get access to the raw PCM data?
