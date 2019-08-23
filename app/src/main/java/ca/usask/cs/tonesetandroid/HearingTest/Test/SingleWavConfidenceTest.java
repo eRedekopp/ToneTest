@@ -109,7 +109,7 @@ public class SingleWavConfidenceTest extends ConfidenceTest<WavTone> {
                         for (WavTone tone : sampleTones) {
                             if (!iModel.testPaused()) return; // stop if user un-pauses
                             playTone(tone.newVol(100));
-//                            sleepThread(500, 500);
+                            sleepThread(500, 500);
                         }
 
                     } finally {
