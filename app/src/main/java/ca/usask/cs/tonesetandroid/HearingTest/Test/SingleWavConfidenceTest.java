@@ -8,6 +8,9 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
 public class SingleWavConfidenceTest extends ConfidenceTest<WavTone> {
 
+                                                    //        F4       C5       B5        G6        A7
+    private static final float[] DEFAULT_WAV_FREQUENCIES = {349.23f, 523.25f, 987.77f, 1567.98f, 3520.0f};
+
     /**
      * Tones to play in sampleTones. Configure this in configureTestTones
      */
@@ -17,9 +20,19 @@ public class SingleWavConfidenceTest extends ConfidenceTest<WavTone> {
         super(results, noiseType);
     }
 
+    /**
+     * @throws IllegalArgumentException If frequencies[] contains a value that does not have a default wav resource
+     * (see WavTone constructors)
+     */
     @Override
-    protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies) {
+    protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies)
+            throws IllegalArgumentException {
         // todo
+    }
+
+    @Override
+    public void initialize() {
+        this.initialize(DEFAULT_TRIALS_PER_TONE, DEFAULT_VOLS_PER_FREQ, DEFAULT_WAV_FREQUENCIES);
     }
 
     @Override

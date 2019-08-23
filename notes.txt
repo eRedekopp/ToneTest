@@ -70,7 +70,7 @@ Big Refactor:
         - Improve code aesthetics / code style / documentation / write developer guide
         - Find a way to eliminate break in crowd noise (low priority) (silence at end of wav?)
         - Normalize background noise types to same volume scale as sines/earcons (wait to hear from Carl about final
-            test format - don't bother if we aren't using the background noise generator in the real thing)
+          test format - don't bother if we aren't using the background noise generator in the real thing)
 
     Confidence tests to add:
         - <DONE> Sine interval
