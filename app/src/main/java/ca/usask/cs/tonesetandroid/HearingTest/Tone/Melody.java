@@ -38,19 +38,20 @@ public class Melody extends ReducibleTone implements Cloneable {
      */
     public Melody(String identifier, float freq1, double vol) {
         ArrayList<FreqVolDurTrio> noteList = new ArrayList<>();
+        float[] freqs = getFrequenciesForPreset(identifier, freq1);
         switch (identifier) {
             case "maj-triad-up":
                 // Major triad first inversion upward, 2 quarter notes + half note
-                noteList.add(new FreqVolDurTrio(freq1, vol, MELODY_DURATION_MS/4));
-                noteList.add(new FreqVolDurTrio(6f*freq1/5f, vol, MELODY_DURATION_MS/4));
-                noteList.add(new FreqVolDurTrio(8f*freq1/5f, vol, MELODY_DURATION_MS/2));
+                noteList.add(new FreqVolDurTrio(freqs[0], vol, MELODY_DURATION_MS/4));
+                noteList.add(new FreqVolDurTrio(freqs[1], vol, MELODY_DURATION_MS/4));
+                noteList.add(new FreqVolDurTrio(freqs[2], vol, MELODY_DURATION_MS/2));
                 this.direction = Earcon.DIRECTION_UP;
                 break;
             case "maj-triad-down":
                 // Major triad first inversion downward, 2 quarter notes + half note
-                noteList.add(new FreqVolDurTrio(freq1, vol, MELODY_DURATION_MS/4));
-                noteList.add(new FreqVolDurTrio(3f*freq1/4f, vol, MELODY_DURATION_MS/4));
-                noteList.add(new FreqVolDurTrio(5f*freq1/8f, vol, MELODY_DURATION_MS/2));
+                noteList.add(new FreqVolDurTrio(freqs[0], vol, MELODY_DURATION_MS/4));
+                noteList.add(new FreqVolDurTrio(freqs[1], vol, MELODY_DURATION_MS/4));
+                noteList.add(new FreqVolDurTrio(freqs[2], vol, MELODY_DURATION_MS/2));
                 this.direction = Earcon.DIRECTION_DOWN;
                 break;
             case "single-freq-rhythm":
@@ -76,19 +77,29 @@ public class Melody extends ReducibleTone implements Cloneable {
 
     /**
      * Return all the notes that would be contained in a preset melody called with the String constructor for this class
+     * All melody intervals are calculated in 12-Tone Equal Temperament (12-TET)
      *
      * @param identifier The string identifier for the desired melody (same as constructor options)
      * @param freq1 The first frequency of the melody
      * @return A list of frequencies that would be in the melody if the constructor was called
      */
     public static float[] getFrequenciesForPreset(String identifier, float freq1) {
+        // min3 -> 1.189207 in 12-TET
+        // P4   -> 1.334840 in 12-TET
+        // min6 -> 1.587401 in 12-TET
         switch (identifier) {
             case "maj-triad-up":
                 // Major triad first inversion upward, 2 quarter notes + half note
-                return new float[]{freq1, 6f*freq1/5f, 8f*freq1/5f};
+                // starting note -> min 3rd up from start -> min6 up from start
+                float freq2 = 1.189207f * freq1;
+                float freq3 = 1.587401f * freq1;
+                return new float[]{freq1, freq2, freq3};
             case "maj-triad-down":
                 // Major triad first inversion downward, 2 quarter notes + half note
-                return new float[]{freq1, 3f*freq1/4f, 5f*freq1/8f};
+                // starting note -> P4 down from start -> min6 down from start
+                freq2 = freq1 / 1.334840f;
+                freq3 = freq1 / 1.587401f;
+                return new float[]{freq1, freq2, freq3};
             case "single-freq-rhythm":
                 // Single-tone syncopated rhythm: | = 8th note, . = 8th rest -> |.||.|.|
                 return new float[]{freq1};

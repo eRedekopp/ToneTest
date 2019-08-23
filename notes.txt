@@ -61,14 +61,13 @@ Big Refactor:
         - Add test type options before test
         - Overload probability methods for different tones
         - Add remaining sine tests
+        - Change interval/earcon pitch ratios to even-temperament
 
     Next:
-	    - Change interval/earcon pitch ratios to even-temperament
-        - Look into programmatically generating earcons via MIDI
         - Clean up git repo
-        - Save calibration analysis in different file than test results
+        - Save confidence analysis in different file than test results
         - Look into whether internal mixer affects waveform
-        - Improve aesthetics / code style / documentation / write developer guide
+        - Improve code aesthetics / code style / documentation / write developer guide
         - Find a way to eliminate break in crowd noise (low priority) (silence at end of wav?)
         - Normalize background noise types to same volume scale as sines/earcons (wait to hear from Carl about final
             test format - don't bother if we aren't using the background noise generator in the real thing)
@@ -95,3 +94,5 @@ Notes on audio synthesis:
             -  Get access to the raw PCM data?
     - Probably a better idea to just download different instrument sample packs and restrict
       ourselves to "musical note" frequencies
+        - UIowa instrument samples normalized to fill full range of 16-bit PCM for single-tone tests
+        - Homemade earcons for earcon tests

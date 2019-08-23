@@ -12,6 +12,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 public class RampTestResults implements HearingTestResults {
@@ -55,6 +56,11 @@ public class RampTestResults implements HearingTestResults {
         double[] probs = new double[tones.length];
         for (int i = 0; i < tones.length; i++) probs[i] = this.getProbability(tones[i]);
         return UtilFunctions.mean(probs);
+    }
+
+    @Override
+    public double getProbability(WavTone tone) {
+        return 0; // todo
     }
 
     /**
