@@ -1,0 +1,7 @@
+This directory contains the results of the ToneTest piloted July
+31 - August 1, 2019. Interval test. Calibration: 6 vols per freq, 6 trials
+per vol, frequencies {200, 500, 1000, 2000, 4000}Hz. Confidence: 1 vol
+per freq, 20 trials per vol, frequencies {220, 880, 1760, 3520}, 2 upward
+2 downward randomly chosen
+
+Calibration test top-end vol boost = 20%

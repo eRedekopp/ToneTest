@@ -1,0 +1,11 @@
+Results.txt contains, in the first line, all the x values of the data,
+and in all subsequent lines, y data, or nothing if no y data for that x 
+value. Contains results for all trials of pilot1 and pilot2 where both a 0% 
+and 100% audible volume were found. results.txt is to be used by 
+draw_psychometric.py to draw a graph of the data.
+
+x data are given as a proportion of the way between the 0% and 100% volume
+y data are given as P(heard) at that volume
+
+The data appears to roughly follow y = x, or possibly y = ln((e-1)x + 1. Will
+build models using both

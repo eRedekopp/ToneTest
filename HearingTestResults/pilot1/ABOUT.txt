@@ -2,3 +2,7 @@ This directory contains the results of the ToneTest piloted July
 15-16, 2019. Single puretone. Calibration: 6 vols per freq, 10 trials
 per vol, frequencies {200, 500, 1000, 2000, 4000}Hz. Confidence: 1 vol
 per freq, 20 trials per vol, frequencies {220, 880, 1760, 3520}
+
+Subject 50 was tested on July 24 with an updated version of the study
+that tests louder volumes (tagged 1.0.1 on Git) - results not
+represented in compiled spreadsheet
