@@ -62,9 +62,17 @@ Big Refactor:
         - Overload probability methods for different tones
         - Add remaining sine tests
         - Change interval/earcon pitch ratios to even-temperament
+        - Clean up git repo
 
     Next:
-        - Clean up git repo
+        - Make .wav files for tones:
+            - single-tone @ a bunch of frequencies
+                - mari
+                - pno
+                - synthetic sound of some sort?
+            - "earcons" - longer than originals
+        - Search for open-license notification tones
+        - Look into improving audio (android dev site "high performance audio")
         - Save confidence analysis in different file than test results
         - Look into whether internal mixer affects waveform
         - Improve code aesthetics / code style / documentation / write developer guide
@@ -72,13 +80,13 @@ Big Refactor:
         - Normalize background noise types to same volume scale as sines/earcons (wait to hear from Carl about final
           test format - don't bother if we aren't using the background noise generator in the real thing)
 
+
     Confidence tests to add:
         - <DONE> Sine interval
         - <DONE> Sine earcon
         - Wav earcon
     Calibration tests to add:
         - Piano
-
 
 Notes on audio synthesis:
     - see "High-Performance Audio" page on developer.android.com - improve playSine?
@@ -95,4 +103,5 @@ Notes on audio synthesis:
     - Probably a better idea to just download different instrument sample packs and restrict
       ourselves to "musical note" frequencies
         - UIowa instrument samples normalized to fill full range of 16-bit PCM for single-tone tests
+            - Did not work - too long and not clear enough, way too much silence at end + difficult to trim
         - Homemade earcons for earcon tests

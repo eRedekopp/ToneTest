@@ -100,7 +100,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
 
 
         if (this.testTones.size() != trialsPerTone * frequencies.length * volsPerFreq * 3)  // sanity check
-            Log.e("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length * volsPerFreq * 3 +
+            Log.w("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length * volsPerFreq * 3 +
                 " test pairs but generated " + this.testTones.size());
     }
 

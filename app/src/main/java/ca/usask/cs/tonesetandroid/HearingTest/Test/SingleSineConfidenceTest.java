@@ -99,7 +99,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
         this.testTones = allTrials;
 
         if (this.testTones.size() != trialsPerTone * frequencies.length * volsPerFreq)
-            Log.e("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length +
+            Log.w("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length * volsPerFreq +
                                         " test pairs but generated " + this.testTones.size());
     }
 

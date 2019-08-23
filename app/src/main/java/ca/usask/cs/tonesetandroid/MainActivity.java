@@ -225,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 // disable all response buttons
                 for (Button b : new Button[]{upButton, downButton, flatButton, heardButton}) b.setEnabled(false);
 
-                // enable response buttons as necessary, if a test is currently happening
+                // re-enable response buttons as necessary, if a test is currently happening
                 if (iModel.testing())
                     for (int option : iModel.getCurrentRequiredButtons()) {
                         switch (option) {

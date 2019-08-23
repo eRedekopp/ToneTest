@@ -172,24 +172,23 @@ public abstract class HearingTest<T extends Tone> {
      */
     protected void playWav(WavTone tone) {
         try {
-            byte[] buf = new byte[2];
+            byte[] buf = Model.buf;
+            short[] writeBuf = new short[1];
             InputStream rawPCM = context.getResources().openRawResource(tone.wavID());
             model.enforceMaxVolume();
             model.startAudio();
 
             try {
+                Log.d("playWav", "Playing wav with freq: " + tone.freq() + ", vol: " + tone.vol());
                 while (rawPCM.available() > 0) {
                     rawPCM.read(buf, 0, 2);       // read data from stream
 
-                    byte b = buf[0];              // convert to big-endian todo get rid of this and swap below + test
-                    buf[0] = buf[1];
-                    buf[1] = b;
-
-                    short sample = (short) (buf[0] << 8 | buf[1] & 0xFF);  // convert to short
+                    short sample = (short) (buf[1] << 8 | buf[0] & 0xFF);  // convert to short
                     double amplitude = (double) sample / (double) Short.MIN_VALUE;
                     sample = (short) (amplitude * tone.vol());                   // convert to same vol scale as
-                                                                                    // sines
-                    model.lineOut.write(new short[]{sample}, 0, 1);                 // write sample to line out
+                                                                                 // sines
+                    writeBuf[0] = sample;
+                    model.lineOut.write(writeBuf, 0, 1);                 // write sample to line out
                 }
             } catch (IOException e) {
                 Log.e("playWav", "Error playing wav file");

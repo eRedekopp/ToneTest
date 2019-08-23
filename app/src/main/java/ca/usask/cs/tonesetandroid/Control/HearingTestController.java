@@ -11,6 +11,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleSineConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleWavConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 
 /**
@@ -30,7 +31,8 @@ public class HearingTestController {
 
     public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine"};
 
-    public static final String[] CONF_TEST_OPTIONS = {"Single Tone Sine", "Interval Sine", "Melody Sine"};
+    public static final String[] CONF_TEST_OPTIONS =
+            {"Single Tone Sine", "Interval Sine", "Melody Sine", "Single Tone Piano"};
 
     ////////////////////////////////////////// control /////////////////////////////////////////////
 
@@ -134,7 +136,7 @@ public class HearingTestController {
         iModel.reset();
 
         switch (testTypeID) {
-            case 0:
+            case 0:     // single sine
                 iModel.setRampTest(new SineRampTest(noise));
                 iModel.setReduceTest(new SineReduceTest(noise));
                 iModel.setCalibrationTest(new SineCalibratonTest(noise));
@@ -159,14 +161,17 @@ public class HearingTestController {
         ConfidenceTest newTest;
 
         switch (testTypeID) {
-            case 0:
+            case 0:     // single sine
                 newTest = new SingleSineConfidenceTest(model.getCalibrationTestResults(), noise);
                 break;
-            case 1:
+            case 1:     // interval sine
                 newTest = new IntervalSineConfidenceTest(model.getCalibrationTestResults(), noise);
                 break;
-            case 2:
+            case 2:     // melody sine
                 newTest = new MelodySineConfidenceTest(model.getCalibrationTestResults(), noise);
+                break;
+            case 3:     // single piano
+                newTest = new SingleWavConfidenceTest(model.calibrationTestResults, noise);
                 break;
             default:
                 throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);

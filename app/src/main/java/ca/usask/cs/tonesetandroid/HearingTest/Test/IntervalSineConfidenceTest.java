@@ -91,7 +91,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
         this.testTones = allTrials;
 
         if (this.testTones.size() != trialsPerTone * frequencies.length * volsPerFreq * 2)  // sanity check
-            Log.e("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length * volsPerFreq * 2 +
+            Log.w("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length * volsPerFreq * 2 +
                     " test pairs but generated " + this.testTones.size());
     }
 

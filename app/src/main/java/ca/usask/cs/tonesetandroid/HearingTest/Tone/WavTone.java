@@ -65,7 +65,7 @@ public class WavTone extends ReducibleTone {
     }
 
     @Override
-    public ReducibleTone newVol(double vol) {
+    public WavTone newVol(double vol) {
         return new WavTone(this.wavID, this.freq, vol);
     }
 
