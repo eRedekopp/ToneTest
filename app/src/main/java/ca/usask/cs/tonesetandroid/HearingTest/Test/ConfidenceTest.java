@@ -1,7 +1,5 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -71,7 +69,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     /**
      * Fill testTones with appropriate tones for this test
      */
-    protected abstract void configureTestPairs(int trialsPerTone, int volsPerFreq, float[] frequencies);
+    protected abstract void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies);
 
     /**
      * @return A runnable which plays a sample of all testable tones in this confidence test via
@@ -109,7 +107,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
      * @param frequencies The frequencies of the tones to be tested
      */
     public void initialize(int trialsPerTone, int volsPerFreq, float[] frequencies) {
-        this.configureTestPairs(trialsPerTone, volsPerFreq, frequencies);
+        this.configureTestTones(trialsPerTone, volsPerFreq, frequencies);
         this.position = this.testTones.listIterator(0);
     }
 

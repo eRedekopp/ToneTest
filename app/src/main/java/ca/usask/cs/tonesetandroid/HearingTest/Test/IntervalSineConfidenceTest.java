@@ -31,7 +31,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
     }
 
     @Override
-    protected void configureTestPairs(int trialsPerTone, int volsPerFreq, float[] frequencies) {
+    protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies) {
         if (frequencies.length == 0) return;
 
         this.testTones = new ArrayList<>();

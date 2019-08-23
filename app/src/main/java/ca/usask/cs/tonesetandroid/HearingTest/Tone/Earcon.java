@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
  * A class representing an "earcon" at a certain volume. It is up to the programmer to ensure that frequency and
  * direction match up with the .wav file with the given audioResourceID
  */
-public class Earcon extends Tone implements Cloneable {
+public class Earcon extends Tone implements Cloneable {  // todo extends WavTone
 
     // to indicate the direction of the notes in the earcon
     public static final int DIRECTION_UP = 2;

@@ -17,6 +17,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.Control.HearingTestInteractionModel;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 import ca.usask.cs.tonesetandroid.Control.Model;
 
@@ -169,10 +170,10 @@ public abstract class HearingTest<T extends Tone> {
      * Play the given Earcon via the model
      * @param earcon the earcon to be played
      */
-    private void playEarcon(Earcon earcon) {
+    protected void playWav(WavTone tone) {
         try {
             byte[] buf = new byte[2];
-            InputStream rawPCM = context.getResources().openRawResource(earcon.audioResourceID);
+            InputStream rawPCM = context.getResources().openRawResource(tone.wavID());
             model.enforceMaxVolume();
             model.startAudio();
 
@@ -186,13 +187,12 @@ public abstract class HearingTest<T extends Tone> {
 
                     short sample = (short) (buf[0] << 8 | buf[1] & 0xFF);  // convert to short
                     double amplitude = (double) sample / (double) Short.MIN_VALUE;
-                    sample = (short) (amplitude * earcon.volume);                   // convert to same vol scale as
+                    sample = (short) (amplitude * tone.vol());                   // convert to same vol scale as
                                                                                     // sines
                     model.lineOut.write(new short[]{sample}, 0, 1);                 // write sample to line out
-
                 }
             } catch (IOException e) {
-                Log.e("playEarcon", "Error playing earcon file");
+                Log.e("playWav", "Error playing wav file");
                 e.printStackTrace();
             }
         } finally {

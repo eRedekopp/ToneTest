@@ -4,6 +4,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
 public interface HearingTestResults {
 
@@ -21,6 +22,8 @@ public interface HearingTestResults {
     double getProbability(Interval tone) throws IllegalStateException;
 
     double getProbability(Melody tone) throws IllegalStateException;
+
+    double getProbability(WavTone tone) throws IllegalStateException;
 
     boolean isEmpty();
 

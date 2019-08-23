@@ -24,7 +24,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
             "\"Flat\" if the melody's pitch never changes. Press nothing if you aren't sure.";
 
     /**
-     * Tones to sample in sampleTones() - configure these in configureTestPairs along with testPairs
+     * Tones to sample in sampleTones() - configure these in configureTestTones along with testPairs
      */
     private ArrayList<Melody> sampleTones;
 
@@ -38,7 +38,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
 
     @Override
     @SuppressWarnings("unchecked")
-    protected void configureTestPairs(int trialsPerTone, int volsPerFreq, float[] frequencies) {
+    protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies) {
         if (frequencies.length == 0) return;
 
         this.testTones = new ArrayList<>();

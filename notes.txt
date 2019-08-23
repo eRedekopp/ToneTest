@@ -60,10 +60,12 @@ Big Refactor:
         - Add calibration info to confidence test file
         - Add test type options before test
         - Overload probability methods for different tones
-       - Add remaining sine tests
+        - Add remaining sine tests
 
     Next:
+	    - Change interval/earcon pitch ratios to even-temperament
         - Look into programmatically generating earcons via MIDI
+        - Clean up git repo
         - Save calibration analysis in different file than test results
         - Look into whether internal mixer affects waveform
         - Improve aesthetics / code style / documentation / write developer guide
@@ -91,3 +93,5 @@ Notes on audio synthesis:
         - https://github.com/billthefarmer/mididriver eas midi driver
         - Can we know the exact waveform?
             -  Get access to the raw PCM data?
+    - Probably a better idea to just download different instrument sample packs and restrict
+      ourselves to "musical note" frequencies

@@ -47,7 +47,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
     }
 
     @Override
-    protected void configureTestPairs(int trialsPerTone, int volsPerFreq, float[] frequencies) {
+    protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies) {
 
         if (frequencies.length == 0) return;
 
