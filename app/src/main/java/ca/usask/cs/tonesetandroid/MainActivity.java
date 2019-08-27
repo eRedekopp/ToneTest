@@ -344,7 +344,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         optBuilder.setTitle("Please select the type of test you wish to begin");
         optBuilder.setSingleChoiceItems(
                 isCalib ? HearingTestController.CALIB_TEST_OPTIONS : HearingTestController.CONF_TEST_OPTIONS,
-                -1,
+                0,
                 new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -376,12 +376,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     private void getBackgroundNoiseAndBeginTest(final boolean isCalib, final int testTypeID) {
         // show dialog to get noise type
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setSingleChoiceItems(BackgroundNoiseType.NOISE_TYPE_STRINGS, -1, new DialogInterface.OnClickListener() {
+        builder.setSingleChoiceItems(BackgroundNoiseType.NOISE_TYPE_STRINGS, 0, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 setDialogSelectedItem(i);
             }
         });
+        setDialogSelectedItem(0);
         builder.setCancelable(false);
         builder.setNegativeButton("Cancel", null);
 

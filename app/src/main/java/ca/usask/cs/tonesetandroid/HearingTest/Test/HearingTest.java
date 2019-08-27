@@ -171,24 +171,28 @@ public abstract class HearingTest<T extends Tone> {
      * @param earcon the earcon to be played
      */
     protected void playWav(WavTone tone) {
+
         try {
             byte[] buf = Model.buf;
-            short[] writeBuf = new short[1];
+            short[] writeBuf = new short[1000];
             InputStream rawPCM = context.getResources().openRawResource(tone.wavID());
             model.enforceMaxVolume();
             model.startAudio();
 
             try {
                 Log.d("playWav", "Playing wav with freq: " + tone.freq() + ", vol: " + tone.vol());
-                while (rawPCM.available() > 0) {
-                    rawPCM.read(buf, 0, 2);       // read data from stream
+                while (rawPCM.available() > 1000) {
 
-                    short sample = (short) (buf[1] << 8 | buf[0] & 0xFF);  // convert to short
-                    double amplitude = (double) sample / (double) Short.MIN_VALUE;
-                    sample = (short) (amplitude * tone.vol());                   // convert to same vol scale as
-                                                                                 // sines
-                    writeBuf[0] = sample;
-                    model.lineOut.write(writeBuf, 0, 1);                 // write sample to line out
+                    for (int i = 0; i < 1000; i++) {
+                        rawPCM.read(buf, 0, 2);       // read data from stream
+
+                        short sample = (short) (buf[1] << 8 | buf[0] & 0xFF);  // convert to short
+                        double amplitude = (double) sample / (double) Short.MIN_VALUE;
+                        sample = (short) (amplitude * tone.vol());                   // convert to same vol scale as
+                                                                                     // sines
+                        writeBuf[i] = sample;
+                    }
+                    model.lineOut.write(writeBuf, 0, 1000);                 // write sample to line out
                 }
             } catch (IOException e) {
                 Log.e("playWav", "Error playing wav file");

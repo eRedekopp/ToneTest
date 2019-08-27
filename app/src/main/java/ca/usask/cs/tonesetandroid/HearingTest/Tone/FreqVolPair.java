@@ -7,7 +7,7 @@ import android.support.annotation.NonNull;
  *
  * @author alexscott, redekopp
  */
-public class FreqVolPair extends ReducibleTone implements Cloneable {
+public class FreqVolPair extends SinglePitchTone implements Cloneable {
 
     protected final float freq;
     protected final double vol;

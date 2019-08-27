@@ -19,6 +19,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 /**
@@ -128,6 +129,14 @@ public class Model {
     }
 
     public double getCalibProbability(Interval tone, int n) {
+        if (! this.hasResults()) throw new IllegalStateException();
+        else {
+            CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
+            return newCalibResults.getProbability(tone);
+        }
+    }
+
+    public double getCalibProbability(WavTone tone, int n) {
         if (! this.hasResults()) throw new IllegalStateException();
         else {
             CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);

@@ -46,11 +46,6 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     private ListIterator<T> position;
 
     /**
-     * A CalibrationTestResults object in which to store the results of this calibration test
-     */
-    protected CalibrationTestResults results;
-
-    /**
      * Play a tone for this calibration test
      */
     protected abstract void playTone(T tone);
@@ -119,7 +114,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                             return;
                         }
                         currentTrial.setCorrect(iModel.answered());
-                        results.addResult(current, currentTrial.wasCorrect());
+                        ((CalibrationTestResults) results).addResult(current, currentTrial.wasCorrect());
                     }
 
                     // test complete: finalize results
@@ -133,7 +128,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     }
 
     public CalibrationTestResults getResults() {
-        return this.results;
+        return (CalibrationTestResults) this.results;
     }
 
     @Override

@@ -1,7 +1,5 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.ListIterator;
 
@@ -21,7 +19,6 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
     protected ArrayList<Float> freqs;
     protected ListIterator<Float> position;
-    protected RampTestResultsWithFloorInfo results;
 
     public RampTest(BackgroundNoiseType noiseType) {
         super(noiseType);
@@ -66,7 +63,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
                                                                  new FreqVolPair(currentFreq, heardVol));
                         currentTrial.start();
                         saveLine();
-                        results.addResult(currentFreq, vol1, heardVol);
+                        ((RampTestResultsWithFloorInfo) results).addResult(currentFreq, vol1, heardVol);
                     }
 
                     controller.rampTestComplete();
@@ -102,7 +99,7 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
     }
 
     public RampTestResultsWithFloorInfo getResults() {
-        return this.results;
+        return (RampTestResultsWithFloorInfo) this.results;
     }
 
     /**

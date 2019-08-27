@@ -4,11 +4,14 @@ import android.util.Log;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
 public class SingleWavConfidenceTest extends ConfidenceTest<WavTone> {
@@ -108,15 +111,21 @@ public class SingleWavConfidenceTest extends ConfidenceTest<WavTone> {
                         iModel.setSampleThreadActive(true);
                         for (WavTone tone : sampleTones) {
                             if (!iModel.testPaused()) return; // stop if user un-pauses
-                            playTone(tone.newVol(100));
+                            playTone(tone.newVol(1000));
                             sleepThread(500, 500);
                         }
-
                     } finally {
                         iModel.setSampleThreadActive(false);
                     }
             }
         };
+    }
+
+    @Override
+    public String getLineEnd(SingleTrialResult trial) {
+        return String.format("freq: %.2f, vol: %.2f, %s, %d clicks: %s",
+                trial.tone().freq(), trial.tone().vol(), trial.wasCorrect() ? "Correct" : "Incorrect", trial.nClicks(),
+                Arrays.toString(trial.clickTimes()));
     }
 
     @Override
@@ -127,6 +136,16 @@ public class SingleWavConfidenceTest extends ConfidenceTest<WavTone> {
     @Override
     protected boolean wasCorrect() {
         return iModel.answered();
+    }
+
+    @Override
+    protected double getModelCalibProbability(WavTone tone, int n) {
+        return model.getCalibProbability(tone, n);
+    }
+
+    @Override
+    protected double getModelRampProbability(WavTone tone, boolean withFloorResults) {
+        return model.getRampProbability(tone, withFloorResults);
     }
 
     @Override

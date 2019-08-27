@@ -26,5 +26,4 @@ public interface HearingTestResults {
     double getProbability(WavTone tone) throws IllegalStateException;
 
     boolean isEmpty();
-
 }

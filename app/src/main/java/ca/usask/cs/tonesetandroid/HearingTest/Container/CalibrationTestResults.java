@@ -95,7 +95,7 @@ public class CalibrationTestResults implements HearingTestResults {
 
     @Override
     public double getProbability(WavTone tone) {
-        return 0; // todo
+        return getProbability(new FreqVolPair(tone.freq(), tone.vol()));
     }
 
     /**

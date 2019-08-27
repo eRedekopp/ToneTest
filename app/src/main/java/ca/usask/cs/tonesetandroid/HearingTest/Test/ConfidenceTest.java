@@ -132,7 +132,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                try { ;
+                try {
                     iModel.setTestThreadActive(true);
                     sleepThread(3000, 5000); // wait 3-5 seconds before playing first tone
                     while (!isComplete()) {

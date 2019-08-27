@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
+import android.support.annotation.NonNull;
+
 import ca.usask.cs.tonesetandroid.R;
 
 /**
@@ -67,6 +69,12 @@ public class WavTone extends ReducibleTone {
     @Override
     public WavTone newVol(double vol) {
         return new WavTone(this.wavID, this.freq, vol);
+    }
+
+    @Override
+    @NonNull
+    public String toString() {
+        return String.format("freq: %.2f, vol: %.2f", this.freq, this.vol);
     }
 
     public int wavID() {

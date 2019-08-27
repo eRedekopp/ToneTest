@@ -60,7 +60,7 @@ public class RampTestResults implements HearingTestResults {
 
     @Override
     public double getProbability(WavTone tone) {
-        return 0; // todo
+        return getProbability((Tone) tone);
     }
 
     /**

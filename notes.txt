@@ -63,8 +63,6 @@ Big Refactor:
         - Add remaining sine tests
         - Change interval/earcon pitch ratios to even-temperament
         - Clean up git repo
-
-    Next:
         - Make .wav files for tones:
             - single-tone @ a bunch of frequencies
                 - mari
@@ -72,7 +70,12 @@ Big Refactor:
                 - synthetic sound of some sort?
             - "earcons" - longer than originals
         - Search for open-license notification tones
+
+
+    Next:
         - Look into improving audio (android dev site "high performance audio")
+            - Write bigger buffers?
+            - Calling play() at the wrong time?
         - Save confidence analysis in different file than test results
         - Look into whether internal mixer affects waveform
         - Improve code aesthetics / code style / documentation / write developer guide
