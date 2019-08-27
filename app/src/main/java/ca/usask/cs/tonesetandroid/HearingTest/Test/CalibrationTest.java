@@ -20,11 +20,6 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
 
     /**
-     * The standard frequencies at which to play tones in a calibration test
-     */
-    protected static final float[] STANDARD_FREQUENCIES = {200, 500, 1000, 2000, 4000};
-
-    /**
      * The default number of volumes at which to test each frequency in a calibration test
      */
     protected static final int DEFAULT_N_VOL_PER_FREQ  = 5;

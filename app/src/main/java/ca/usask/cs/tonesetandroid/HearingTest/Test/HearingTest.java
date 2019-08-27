@@ -24,7 +24,7 @@ import ca.usask.cs.tonesetandroid.Control.Model;
 public abstract class HearingTest<T extends Tone> {
 
     // constants
-    public static final float[] CALIB_FREQS = {200, 500, 1000, 2000, 4000};
+    public static final float[] DEFAULT_CALIBRATION_FREQUENCIES = {200, 500, 1000, 2000, 4000};
 
     // mvc elements
     protected static Model model;

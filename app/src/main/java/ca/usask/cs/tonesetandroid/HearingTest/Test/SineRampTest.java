@@ -16,7 +16,7 @@ public class SineRampTest extends RampTest<FreqVolPair> {
 
         this.testTypeName = "sine-ramp";
         this.freqs = new ArrayList<>();
-        for (float freq : CALIB_FREQS) freqs.add(freq);
+        for (float freq : DEFAULT_CALIBRATION_FREQUENCIES) freqs.add(freq);
         this.position = freqs.listIterator(0);
     }
 

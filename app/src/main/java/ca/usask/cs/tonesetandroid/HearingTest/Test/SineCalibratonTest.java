@@ -29,7 +29,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
                                       int nVolsPerFreq,
                                       int nTrialsPerVol) {
         ArrayList<FreqVolPair> allTones = new ArrayList<>();
-        for (float freq : STANDARD_FREQUENCIES) {
+        for (float freq : DEFAULT_CALIBRATION_FREQUENCIES) {
             double topVolEst = Tone.getVolForFreq(rampResults.getResultsArray(), freq) * 1.2; // boost volumes
             double bottomVolEst = Tone.getVolForFreq(reduceResults.getResults(), freq) * 1.2;
             for (double vol = bottomVolEst;
@@ -42,9 +42,10 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
         this.testTones = new ArrayList<>();
         for (int i = 0; i < nTrialsPerVol; i++) this.testTones.addAll(allTones);
 
-        if (this.testTones.size() != STANDARD_FREQUENCIES.length * nVolsPerFreq * nTrialsPerVol) // sanity check
+        // sanity check
+        if (this.testTones.size() != DEFAULT_CALIBRATION_FREQUENCIES.length * nVolsPerFreq * nTrialsPerVol)
             Log.e("SineCalibration", "Error configuring test tones: should have generated "
-                    + nVolsPerFreq * nTrialsPerVol * STANDARD_FREQUENCIES.length + " trials but generated "
+                    + nVolsPerFreq * nTrialsPerVol * DEFAULT_CALIBRATION_FREQUENCIES.length + " trials but generated "
                     + this.testTones.size());
     }
 }
