@@ -87,7 +87,10 @@ Big Refactor:
     Confidence tests to add:
         - <DONE> Sine interval
         - <DONE> Sine earcon
-        - Wav earcon
+        - Wav earcon (audibility)
+        - Wav earcon (differentiation)
+        - Single-sine w/ tested frequencies
+        - Piano tested frequencies
     Calibration tests to add:
         - Piano
 
