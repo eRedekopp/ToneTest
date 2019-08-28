@@ -7,6 +7,9 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.IntervalSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.MelodySineConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.PianoCalibrationTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.PianoRampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.PianoReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineReduceTest;
@@ -143,6 +146,11 @@ public class HearingTestController {
                 iModel.setRampTest(new SineRampTest(noise));
                 iModel.setReduceTest(new SineReduceTest(noise));
                 iModel.setCalibrationTest(new SineCalibratonTest(noise));
+                break;
+            case 1:
+                iModel.setRampTest(new PianoRampTest(noise));
+                iModel.setReduceTest(new PianoReduceTest(noise));
+                iModel.setCalibrationTest(new PianoCalibrationTest(noise));
                 break;
             default:
                 throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);

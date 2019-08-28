@@ -29,12 +29,9 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
 
     public ReduceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.currentVolumes = new ArrayList<>();
-        this.timesNotHeardPerFreq = new HashMap<>();
-        this.results = new ReduceTestResults();
     }
 
-    protected abstract void playTone(Tone tone);
+    protected abstract void playTone(T tone);
 
     public abstract void initialize(RampTestResults rampResults);
 
@@ -144,7 +141,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
         }
     }
 
-    public static class ReduceTestResults {
+    public static class ReduceTestResults {  // todo give own class
         ArrayList<FreqVolPair> results;
 
         public ReduceTestResults() {

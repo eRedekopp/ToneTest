@@ -13,12 +13,14 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
     protected static final int TIME_PER_VOL_MS = 50;
-    protected static final double RAMP_RATE_1 = 1.05;
-    protected static final double RAMP_RATE_2 = 1.025;
     protected static final double STARTING_VOL = 0.5;
 
-    protected ArrayList<Float> freqs;
-    protected ListIterator<Float> position;
+    protected static final String DEFAULT_TEST_INFO =
+            "In this phase of the test, tones will play quietly and slowly get louder. Please press the \"Heard " +
+            "Tone\" button as soon as the tone becomes audible";
+
+    protected ArrayList<T> tones;
+    protected ListIterator<T> position;
 
     public RampTest(BackgroundNoiseType noiseType) {
         super(noiseType);
@@ -27,6 +29,12 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
     @Override
     protected void run() {
+
+        if (this.tones == null || this.position == null)
+            throw new IllegalStateException(String.format(
+                    "RampTest not initialized. tones = null ? %b , position = null ? %b",
+                    this.tones == null, this.position == null));
+
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -37,11 +45,11 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
                     while (! isComplete()) {
                         if (iModel.testPaused() || ! iModel.testing()) return;
-                        float currentFreq = position.next();
+                        T currentTone = position.next();
 
                         // test frequency, ramp up quickly
                         iModel.resetAnswer();
-                        heardVol = rampUp(RAMP_RATE_1, currentFreq, STARTING_VOL);
+                        heardVol = rampUp(getRampRate1(), currentTone, STARTING_VOL);
                         if (heardVol == -1 || iModel.testPaused()) {
                             position.previous(); // move cursor back to starting location and return without doing
                             return;              // anything if user paused
@@ -52,18 +60,19 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
 
                         // test frequency again, slower, starting from 1/10 the first heardVol
                         iModel.resetAnswer();
-                        heardVol = rampUp(RAMP_RATE_2, currentFreq, heardVol / 10.0);
+                        heardVol = rampUp(getRampRate2(), currentTone, heardVol / 10.0);
                         if (heardVol == -1 || iModel.testPaused()) {
                             position.previous(); // move cursor back to starting location and return without doing
                             return;              // anything if user paused
                         }
 
                         // save result
-                        currentTrial = new SingleRampTrialResult(new FreqVolPair(currentFreq, vol1),
-                                                                 new FreqVolPair(currentFreq, heardVol));
+                        currentTrial = new SingleRampTrialResult(currentTone.newVol(vol1),
+                                                                 currentTone.newVol(heardVol));
                         currentTrial.start();
+
                         saveLine();
-                        ((RampTestResultsWithFloorInfo) results).addResult(currentFreq, vol1, heardVol);
+                        ((RampTestResultsWithFloorInfo) results).addResult(currentTone.freq(), vol1, heardVol);
                     }
 
                     controller.rampTestComplete();
@@ -107,13 +116,22 @@ public abstract class RampTest<T extends ReducibleTone> extends HearingTest<T> {
      * volume reached
      *
      * @param rateOfRamp The multiplier for the ramp speed (1.0 < rateOfRamp < ~1.1)
-     * @param freq The frequency of the tone to be ramped up
+     * @param tone A Tone object representing the sound of the tone to be ramped up (tone.vol() disregarded)
      * @param startingVol The volume at which to start the ramp (0 < startingVol <= Short.MAX_VALUE)
      * @return The volume at which the user pressed "heard", or max volume if not pressed, or -1 if user paused test
      * during ramp
      */
-    protected abstract double rampUp(double rateOfRamp, float freq, double startingVol);
+    protected abstract double rampUp(double rateOfRamp, T tone, double startingVol);
 
+    /**
+     * @return rateOfRamp for the first try of each frequency
+     */
+    protected abstract float getRampRate1();
+
+    /**
+     * @return rateOfRamp for the second try of each frequency
+     */
+    protected abstract float getRampRate2();
 
     private class SingleRampTrialResult extends SingleTrialResult {
 

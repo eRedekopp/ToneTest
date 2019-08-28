@@ -1,4 +1,12 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test;
 
-public abstract class WavRampTest extends RampTest {
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
+
+public abstract class WavRampTest extends RampTest<WavTone> {
+
+    public WavRampTest(BackgroundNoiseType noiseType) {
+        super(noiseType);
+    }
+
 }

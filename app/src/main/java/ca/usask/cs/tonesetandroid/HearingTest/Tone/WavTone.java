@@ -9,9 +9,9 @@ import ca.usask.cs.tonesetandroid.R;
  */
 public class WavTone extends ReducibleTone {
 
-    float freq;
+    private float freq;
 
-    double vol;
+    private double vol;
 
     /**
      * The android resource ID of the wav file associated with this WavTone
