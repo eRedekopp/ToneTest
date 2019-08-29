@@ -98,7 +98,7 @@ public class FileIOController {
      * @return Given the state of model and iModel, return a String with subject ID, current date/time, test type
      * name, and background noise type/volume
      */
-    private String getLineBeginning() {
+    private String getLineBeginning() {  // todo move to HearingTest
         Long startTime = null;
         SimpleDateFormat dateFormat = null;
         String formattedDateTime = null;

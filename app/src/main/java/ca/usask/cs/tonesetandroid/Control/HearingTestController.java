@@ -32,7 +32,7 @@ public class HearingTestController {
 
     Context context;
 
-    public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine"};
+    public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine", "Single Tone Piano"};
 
     public static final String[] CONF_TEST_OPTIONS =
             {"Single Tone Sine", "Interval Sine", "Melody Sine", "Single Tone Piano",
@@ -66,12 +66,13 @@ public class HearingTestController {
      * Prepare for a reduce test. Must only be called immediately after the ramp test is completed
      */
     public void rampTestComplete() {
-        iModel.getReduceTest().initialize(iModel.getRampTest().getResults());
-        iModel.setCurrentTest(iModel.getReduceTest());
-        iModel.setTestThreadActive(false);
-        iModel.notifySubscribers();
         iModel.setTestPaused(true);
         view.showInformationDialog(iModel.getReduceTest().getTestInfo());
+        iModel.getReduceTest().initialize(iModel.getRampTest().getResults());
+        iModel.setTestThreadActive(false);
+        iModel.notifySubscribers();
+        iModel.setCurrentTest(iModel.getReduceTest());
+
     }
 
     public void reduceTestComplete() {

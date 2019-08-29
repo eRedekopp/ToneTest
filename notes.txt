@@ -1,5 +1,10 @@
 Todo:
     - Test piano calibration
+    - Complete all todos in source code
+    - Alternate input methods:
+        - Register "heard tone" with accelerometer (slap bag with phone in it, or bump phone under a towel)
+        - Register "up"/"down" with volume up/down buttons?
+            - "BroadcastReceiver" event (?)
     - Look into improving audio (android dev site "high performance audio")
         - Write bigger buffers?
         - Sine wave : write entire sine at once?

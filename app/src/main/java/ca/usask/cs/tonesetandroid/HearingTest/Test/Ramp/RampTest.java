@@ -1,5 +1,7 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.ListIterator;
 
@@ -12,8 +14,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public abstract class RampTest<T extends Tone> extends HearingTest<T> {
 
-    protected static final int TIME_PER_VOL_MS = 50;
-    protected static final double STARTING_VOL = 0.5;
+    protected double startingVol = 0.5; // start at volume 0.5 by default
 
     protected static final String DEFAULT_TEST_INFO =
             "In this phase of the test, tones will play quietly and slowly get louder. Please press the \"Heard " +
@@ -49,7 +50,7 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
 
                         // test frequency, ramp up quickly
                         iModel.resetAnswer();
-                        heardVol = rampUp(getRampRate1(), currentTone, STARTING_VOL);
+                        heardVol = rampUp(getRampRate1(), currentTone, startingVol);
                         if (heardVol == -1 || iModel.testPaused()) {
                             position.previous(); // move cursor back to starting location and return without doing
                             return;              // anything if user paused

@@ -10,6 +10,8 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public class SineRampTest extends RampTest<FreqVolPair> {
 
+    protected static final int TIME_PER_VOL_MS = 50;
+
     public SineRampTest(BackgroundNoiseType noiseType) {
         super(noiseType);
 
