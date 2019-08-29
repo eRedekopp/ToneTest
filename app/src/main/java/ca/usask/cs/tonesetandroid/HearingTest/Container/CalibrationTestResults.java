@@ -15,7 +15,6 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
@@ -39,10 +38,9 @@ public class CalibrationTestResults implements HearingTestResults {
     }
 
     /**
-     * Add a new calibration test result to this container
+     * Add the result of a single CalibrationTest trial to these results
      *
-     * @param freq The frequency of the trial
-     * @param vol The volume of the trial
+     * @param tone The tone played in the new trial
      * @param heard Was the trial heard?
      */
     @SuppressWarnings("ConstantConditions")
@@ -135,35 +133,36 @@ public class CalibrationTestResults implements HearingTestResults {
         return probBelow + pctBetween * (probAbove - probBelow);
     }
 
-    /**
-     * Given an earcon and a subset of the tested frequencies, determine the probability that the user will correctly
-     * hear the direction of the earcon based only on the given subset of frequencies
-     *
-     * @param earcon The earcon whose probability of being distinguished is to be determined
-     * @param subset A subset of the tested volumes, to be used to generate the estimate
-     * @return An estimate of the probability that the user will correctly hear the direction of the interval
-     * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
-     */
-    public double getProbOfCorrectAnswer(Earcon earcon, float[] subset) throws IllegalArgumentException {
-
-        // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
-
-        int nAudioSamples = 50;
-        int nFreqsPerSample = 3;  // top 3 frequencies in every sample
-
-        Log.d("earcon", earcon.toString());
-
-        float[][] topFreqs = topNFrequencies(earcon.audioResourceID, nAudioSamples, 3);
-
-        ArrayList<Float> probEstimates = new ArrayList<>();
-
-        for (int i = 0; i < nAudioSamples; i++)
-            for (int j = 0; j < nFreqsPerSample; j++)
-                if (topFreqs[i] != null && topFreqs[i][j] > 100)
-                    probEstimates.add(getProbability(topFreqs[i][j], earcon.volume, subset));
-
-        return UtilFunctions.mean(probEstimates);
-    }
+    // todo
+//    /**
+//     * Given an earcon and a subset of the tested frequencies, determine the probability that the user will correctly
+//     * hear the direction of the earcon based only on the given subset of frequencies
+//     *
+//     * @param earcon The earcon whose probability of being distinguished is to be determined
+//     * @param subset A subset of the tested volumes, to be used to generate the estimate
+//     * @return An estimate of the probability that the user will correctly hear the direction of the interval
+//     * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
+//     */
+//    public double getProbOfCorrectAnswer(Earcon earcon, float[] subset) throws IllegalArgumentException {
+//
+//        // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
+//
+//        int nAudioSamples = 50;
+//        int nFreqsPerSample = 3;  // top 3 frequencies in every sample
+//
+//        Log.d("earcon", earcon.toString());
+//
+//        float[][] topFreqs = topNFrequencies(earcon.audioResourceID, nAudioSamples, 3);
+//
+//        ArrayList<Float> probEstimates = new ArrayList<>();
+//
+//        for (int i = 0; i < nAudioSamples; i++)
+//            for (int j = 0; j < nFreqsPerSample; j++)
+//                if (topFreqs[i] != null && topFreqs[i][j] > 100)
+//                    probEstimates.add(getProbability(topFreqs[i][j], earcon.volume, subset));
+//
+//        return UtilFunctions.mean(probEstimates);
+//    }
 
     /**
      * Returns a mapping of volumes to the number of times each volume was heard in the test for the given frequency
