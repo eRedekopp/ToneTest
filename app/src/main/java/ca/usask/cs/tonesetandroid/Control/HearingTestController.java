@@ -85,12 +85,12 @@ public class HearingTestController {
      * Perform any final actions that need to be done before the calibration test is officially "complete"
      */
     public void calibrationTestComplete() {
-        this.fileController.closeFile();
         this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
         this.model.setRampResults(this.iModel.getRampTest().getResults());
         this.iModel.reset();
         this.model.printResultsToConsole();
         this.model.audioTrackCleanup();
+        this.fileController.closeFile();
         this.iModel.notifySubscribers();
     }
 

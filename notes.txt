@@ -92,7 +92,7 @@ Big Refactor:
         - Single-sine w/ tested frequencies
         - Piano tested frequencies
     Calibration tests to add:
-        - Piano
+        - <DONE> Piano
 
 Notes on audio synthesis:
     - see "High-Performance Audio" page on developer.android.com - improve playSine?
