@@ -1,7 +1,6 @@
 package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
-import android.util.Log;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Test.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
@@ -13,10 +12,9 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.PianoReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SineReduceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SinglePianoConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.PianoConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleSineCalibFreqConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleSineConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleWavConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 
 /**
@@ -182,7 +180,7 @@ public class HearingTestController {
                 newTest = new MelodySineConfidenceTest(model.getCalibrationTestResults(), noise);
                 break;
             case 3:     // single piano
-                newTest = new SinglePianoConfidenceTest(model.calibrationTestResults, noise);
+                newTest = new PianoConfidenceTest(model.calibrationTestResults, noise);
                 break;
             case 4:     // single sine, test default calibration frequencies
                 newTest = new SingleSineCalibFreqConfidenceTest(model.calibrationTestResults, noise);

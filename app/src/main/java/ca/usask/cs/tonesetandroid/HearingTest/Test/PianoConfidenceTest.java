@@ -9,9 +9,9 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
-public class SinglePianoConfidenceTest extends SingleWavConfidenceTest {
+public class PianoConfidenceTest extends WavConfidenceTest {
 
-    public SinglePianoConfidenceTest(CalibrationTestResults results, BackgroundNoiseType noiseType) {
+    public PianoConfidenceTest(CalibrationTestResults results, BackgroundNoiseType noiseType) {
         super(results, noiseType);
     }
 
