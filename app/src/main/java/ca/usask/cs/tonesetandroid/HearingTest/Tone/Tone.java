@@ -11,6 +11,11 @@ public abstract class Tone {
     public abstract float freq();
 
     /**
+     * @return A new Tone identical to this one except with the given volume
+     */
+    public abstract Tone newVol(double vol);
+
+    /**
      * Given a list of FreqVolPairs, return the volume associated with the given frequency in a pair
      *
      * @param list A list of freqvolpairs

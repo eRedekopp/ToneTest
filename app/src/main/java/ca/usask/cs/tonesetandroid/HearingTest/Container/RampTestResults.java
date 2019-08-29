@@ -10,7 +10,6 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
@@ -37,12 +36,7 @@ public class RampTestResults implements HearingTestResults {
         if (equationID == 1) return getProbabilityLogarithmic(tone);
         else throw new IllegalStateException("Equation ID set to invalid value: " + equationID);
     }
-
-    @Override
-    public double getProbability(SinglePitchTone tone) throws IllegalStateException {
-        return getProbability((Tone) tone);
-    }
-
+    
     @Override
     public double getProbability(Interval tone) throws IllegalStateException {
         double f1Prob = this.getProbability(new FreqVolPair(tone.freq(), tone.vol()));

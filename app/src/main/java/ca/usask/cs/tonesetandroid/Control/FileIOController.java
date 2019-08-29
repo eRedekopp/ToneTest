@@ -453,7 +453,7 @@ public class FileIOController {
             }
 
             model.setCalibrationTestResults(newCalibResults);
-            newRampResults.setReduceResults(reduceResultsBuilder.build());
+            newRampResults.setReduceResults(reduceResultsBuilder.build().getResults());
             model.setRampResults(newRampResults);
 
         } finally {

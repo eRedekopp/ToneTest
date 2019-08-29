@@ -2,19 +2,19 @@ package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Test.ConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.PianoCalibrationTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.SineCalibratonTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.IntervalSineConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.MelodySineConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SingleSineCalibFreqConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SingleSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.IntervalSineConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.MelodySineConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.PianoCalibrationTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.PianoRampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.PianoRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.PianoReduceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.SineReduceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.PianoConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleSineCalibFreqConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleSineConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.PianoConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 
 /**
@@ -76,10 +76,11 @@ public class HearingTestController {
 
     public void reduceTestComplete() {
         // add these results to RampTest
-        iModel.getRampTest().getResults().setReduceResults(iModel.getReduceTest().getResults());
+        iModel.getRampTest().getResults().setReduceResults(iModel.getReduceTest().getLowestVolumes());
 
         // set up CalibrationTest to run next
-        iModel.getCalibrationTest().initialize(iModel.getRampTest().getResults(), iModel.getReduceTest().getResults());
+        iModel.getCalibrationTest().initialize(
+                iModel.getRampTest().getResults(), iModel.getReduceTest().getLowestVolumes());
         iModel.setCurrentTest(iModel.getCalibrationTest());
         iModel.setTestThreadActive(false);
         iModel.notifySubscribers();

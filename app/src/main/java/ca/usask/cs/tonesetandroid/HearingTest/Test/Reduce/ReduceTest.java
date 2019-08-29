@@ -13,10 +13,9 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.ReducibleTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
-public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T> {
+public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
 
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
 
@@ -111,8 +110,8 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
         Collections.shuffle(this.currentVolumes);
     }
 
-    public ReduceTestResults getResults() {
-        return this.results;
+    public FreqVolPair[] getLowestVolumes() {
+        return this.results.getResults();
     }
 
     /**
@@ -142,7 +141,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
         }
     }
 
-    public static class ReduceTestResults {  // todo give own class
+    public static class ReduceTestResults  {
         ArrayList<FreqVolPair> results;
 
         public ReduceTestResults() {
@@ -156,6 +155,7 @@ public abstract class ReduceTest<T extends ReducibleTone> extends HearingTest<T>
         public FreqVolPair[] getResults() {
             return results.toArray(new FreqVolPair[]{});
         }
+
     }
 
     /**

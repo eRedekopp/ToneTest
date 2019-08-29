@@ -10,17 +10,14 @@ import com.paramsen.noise.Noise;
 import com.paramsen.noise.NoiseOptimized;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResultsWithFloorInfo;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
-import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 /**
  * Contains methods and values for audio output and stores/handles saved test results and the mathematical model for
@@ -117,16 +114,11 @@ public class Model {
      * @throws IllegalArgumentException If n > confidence test sample size
      */
     public double getCalibProbability(Tone tone, int n) throws IllegalArgumentException {
-        return this.getCalibProbability(new FreqVolPair(tone.freq(), tone.vol()), n);
-    }
-
-    public double getCalibProbability(SinglePitchTone tone, int n) throws IllegalArgumentException {
         if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
         else {
             CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
             return newCalibResults.getProbability(tone);
-        }
-    }
+        }    }
 
     public double getCalibProbability(Interval tone, int n) {
         if (! this.hasResults()) throw new IllegalStateException();
@@ -148,12 +140,6 @@ public class Model {
      * Get the probability of hearing or differentiating the given tone, given the ramp results stored in this model
      */
     public double getRampProbability(Tone tone, boolean withFloorResults) {
-        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
-        return this.getRampProbability(new FreqVolPair(tone.freq(), tone.vol()), withFloorResults);
-    }
-
-
-    public double getRampProbability(SinglePitchTone tone, boolean withFloorResults) {
         if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
         else if (withFloorResults) {
             return this.rampResults.getProbability(tone);

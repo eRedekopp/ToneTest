@@ -73,6 +73,8 @@ Big Refactor:
 
 
     Next:
+	- Override summaryStats method for wav tests
+	- Fix bugs caused by deleting ReducibleTone
         - Look into improving audio (android dev site "high performance audio")
             - Write bigger buffers?
             - Calling play() at the wrong time?

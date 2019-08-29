@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Test;
+package ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration;
 
 import android.util.Log;
 
@@ -11,7 +11,9 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 /**
@@ -50,7 +52,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
      * Configure the tones that will be tested in this calibration test
      */
     protected abstract void configureTestTones(RampTestResults rampResults,
-                                            ReduceTest.ReduceTestResults reduceResults,
+                                            FreqVolPair[] reduceResults,
                                             int nVolsPerFreq,
                                             int nTrialsPerVol);
 
@@ -71,7 +73,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
      * @param nTrialsPerVol The number of times to test each tone
      */
     public void initialize(RampTestResults rampResults,
-                           ReduceTest.ReduceTestResults reduceResults,
+                           FreqVolPair[] reduceResults,
                            int nVolsPerFreq,
                            int nTrialsPerVol) {
         this.configureTestTones(rampResults, reduceResults, nVolsPerFreq, nTrialsPerVol);
@@ -82,7 +84,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     /**
      * Initialize with default values
      */
-    public void initialize(RampTestResults rampResults, ReduceTest.ReduceTestResults reduceResults) {
+    public void initialize(RampTestResults rampResults, FreqVolPair[] reduceResults) {
         initialize(rampResults, reduceResults, DEFAULT_N_VOL_PER_FREQ, DEFAULT_N_TRIAL_PER_VOL);
     }
 

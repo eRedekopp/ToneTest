@@ -1,7 +1,6 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,7 +18,6 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.MainActivity;
@@ -64,16 +62,12 @@ public class CalibrationTestResults implements HearingTestResults {
     /**
      * @return  the model's estimate of the probability of hearing the given tone, given these calibration results
      */
-    public double getProbability(Tone tone) throws IllegalArgumentException {
+    @Override
+    public double getProbability(Tone tone) throws IllegalStateException {
         Float[] testedFreqs = this.getTestedFreqs();
         float[] testedFreqsPrimitive = new float[testedFreqs.length];  // JAVA WHY???
         for (int i = 0; i < testedFreqs.length; i++) testedFreqsPrimitive[i] = testedFreqs[i];
         return getProbability(tone.freq(), tone.vol(), testedFreqsPrimitive);
-    }
-
-    @Override
-    public double getProbability(SinglePitchTone tone) throws IllegalStateException {
-        return (getProbability((Tone) tone));
     }
 
     @Override

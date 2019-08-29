@@ -55,7 +55,7 @@ public abstract class HearingTest<T extends Tone> {
     /**
      * A container to store the results of this test
      */
-    HearingTestResults results;
+    protected HearingTestResults results;
 
     /**
      * The current trial being performed in this test, or null if test not running
@@ -286,5 +286,9 @@ public abstract class HearingTest<T extends Tone> {
 
     public void setBackgroundNoiseType(BackgroundNoiseType backgroundNoiseType) {
         this.backgroundNoiseType = backgroundNoiseType;
+    }
+
+    public HearingTestResults getResults() {
+        return this.results;
     }
 }

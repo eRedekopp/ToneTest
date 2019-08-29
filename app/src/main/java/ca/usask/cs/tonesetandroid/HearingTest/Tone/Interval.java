@@ -38,6 +38,11 @@ public class Interval extends Tone implements Cloneable {
     }
 
     @Override
+    public Interval newVol(double vol) {
+        return new Interval(this.freq1, this.freq2, vol);
+    }
+
+    @Override
     @NonNull
     public String toString() {
         return String.format("Freq1: %.1f, Freq2: %.1f, vol: %.1f ", this.freq1, this.freq2, this.vol);

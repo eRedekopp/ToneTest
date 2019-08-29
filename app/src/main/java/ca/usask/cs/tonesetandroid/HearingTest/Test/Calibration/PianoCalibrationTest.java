@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Test;
+package ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration;
 
 import java.util.ArrayList;
 
@@ -6,6 +6,7 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.WavCalibrationTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
@@ -22,7 +23,7 @@ public class PianoCalibrationTest extends WavCalibrationTest {
 
     @Override
     protected void configureTestTones(RampTestResults rampResults,
-                                      ReduceTest.ReduceTestResults reduceResults,
+                                      FreqVolPair[] reduceResults,
                                       int nVolsPerFreq,
                                       int nTrialsPerVol) {
 
@@ -30,7 +31,7 @@ public class PianoCalibrationTest extends WavCalibrationTest {
 
         for (float freq : FREQUENCIES) {
             double topVolEst = Tone.getVolForFreq(rampResults.getResultsArray(), freq) * 1.2; // boost volumes
-            double bottomVolEst = Tone.getVolForFreq(reduceResults.getResults(), freq) * 1.2;
+            double bottomVolEst = Tone.getVolForFreq(reduceResults, freq) * 1.2;
             for (double vol = bottomVolEst;
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / nVolsPerFreq) {

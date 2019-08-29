@@ -7,7 +7,7 @@ import ca.usask.cs.tonesetandroid.R;
 /**
  * A class for a tone whose audio data is stored in a .wav file
  */
-public class WavTone extends ReducibleTone {
+public class WavTone extends Tone {
 
     protected float freq;
 

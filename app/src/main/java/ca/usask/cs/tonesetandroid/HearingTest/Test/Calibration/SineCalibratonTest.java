@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Test;
+package ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration;
 
 import android.util.Log;
 
@@ -26,14 +26,14 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
     @Override
     protected void configureTestTones(RampTestResults rampResults,
-                                      ReduceTest.ReduceTestResults reduceResults,
+                                      FreqVolPair[] reduceResults,
                                       int nVolsPerFreq,
                                       int nTrialsPerVol) {
 
         ArrayList<FreqVolPair> allTones = new ArrayList<>();
         for (float freq : DEFAULT_CALIBRATION_FREQUENCIES) {
             double topVolEst = Tone.getVolForFreq(rampResults.getResultsArray(), freq) * 1.2; // boost volumes
-            double bottomVolEst = Tone.getVolForFreq(reduceResults.getResults(), freq) * 1.2;
+            double bottomVolEst = Tone.getVolForFreq(reduceResults, freq) * 1.2;
             for (double vol = bottomVolEst;
                  vol < topVolEst;
                  vol += (topVolEst - bottomVolEst) / nVolsPerFreq) {
