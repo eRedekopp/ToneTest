@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Test;
+package ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;

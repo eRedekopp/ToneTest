@@ -1,12 +1,10 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
-import android.util.Log;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Test.ReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;

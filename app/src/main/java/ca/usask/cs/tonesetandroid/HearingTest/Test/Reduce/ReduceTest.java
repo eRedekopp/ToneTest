@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Test;
+package ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce;
 
 import android.util.Log;
 
@@ -11,6 +11,7 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.ReducibleTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;

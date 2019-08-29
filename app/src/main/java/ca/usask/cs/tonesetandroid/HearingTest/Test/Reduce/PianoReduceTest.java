@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Test;
+package ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce;
 
 import java.util.ArrayList;
 import java.util.Collections;
