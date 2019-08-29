@@ -1,109 +1,35 @@
-How do we control for false alarms?
-  - Ask carl? Need incentive to force one way or another?
-Constructing 95% CI for confidence trial
-  - Stats textbook p395
-  - https://www.desmos.com/calculator/urltj90ojf
-    - size of confidence interval as function of test proportion
-  - n = 20 trials per FVP gives 95% CI with width 8% to 20%
-  - https://www.desmos.com/calculator/bjzixmtknu
-    - Need a huge number of trials to get any sort of accuracy
-  - stats textbook p452 type II error probabilities
+Todo:
+    - Test piano calibration
+    - Look into improving audio (android dev site "high performance audio")
+        - Write bigger buffers?
+        - Sine wave : write entire sine at once?
+        - Calling play() at the wrong time?
+    - Save confidence analysis in different file than test results
+    - Look into whether internal mixer affects waveform
+    - Improve code aesthetics / code style / documentation / write developer guide
+    - Find a way to eliminate break in crowd noise (low priority) (silence at end of wav?)
+    - Normalize background noise types to same volume scale as sines/earcons (wait to hear from Carl about final
+      test format - don't bother if we aren't using the background noise generator in the real thing)
 
-Things to do while waiting for pilot results:
-    - analyze interval results
-    - add "wait" screen for earcon selection and results analysis
-    - force up, flat, down buttons to fit layout more precisely
-    - Make Short conversion marginally more efficient (see todos)
-
-Earcon models tried (based only on self-tests):
-    - n=50 samples of 1000 using only most prominent frequency from each:
-            - Guesses within ~30%
-            - Inconsistent: wrong in both directions
-    - n=2 samples from very beginning and very end:
-            - Close for low frequencies but off by ~40% for higher probabilities
-            - Guesses low, generally
-            - Doesn't seem to generate probabilities over 50%
-    - Above, except cuts off last 2000 samples from earcon
-            - Actually somewhat accurate
-            - Frequencies from periodogram are not even close to actual frequencies, end frequency always 8.0
-    - n=50 samples of 1000 using only most prominent frequency from each:
-            - Seems to guess within 20%
-            - Tends to guess high
-    - All of the above are bad for "neg" earcon
-    - n=50 samples of 1000 using top 3 most prominent frequencies in each, probability averaged of all with equal weight
-            - Guesses within about 15%
-            - Most accurate so far
-
-
-Big Refactor:
-    Done:
-        - simple sine confidence test
-        - ramp test and reduce test
-        - adjust reduce test to use SingleTrialResults
-        - implement main ToneTest
-        - make playTone() abstract method for confidence test
-        - make CalibrationTestResults more generic
-        - implement controller to run tests
-        - fix FileNameController
-        - adjust UI to make new test runnable
-        - Add analysis to confidence test
-        - Play sample tones before confidence test
-        - Read Carl's paper outline
-        - Make sure that confidence statistics save/are calculated properly
-        - Figure out why playSine doesn't work anymore
-        - Figure out why FileIOController sometimes throws NullPointerException (Done, I think)
-        - Boost volumes in ToneTest (boost top vol estimates?) / Conf Test ( 3 "loud" ones in confidence test)
-        - Generate model based on RampTest results alone
-        - Adjust RampTest and FileIOController as necessary
-        - Full self-test - make sure ramp results are reasonable
-        - Choppy audio? (problem fixed itself ???? maybe something to do with the tablet itself)
-        - Add calibration info to confidence test file
-        - Add test type options before test
-        - Overload probability methods for different tones
-        - Add remaining sine tests
-        - Change interval/earcon pitch ratios to even-temperament
-        - Clean up git repo
-        - Make .wav files for tones:
-            - single-tone @ a bunch of frequencies
-                - mari
-                - pno
-                - synthetic sound of some sort?
-            - "earcons" - longer than originals
-        - Search for open-license notification tones
-
-
-    Next:
-        - Look into improving audio (android dev site "high performance audio")
-            - Write bigger buffers?
-            - Sine wave : write entire sine at once?
-            - Calling play() at the wrong time?
-        - Save confidence analysis in different file than test results
-        - Look into whether internal mixer affects waveform
-        - Improve code aesthetics / code style / documentation / write developer guide
-        - Find a way to eliminate break in crowd noise (low priority) (silence at end of wav?)
-        - Normalize background noise types to same volume scale as sines/earcons (wait to hear from Carl about final
-          test format - don't bother if we aren't using the background noise generator in the real thing)
-
-
-    Confidence tests to add:
-        - <DONE> Sine interval
-        - <DONE> Sine earcon
-        - <DONE> Piano Single Tone
-        - Wav earcon (audibility)
-        - Wav earcon (differentiation)
-        - <DONE> Single-sine w/ tested frequencies
-        - Piano tested frequencies
-    Calibration tests to add:
-        - <DONE> Piano
+Confidence tests to add:
+    - <DONE> Sine interval
+    - <DONE> Sine earcon
+    - <DONE> Piano Single Tone
+    - Wav earcon (audibility)
+    - Wav earcon (differentiation)
+    - <DONE> Single-sine w/ tested frequencies
+    - Piano tested frequencies
+Calibration tests to add:
+    - <DONE> Piano
 
 Notes on audio synthesis:
     - see "High-Performance Audio" page on developer.android.com - improve playSine?
         - use native c++ code?
         - Math.sin() has bad performance with large x - if still using java, maybe force x to stay small
     - PureData (libpd) for complex tone synthesis?
-        - FM synthesis only 
+        - FM synthesis only
     - Other ARM synthesis libraries?
-    - built in sonivox EAS synth 
+    - built in sonivox EAS synth
         - android.google.com search for sonivox
         - https://github.com/billthefarmer/mididriver eas midi driver
         - Can we know the exact waveform?
