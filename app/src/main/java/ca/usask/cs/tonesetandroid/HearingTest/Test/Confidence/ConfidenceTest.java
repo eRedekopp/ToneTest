@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Test;
+package ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +9,7 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
@@ -186,35 +187,38 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
         return model.getCalibProbability(t, n);
     }
 
+    protected Tone[] allTones() {
+        ArrayList<Tone> allTones = new ArrayList<>();
+        for (SingleTrialResult t : this.completedTrials) if (! allTones.contains(t.tone())) allTones.add(t.tone());
+        Tone[] toneArr = new Tone[allTones.size()];
+        allTones.toArray(toneArr);
+        return toneArr;
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    protected SingleToneResult[] getConfResults() {
+        HashMap<Float, SingleToneResult> allResults = new HashMap<>();
+
+        for (Tone t : this.allTones()) allResults.put(t.freq(), new SingleToneResult(t));
+
+        for (SingleTrialResult t : this.completedTrials)  // count the number of in/correct responses for each tone
+            if (t.wasCorrect()) allResults.get(t.tone().freq()).addCorrect();
+            else allResults.get(t.tone().freq()).addIncorrect();
+
+        SingleToneResult[] toneArr = new SingleToneResult[allResults.size()];
+        allResults.values().toArray(toneArr);
+        return toneArr;
+    }
+
     /**
      * @return The basic statistics of this confidence test as a string - including values
      * estimated by calibration and ramp models
      */
-    @SuppressWarnings({"ConstantConditions", "unchecked"})
+    @SuppressWarnings({"unchecked"})
     public String summaryStatsAsString() {
         StringBuilder builder = new StringBuilder();
-        HashMap<Tone, Integer> correctMap = new HashMap<>(), incorrectMap = new HashMap<>();
-        ArrayList<Tone> allTones = new ArrayList<>();
         RampTestResults regularResults = model.getRampResults().getRegularRampResults();
-
-        for (SingleTrialResult t : this.completedTrials) {  // count the number of in/correct responses for each tone
-            if (t.wasCorrect()) {
-                if (!correctMap.containsKey(t.tone())) correctMap.put(t.tone(), 1);
-                else {
-                    int newVal = correctMap.get(t.tone()) + 1;
-                    correctMap.remove(t.tone());
-                    correctMap.put(t.tone(), newVal);
-                }
-            } else {
-                if (!incorrectMap.containsKey(t.tone())) incorrectMap.put(t.tone(), 1);
-                else {
-                    int newVal = incorrectMap.get(t.tone()) + 1;
-                    incorrectMap.remove(t.tone());
-                    incorrectMap.put(t.tone(), newVal);
-                }
-            }
-            if (!allTones.contains(t.tone())) allTones.add(t.tone());
-        }
+        SingleToneResult[] confResults = this.getConfResults();
 
         for (int n = 1; n <= model.getNumCalibrationTrials(); n++)         {
             builder.append("########## n = ");
@@ -223,19 +227,8 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
             builder.append( "Tone confidenceProbability toneProbability rampProbabilityLinearWithReduceData " +
                             "rampProbabilityLinearWithoutReduceData rampProbabilityLogWithReduceData " +
                             "rampProbabilityLogWithoutReduceData\n");
-            for (Tone t : allTones) {
-                int correct, incorrect;
-                try {
-                    correct = correctMap.get(t);
-                } catch (NullPointerException e) {
-                    correct = 0;
-                }
-                try {
-                    incorrect = incorrectMap.get(t);
-                } catch (NullPointerException e) {
-                    incorrect = 0;
-                }
-                double  confProb = (double) correct / (double) (correct + incorrect),
+            for (SingleToneResult result : confResults) {
+                double  confProb = (double) result.getCorrect() / (result.getCorrect() + result.getIncorrect()),
                         calibProb,
                         rampProbLinFloor,
                         rampProbLinReg,
@@ -243,6 +236,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                         rampProbLogReg;
 
                 // get all 4 ramp estimates
+                Tone t = result.tone;
                 regularResults.setModelEquation(0);
                 model.getRampResults().setModelEquation(0);
                 rampProbLinFloor = this.getModelRampProbability((T) t, true);
@@ -262,4 +256,33 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
 
         return builder.toString();
     }
+
+    protected static class SingleToneResult {
+        private int correct;
+        private int incorrect;
+        public final Tone tone;
+
+        public SingleToneResult(Tone tone) {
+            this.correct = 0;
+            this.incorrect = 0;
+            this.tone = tone;
+        }
+
+        public void addCorrect() {
+            this.correct++;
+        }
+
+        public void addIncorrect() {
+            this.incorrect++;
+        }
+
+        public int getCorrect() {
+            return this.correct;
+        }
+
+        public int getIncorrect() {
+            return this.incorrect;
+        }
+    }
+
 }

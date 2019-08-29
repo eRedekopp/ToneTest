@@ -1,12 +1,10 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
-import android.util.Log;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Test.ReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
@@ -17,13 +15,13 @@ import ca.usask.cs.tonesetandroid.UtilFunctions;
  */
 public class RampTestResultsWithFloorInfo extends RampTestResults {
 
-    private ReduceTest.ReduceTestResults reduceResults = null;
+    private FreqVolPair[] reduceResults = null;
 
     public RampTestResultsWithFloorInfo() {
         super();
     }
 
-    public void setReduceResults(ReduceTest.ReduceTestResults reduceResults) {
+    public void setReduceResults(FreqVolPair[] reduceResults) {
         this.reduceResults = reduceResults;
     }
 
@@ -44,7 +42,7 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
 
         if (this.reduceResults == null) throw new IllegalStateException("No reduce results stored");
 
-        FreqVolPair[] results = this.reduceResults.getResults();
+        FreqVolPair[] results = this.reduceResults;
         Float[] testedFreqs = FreqVolPair.getFreqsFromPairs(results);
 
         // If freq tested, return result from reduce test

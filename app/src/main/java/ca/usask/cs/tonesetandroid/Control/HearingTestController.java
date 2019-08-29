@@ -1,17 +1,20 @@
 package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
-import android.util.Log;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Test.ConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.PianoCalibrationTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.SineCalibratonTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.IntervalSineConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.MelodySineConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SingleSineCalibFreqConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SingleSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.IntervalSineConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.MelodySineConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SineCalibratonTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SineRampTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SineReduceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleSineConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleWavConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.PianoRampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.PianoReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.SineRampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.SineReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.PianoConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 
 /**
@@ -32,7 +35,8 @@ public class HearingTestController {
     public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine"};
 
     public static final String[] CONF_TEST_OPTIONS =
-            {"Single Tone Sine", "Interval Sine", "Melody Sine", "Single Tone Piano"};
+            {"Single Tone Sine", "Interval Sine", "Melody Sine", "Single Tone Piano",
+                    "Single Sine w/ Calibration Pitches"};
 
     ////////////////////////////////////////// control /////////////////////////////////////////////
 
@@ -72,10 +76,11 @@ public class HearingTestController {
 
     public void reduceTestComplete() {
         // add these results to RampTest
-        iModel.getRampTest().getResults().setReduceResults(iModel.getReduceTest().getResults());
+        iModel.getRampTest().getResults().setReduceResults(iModel.getReduceTest().getLowestVolumes());
 
         // set up CalibrationTest to run next
-        iModel.getCalibrationTest().initialize(iModel.getRampTest().getResults(), iModel.getReduceTest().getResults());
+        iModel.getCalibrationTest().initialize(
+                iModel.getRampTest().getResults(), iModel.getReduceTest().getLowestVolumes());
         iModel.setCurrentTest(iModel.getCalibrationTest());
         iModel.setTestThreadActive(false);
         iModel.notifySubscribers();
@@ -141,6 +146,11 @@ public class HearingTestController {
                 iModel.setReduceTest(new SineReduceTest(noise));
                 iModel.setCalibrationTest(new SineCalibratonTest(noise));
                 break;
+            case 1:
+                iModel.setRampTest(new PianoRampTest(noise));
+                iModel.setReduceTest(new PianoReduceTest(noise));
+                iModel.setCalibrationTest(new PianoCalibrationTest(noise));
+                break;
             default:
                 throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
         }
@@ -171,7 +181,10 @@ public class HearingTestController {
                 newTest = new MelodySineConfidenceTest(model.getCalibrationTestResults(), noise);
                 break;
             case 3:     // single piano
-                newTest = new SingleWavConfidenceTest(model.calibrationTestResults, noise);
+                newTest = new PianoConfidenceTest(model.calibrationTestResults, noise);
+                break;
+            case 4:     // single sine, test default calibration frequencies
+                newTest = new SingleSineCalibFreqConfidenceTest(model.calibrationTestResults, noise);
                 break;
             default:
                 throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);

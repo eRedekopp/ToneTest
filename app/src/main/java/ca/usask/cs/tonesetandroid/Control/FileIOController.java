@@ -20,7 +20,7 @@ import java.util.Scanner;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResultsWithFloorInfo;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.ReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 
 /**
@@ -453,7 +453,7 @@ public class FileIOController {
             }
 
             model.setCalibrationTestResults(newCalibResults);
-            newRampResults.setReduceResults(reduceResultsBuilder.build());
+            newRampResults.setReduceResults(reduceResultsBuilder.build().getResults());
             model.setRampResults(newRampResults);
 
         } finally {

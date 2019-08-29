@@ -11,7 +11,6 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.HearingTestController;
 import ca.usask.cs.tonesetandroid.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.Control.FileIOController;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
@@ -24,7 +23,11 @@ import ca.usask.cs.tonesetandroid.Control.Model;
 public abstract class HearingTest<T extends Tone> {
 
     // constants
-    public static final float[] CALIB_FREQS = {200, 500, 1000, 2000, 4000};
+    public static final float[] DEFAULT_CALIBRATION_FREQUENCIES = {200, 500, 1000, 2000, 4000};
+
+    public static final int DIRECTION_DOWN = -1;
+    public static final int DIRECTION_FLAT =  0;
+    public static final int DIRECTION_UP   =  1;
 
     // mvc elements
     protected static Model model;
@@ -52,7 +55,7 @@ public abstract class HearingTest<T extends Tone> {
     /**
      * A container to store the results of this test
      */
-    HearingTestResults results;
+    protected HearingTestResults results;
 
     /**
      * The current trial being performed in this test, or null if test not running
@@ -167,8 +170,7 @@ public abstract class HearingTest<T extends Tone> {
     }
 
     /**
-     * Play the given Earcon via the model
-     * @param earcon the earcon to be played
+     * Play the audio from the WavTone's resource id
      */
     protected void playWav(WavTone tone) {
 
@@ -284,5 +286,9 @@ public abstract class HearingTest<T extends Tone> {
 
     public void setBackgroundNoiseType(BackgroundNoiseType backgroundNoiseType) {
         this.backgroundNoiseType = backgroundNoiseType;
+    }
+
+    public HearingTestResults getResults() {
+        return this.results;
     }
 }

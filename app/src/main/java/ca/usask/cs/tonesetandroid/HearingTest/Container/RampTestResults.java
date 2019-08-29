@@ -2,15 +2,16 @@ package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 import android.support.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import ca.usask.cs.tonesetandroid.Control.Model;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.SinglePitchTone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
@@ -37,12 +38,7 @@ public class RampTestResults implements HearingTestResults {
         if (equationID == 1) return getProbabilityLogarithmic(tone);
         else throw new IllegalStateException("Equation ID set to invalid value: " + equationID);
     }
-
-    @Override
-    public double getProbability(SinglePitchTone tone) throws IllegalStateException {
-        return getProbability((Tone) tone);
-    }
-
+    
     @Override
     public double getProbability(Interval tone) throws IllegalStateException {
         double f1Prob = this.getProbability(new FreqVolPair(tone.freq(), tone.vol()));
@@ -60,8 +56,23 @@ public class RampTestResults implements HearingTestResults {
 
     @Override
     public double getProbability(WavTone tone) {
-        return getProbability((Tone) tone);
+        // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
+
+        int nAudioSamples = 50;
+        int nFreqsPerSample = 3;  // top 3 frequencies in every sample
+
+        float[][] topFreqs = Model.topNFrequencies(tone.wavID(), nAudioSamples, 3);
+
+        ArrayList<Number> probEstimates = new ArrayList<>();
+
+        for (int i = 0; i < nAudioSamples; i++)
+            for (int j = 0; j < nFreqsPerSample; j++)
+                if (topFreqs[i] != null && topFreqs[i][j] > 100)
+                    probEstimates.add(getProbability(new FreqVolPair(topFreqs[i][j], tone.vol())));
+
+        return UtilFunctions.mean(probEstimates);
     }
+
 
     /**
      * Return the probability of hearing the tone given these hearing test results, using the

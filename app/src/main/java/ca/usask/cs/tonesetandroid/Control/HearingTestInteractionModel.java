@@ -3,11 +3,11 @@ package ca.usask.cs.tonesetandroid.Control;
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.CalibrationTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.ConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.CalibrationTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.RampTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.ReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.RampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
 
 /**
  * Handles the menu and current test being performed

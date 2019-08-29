@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Test;
+package ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence;
 
 import android.util.Log;
 
@@ -8,7 +8,6 @@ import java.util.Collections;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Earcon;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
@@ -148,13 +147,13 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
     protected boolean wasCorrect() {
         int expected;
         switch(((Melody) this.currentTrial.tone()).direction()) {
-            case Earcon.DIRECTION_DOWN:
+            case DIRECTION_DOWN:
                 expected = ANSWER_DOWN;
                 break;
-            case Earcon.DIRECTION_UP:
+            case DIRECTION_UP:
                 expected = ANSWER_UP;
                 break;
-            case Earcon.DIRECTION_FLAT:
+            case DIRECTION_FLAT:
                 expected = ANSWER_FLAT;
                 break;
             default:

@@ -1,26 +1,37 @@
-package ca.usask.cs.tonesetandroid.HearingTest.Test;
+package ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp;
 
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.Model;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.RampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public class SineRampTest extends RampTest<FreqVolPair> {
 
     public SineRampTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testInfo =
-                "In this phase of the test, tones will play quietly and slowly get louder. Please press the \"Heard " +
-                        "Tone\" button as soon as the tone becomes audible";
 
+        this.testInfo = DEFAULT_TEST_INFO;
         this.testTypeName = "sine-ramp";
-        this.freqs = new ArrayList<>();
-        for (float freq : CALIB_FREQS) freqs.add(freq);
-        this.position = freqs.listIterator(0);
+        this.tones = new ArrayList<>();
+        for (float freq : DEFAULT_CALIBRATION_FREQUENCIES) tones.add(new FreqVolPair(freq, 0));
+        this.position = tones.listIterator(0);
     }
 
-    protected double rampUp(double rateOfRamp, float freq, double startingVol) {
+    @Override
+    protected float getRampRate1() {
+        return 1.05f;
+    }
+
+    @Override
+    protected float getRampRate2() {
+        return 1.025f;
+    }
+
+    @Override
+    protected double rampUp(double rateOfRamp, FreqVolPair tone, double startingVol) {
 
         byte[] buf = Model.buf;
 
@@ -36,7 +47,7 @@ public class SineRampTest extends RampTest<FreqVolPair> {
                 }
 
                 for (int i = 0; i < TIME_PER_VOL_MS * (float) 44100 / 1000; i++) { //1000 ms in 1 second
-                    float period = (float) Model.OUTPUT_SAMPLE_RATE / freq;
+                    float period = (float) Model.OUTPUT_SAMPLE_RATE / tone.freq();
                     double angle = 2 * i / (period) * Math.PI;
                     short a = (short) (Math.sin(angle) * volume);
                     buf[0] = (byte) (a & 0xFF); //write 8bits ________WWWWWWWW out of 16

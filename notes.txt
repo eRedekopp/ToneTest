@@ -75,6 +75,7 @@ Big Refactor:
     Next:
         - Look into improving audio (android dev site "high performance audio")
             - Write bigger buffers?
+            - Sine wave : write entire sine at once?
             - Calling play() at the wrong time?
         - Save confidence analysis in different file than test results
         - Look into whether internal mixer affects waveform
@@ -87,9 +88,10 @@ Big Refactor:
     Confidence tests to add:
         - <DONE> Sine interval
         - <DONE> Sine earcon
+        - <DONE> Piano Single Tone
         - Wav earcon (audibility)
         - Wav earcon (differentiation)
-        - Single-sine w/ tested frequencies
+        - <DONE> Single-sine w/ tested frequencies
         - Piano tested frequencies
     Calibration tests to add:
         - <DONE> Piano
