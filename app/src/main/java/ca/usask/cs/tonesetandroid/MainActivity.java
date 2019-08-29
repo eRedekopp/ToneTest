@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     BackgroundNoiseController noiseController;
 
     private int dialogSelectedItem;  // for selecting background noise configurations
+    private int dialogTestTypeID;
     private int dialogNoiseID;
     private int dialogVolume;
 
@@ -341,6 +342,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     private void getTestTypeAndBegin(final boolean isCalib) {
         AlertDialog.Builder optBuilder = new AlertDialog.Builder(this);
+        setDialogSelectedItem(0);
         optBuilder.setTitle("Please select the type of test you wish to begin");
         optBuilder.setSingleChoiceItems(
                 isCalib ? HearingTestController.CALIB_TEST_OPTIONS : HearingTestController.CONF_TEST_OPTIONS,
@@ -351,17 +353,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                         setDialogSelectedItem(which);
                     }
                 });
-        optBuilder.setOnCancelListener(new DialogInterface.OnCancelListener() {
-            @Override
-            public void onCancel(DialogInterface dialog) {
-                getBackgroundNoiseAndBeginTest(isCalib, dialogSelectedItem);
-            }
-        });
         optBuilder.setNegativeButton("Cancel", null);
         optBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                setDialogTestTypeID();
                 dialog.cancel();
+                getBackgroundNoiseAndBeginTest(isCalib);
             }
         });
         optBuilder.show();
@@ -373,7 +371,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      *
      * @param isCalib Is the new test to be started a calibration test? If not, it is a confidence test
      */
-    private void getBackgroundNoiseAndBeginTest(final boolean isCalib, final int testTypeID) {
+    private void getBackgroundNoiseAndBeginTest(final boolean isCalib) {
         // show dialog to get noise type
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setSingleChoiceItems(BackgroundNoiseType.NOISE_TYPE_STRINGS, 0, new DialogInterface.OnClickListener() {
@@ -385,13 +383,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         setDialogSelectedItem(0);
         builder.setCancelable(false);
         builder.setNegativeButton("Cancel", null);
-
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 setDialogNoiseID();
                 dialogInterface.cancel();
-                getBackgroundNoiseAndBeginTest_2(isCalib, testTypeID);
+                getBackgroundNoiseAndBeginTest_2(isCalib);
             }
         });
         builder.setTitle("Select the background noise type for this test");
@@ -402,13 +399,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      * Show the second dialog (if required) for beginning a background noise test. This method should only be called
      * by getBackgroundNoiseAndBeginTest
      */
-    private void getBackgroundNoiseAndBeginTest_2(final boolean isCalib, final int testTypeID) {
+    private void getBackgroundNoiseAndBeginTest_2(final boolean isCalib) {
         if (this.dialogNoiseID == BackgroundNoiseType.NOISE_TYPE_NONE) {    // set volume to 0 and continue if no noise
             this.setDialogSelectedItem(0);
             this.setDialogVolume();
             BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
-            if (isCalib) controller.handleCalibClick(noiseType, testTypeID);
-            else controller.handleConfClick(noiseType, testTypeID);
+            if (isCalib) controller.handleCalibClick(noiseType, dialogTestTypeID);
+            else controller.handleConfClick(noiseType, dialogTestTypeID);
         } else {                                                            // else get volume from user
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             final EditText editText = new EditText(context);
@@ -429,7 +426,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 dialogInterface.cancel();
-                                getBackgroundNoiseAndBeginTest_2(isCalib, testTypeID);
+                                getBackgroundNoiseAndBeginTest_2(isCalib);
                             }
                         });
                         return;
@@ -442,19 +439,18 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                                     @Override
                                     public void onClick(DialogInterface dialogInterface, int i) {
                                         dialogInterface.cancel();
-                                        getBackgroundNoiseAndBeginTest_2(isCalib, testTypeID);
+                                        getBackgroundNoiseAndBeginTest_2(isCalib);
                                     }
                                 });
                     } else {
                         setDialogVolume();
                         dialogInterface.cancel();
                         BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
-                        if (isCalib) controller.handleCalibClick(noiseType, testTypeID);
-                        else controller.handleConfClick(noiseType, testTypeID);
+                        if (isCalib) controller.handleCalibClick(noiseType, dialogTestTypeID);
+                        else controller.handleConfClick(noiseType, dialogTestTypeID);
                     }
                 }
             });
-
             builder.setNegativeButton("Cancel", null);
             builder.show();
         }
@@ -590,5 +586,9 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     private void setDialogVolume() {
         this.dialogVolume = this.dialogSelectedItem;
+    }
+
+    public void setDialogTestTypeID() {
+        this.dialogTestTypeID = this.dialogSelectedItem;
     }
 }
