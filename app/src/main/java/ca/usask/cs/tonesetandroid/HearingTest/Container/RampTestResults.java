@@ -2,10 +2,12 @@ package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 import android.support.annotation.NonNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import ca.usask.cs.tonesetandroid.Control.Model;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
@@ -54,8 +56,23 @@ public class RampTestResults implements HearingTestResults {
 
     @Override
     public double getProbability(WavTone tone) {
-        return getProbability((Tone) tone);
+        // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
+
+        int nAudioSamples = 50;
+        int nFreqsPerSample = 3;  // top 3 frequencies in every sample
+
+        float[][] topFreqs = Model.topNFrequencies(tone.wavID(), nAudioSamples, 3);
+
+        ArrayList<Number> probEstimates = new ArrayList<>();
+
+        for (int i = 0; i < nAudioSamples; i++)
+            for (int j = 0; j < nFreqsPerSample; j++)
+                if (topFreqs[i] != null && topFreqs[i][j] > 100)
+                    probEstimates.add(getProbability(new FreqVolPair(topFreqs[i][j], tone.vol())));
+
+        return UtilFunctions.mean(probEstimates);
     }
+
 
     /**
      * Return the probability of hearing the tone given these hearing test results, using the

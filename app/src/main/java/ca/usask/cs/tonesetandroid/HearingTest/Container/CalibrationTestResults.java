@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,6 +61,9 @@ public class CalibrationTestResults implements HearingTestResults {
     }
 
     /**
+     * The Tone method uses simple linear estimation using the Tone's freq() and vol() values and nothing else. Use
+     * the overloaded methods for specific tones
+     *
      * @return  the model's estimate of the probability of hearing the given tone, given these calibration results
      */
     @Override
@@ -87,7 +91,21 @@ public class CalibrationTestResults implements HearingTestResults {
 
     @Override
     public double getProbability(WavTone tone) {
-        return getProbability(new FreqVolPair(tone.freq(), tone.vol()));
+        // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
+
+        int nAudioSamples = 50;
+        int nFreqsPerSample = 3;  // top 3 frequencies in every sample
+
+        float[][] topFreqs = Model.topNFrequencies(tone.wavID(), nAudioSamples, 3);
+
+        ArrayList<Number> probEstimates = new ArrayList<>();
+
+        for (int i = 0; i < nAudioSamples; i++)
+            for (int j = 0; j < nFreqsPerSample; j++)
+                if (topFreqs[i] != null && topFreqs[i][j] > 100)
+                    probEstimates.add(getProbability(new FreqVolPair(topFreqs[i][j], tone.vol())));
+
+        return UtilFunctions.mean(probEstimates);
     }
 
     /**
@@ -126,37 +144,6 @@ public class CalibrationTestResults implements HearingTestResults {
         // estimate this probability linearly between the results above and below
         return probBelow + pctBetween * (probAbove - probBelow);
     }
-
-    // todo
-//    /**
-//     * Given an earcon and a subset of the tested frequencies, determine the probability that the user will correctly
-//     * hear the direction of the earcon based only on the given subset of frequencies
-//     *
-//     * @param earcon The earcon whose probability of being distinguished is to be determined
-//     * @param subset A subset of the tested volumes, to be used to generate the estimate
-//     * @return An estimate of the probability that the user will correctly hear the direction of the interval
-//     * @throws IllegalArgumentException If the given subset is not a subset of the tested frequencies
-//     */
-//    public double getProbOfCorrectAnswer(Earcon earcon, float[] subset) throws IllegalArgumentException {
-//
-//        // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
-//
-//        int nAudioSamples = 50;
-//        int nFreqsPerSample = 3;  // top 3 frequencies in every sample
-//
-//        Log.d("earcon", earcon.toString());
-//
-//        float[][] topFreqs = topNFrequencies(earcon.audioResourceID, nAudioSamples, 3);
-//
-//        ArrayList<Float> probEstimates = new ArrayList<>();
-//
-//        for (int i = 0; i < nAudioSamples; i++)
-//            for (int j = 0; j < nFreqsPerSample; j++)
-//                if (topFreqs[i] != null && topFreqs[i][j] > 100)
-//                    probEstimates.add(getProbability(topFreqs[i][j], earcon.volume, subset));
-//
-//        return UtilFunctions.mean(probEstimates);
-//    }
 
     /**
      * Returns a mapping of volumes to the number of times each volume was heard in the test for the given frequency
@@ -310,51 +297,6 @@ public class CalibrationTestResults implements HearingTestResults {
             }
         if (curClosest == -1) throw new RuntimeException("Found unexpected value -1");
         return curClosest;
-    }
-
-    /**
-     * Given an ID for a .wav file, return the most prominent frequencies in each sample for some number of
-     * evenly-spaced samples.
-     *
-     * @param wavResId The resource ID for the wav file to be tested
-     * @param nSamples The number of samples to test from the file (fewer samples -> faster, less precise)
-     * @param nFreqsPerSample The number of most prominent frequencies to return for each sample
-     * @return An array of length nSamples containing the most prominent frequencies in each sample
-     */
-    public static float[][] topNFrequencies(int wavResId, int nSamples, int nFreqsPerSample) {
-        int sampleSize = 1000;
-        InputStream rawPCM = MainActivity.context.getResources().openRawResource(wavResId);
-        byte[] buf = new byte[2];
-        float[] pcm = new float[sampleSize];
-        float[][] results = new float[nSamples][];
-        int nSamplesTaken = 0;
-
-        try {
-            int size = rawPCM.available() / 2; // /2 because each sample is 2 bytes
-            for (int i = 0;
-                 i < size - sampleSize;
-                 i += (size - nSamples * sampleSize) / nSamples) {
-
-                for (int j = 0; j < sampleSize; j++, i++) {      // populate pcm for current set of samples
-                    rawPCM.read(buf, 0, 2);       // read data from stream
-
-                    byte b = buf[0];              // convert to big-endian
-                    buf[0] = buf[1];
-                    buf[1] = b;
-                    short sample = ByteBuffer.wrap(buf).getShort();   // convert to short todo use more efficient method
-                    pcm[j] = (float) sample / (float) Short.MIN_VALUE;
-                }
-
-                FreqVolPair[] periodogram = Model.getPeriodogramFromPcmData(pcm);   // get fft of pcm data
-                FreqVolPair[] max = FreqVolPair.maxNVols(periodogram, nFreqsPerSample);
-                float[] maxFreqs = new float[max.length];
-                for (int j = 0; j < nFreqsPerSample; j++) maxFreqs[j] = max[j].freq();
-                results[nSamplesTaken++] = maxFreqs;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return results;
     }
 
     /**

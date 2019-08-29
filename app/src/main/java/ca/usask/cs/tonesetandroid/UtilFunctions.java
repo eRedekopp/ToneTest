@@ -154,9 +154,9 @@ public final class UtilFunctions {
         return total / arr.length;
     }
 
-    public static double mean(List<Float> lst) {
-        Float total = 0f;
-        for (Float n : lst) total += n;
+    public static double mean(List<Number> lst) {
+        double total = 0.0;
+        for (Number n : lst) total = n.doubleValue() + total;
         return total / lst.size();
     }
 

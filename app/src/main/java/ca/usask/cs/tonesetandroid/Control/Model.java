@@ -9,6 +9,9 @@ import android.util.Log;
 import com.paramsen.noise.Noise;
 import com.paramsen.noise.NoiseOptimized;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
@@ -18,6 +21,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
+import ca.usask.cs.tonesetandroid.MainActivity;
 
 /**
  * Contains methods and values for audio output and stores/handles saved test results and the mathematical model for
@@ -150,15 +154,21 @@ public class Model {
     }
 
     public double getRampProbability(Interval interval, boolean withFloorResults) {
-        if (! this.hasResults()) throw new IllegalArgumentException("No results stored in model");
+        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
         else if (withFloorResults) return this.rampResults.getProbability(interval);
         else return this.rampResults.getRegularRampResults().getProbability(interval);
     }
 
     public double getRampProbability(Melody melody, boolean withFloorResults) {
-        if (! this.hasResults()) throw new IllegalArgumentException("No results stored in model");
+        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
         else if (withFloorResults) return this.rampResults.getProbability(melody);
         else return this.rampResults.getRegularRampResults().getProbability(melody);
+    }
+
+    public double getRampProbability(WavTone tone, boolean withFloorResults) {
+        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
+        else if (withFloorResults) return this.rampResults.getProbability(tone);
+        else return this.rampResults.getRegularRampResults().getProbability(tone);
     }
 
     /**
@@ -215,6 +225,51 @@ public class Model {
             freqBins[i] = new FreqVolPair(freq, vol);
         }
         return freqBins;
+    }
+
+    /**
+     * Given an ID for a .wav file, return the most prominent frequencies in each sample for some number of
+     * evenly-spaced samples.
+     *
+     * @param wavResId The resource ID for the wav file to be tested
+     * @param nSamples The number of samples to test from the file (fewer samples -> faster, less precise)
+     * @param nFreqsPerSample The number of most prominent frequencies to return for each sample
+     * @return An array of length nSamples containing the most prominent frequencies in each sample
+     */
+    public static float[][] topNFrequencies(int wavResId, int nSamples, int nFreqsPerSample) {
+        int sampleSize = 1000;
+        InputStream rawPCM = MainActivity.context.getResources().openRawResource(wavResId);
+        byte[] buf = new byte[2];
+        float[] pcm = new float[sampleSize];
+        float[][] results = new float[nSamples][];
+        int nSamplesTaken = 0;
+
+        try {
+            int size = rawPCM.available() / 2; // /2 because each sample is 2 bytes
+            for (int i = 0;
+                 i < size - sampleSize;
+                 i += (size - nSamples * sampleSize) / nSamples) {
+
+                for (int j = 0; j < sampleSize; j++, i++) {      // populate pcm for current set of samples
+                    rawPCM.read(buf, 0, 2);       // read data from stream
+
+                    byte b = buf[0];              // convert to big-endian
+                    buf[0] = buf[1];
+                    buf[1] = b;
+                    short sample = ByteBuffer.wrap(buf).getShort();   // convert to short todo use more efficient method
+                    pcm[j] = (float) sample / (float) Short.MIN_VALUE;
+                }
+
+                FreqVolPair[] periodogram = Model.getPeriodogramFromPcmData(pcm);   // get fft of pcm data
+                FreqVolPair[] max = FreqVolPair.maxNVols(periodogram, nFreqsPerSample);
+                float[] maxFreqs = new float[max.length];
+                for (int j = 0; j < nFreqsPerSample; j++) maxFreqs[j] = max[j].freq();
+                results[nSamplesTaken++] = maxFreqs;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return results;
     }
 
     /**

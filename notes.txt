@@ -73,10 +73,9 @@ Big Refactor:
 
 
     Next:
-	- Override summaryStats method for wav tests
-	- Fix bugs caused by deleting ReducibleTone
         - Look into improving audio (android dev site "high performance audio")
             - Write bigger buffers?
+            - Sine wave : write entire sine at once?
             - Calling play() at the wrong time?
         - Save confidence analysis in different file than test results
         - Look into whether internal mixer affects waveform

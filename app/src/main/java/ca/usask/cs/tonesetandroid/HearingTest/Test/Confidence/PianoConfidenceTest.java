@@ -13,6 +13,7 @@ public class PianoConfidenceTest extends WavConfidenceTest {
 
     public PianoConfidenceTest(CalibrationTestResults results, BackgroundNoiseType noiseType) {
         super(results, noiseType);
+        this.testTypeName = "single-piano-conf";
     }
 
     /**
