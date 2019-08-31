@@ -53,15 +53,13 @@ public class FileIOController {
     }
 
     /**
-     * Saves a line representing an individual trial to the current file
-     *
-     * @param lineEnd The end of the line, ie. information specific only to the trial being saved
+     * Save the given string on its own line to the current file
      */
-    public void saveLine(final String lineEnd) {
+    public void saveLine(final String line) {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                saveString(String.format("%s %s%n", getLineBeginning(), lineEnd));
+                saveString(line + '\n');
             }
         }).start();
     }
@@ -95,33 +93,7 @@ public class FileIOController {
     }
 
     /**
-     * @return Given the state of model and iModel, return a String with subject ID, current date/time, test type
-     * name, and background noise type/volume
-     */
-    private String getLineBeginning() {  // todo move to HearingTest
-        Long startTime = null;
-        SimpleDateFormat dateFormat = null;
-        String formattedDateTime = null;
-
-        try {
-            startTime = this.iModel.getCurrentTest().getLastTrialStartTime();
-            dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-            formattedDateTime = dateFormat.format(startTime);
-        } catch (NullPointerException e) {
-            Log.e("getLineBeginning", "Nullpointerexception caused - dateFormat = " +
-                    (dateFormat == null ? "null" : dateFormat.toPattern()) + " Date = " +
-                    (startTime == null ? "null" : startTime.toString()));
-            e.printStackTrace();
-            formattedDateTime = "TimeFetchError";
-        }
-
-        return String.format("%s Subject %d, Test %s, Noise %s,",
-                formattedDateTime, model.getSubjectId(), iModel.getCurrentTest().getTestTypeName(),
-                iModel.getCurrentTest().getBackgroundNoiseType().toString());
-    }
-
-    /**
-     * Start a new save file for a new HearingTest and set it as this.currentFile, also configureTestTones this.out
+     * Start a new save file for a new HearingTest and set it as this.currentFile
      *
      * @param isCalib Is the new file for a calibration test?
      */

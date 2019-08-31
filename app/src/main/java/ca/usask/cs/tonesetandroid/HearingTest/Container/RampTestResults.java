@@ -18,8 +18,17 @@ import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 public class RampTestResults implements HearingTestResults {
 
+    /**
+     * Recognized values of equationID
+     */
     public static final int[] EQUATION_ID_NUMS = {0, 1};
 
+    /**
+     * Which equation should be used to calculate probabilities?
+     *
+     * This is necessary in order to fit the getProbability(Tone) requirement for HearingTestResults. Although
+     * it's kind of clunky, it's really not worth the trouble to fix it
+     */
     protected int equationID = 0;
 
     /**

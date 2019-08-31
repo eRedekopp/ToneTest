@@ -251,8 +251,6 @@ public class CalibrationTestResults implements HearingTestResults {
 
     public double getVolFloorEstimateForEarcon(int wavResId) {
 
-        // todo ignore silence
-
         // find most prominent frequencies in samples of .wav file, return average of their floor estimates
 
         int nAudioSamples = 50;
@@ -266,8 +264,6 @@ public class CalibrationTestResults implements HearingTestResults {
     }
 
     public double getVolCeilingEstimateForEarcon(int wavResId) {
-
-        // todo ignore silence
 
         // find most prominent frequencies in samples of .wav file, return average of their ceiling estimates
 

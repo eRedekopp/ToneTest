@@ -118,7 +118,7 @@ public abstract class WavConfidenceTest extends ConfidenceTest<WavTone> {
 
                 // get all 4 ramp estimates
                 WavTone t = (WavTone) result.tone;
-                regularResults.setModelEquation(0); // todo - dumb. get rid of this and just make 2 functions
+                regularResults.setModelEquation(0);
                 model.getRampResults().setModelEquation(0);
                 rampProbFVLinFloor = model.getRampProbability((Tone) t, true);
                 rampProbFVLinReg   = model.getRampProbability((Tone) t, false);
