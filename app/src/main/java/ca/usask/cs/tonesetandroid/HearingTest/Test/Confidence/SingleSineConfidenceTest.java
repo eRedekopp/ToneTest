@@ -11,9 +11,10 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 
+/**
+ * A ConfidenceTest that tests the user's ability to hear a single sine wave
+ */
 public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
-
-    private static final int TONE_DURATION_MS = 1500;
 
     public SingleSineConfidenceTest(CalibrationTestResults calibResults, BackgroundNoiseType noiseType) {
         super(calibResults, noiseType);
@@ -30,7 +31,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
                         iModel.setSampleThreadActive(true);
                         for (float freq : DEFAULT_FREQUENCIES) {
                             if (!iModel.testPaused()) return;  // stop if user un-pauses during tones
-                            playSine(freq, 70, TONE_DURATION_MS);
+                            playSine(freq, 70, DEFAULT_TONE_DURATION_MS);
                             sleepThread(500, 500);
                         }
                     } finally {
@@ -114,7 +115,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
     @Override
     protected void playTone(FreqVolPair tone) {
-        this.playSine(tone, TONE_DURATION_MS);
+        this.playSine(tone, DEFAULT_TONE_DURATION_MS);
     }
 
     @Override

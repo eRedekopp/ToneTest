@@ -11,9 +11,10 @@ import java.util.Random;
 
 import ca.usask.cs.tonesetandroid.R;
 
-
+/**
+ * A class for controlling the background noise during a HearingTest
+ */
 public class BackgroundNoiseController {
-
 
     private HearingTestInteractionModel iModel;
 
@@ -49,6 +50,9 @@ public class BackgroundNoiseController {
         }
     }
 
+    /**
+     * Set up the AudioTrack 
+     */
     private void setupLineOut() {
         if (lineOut == null || lineOut.getState() == AudioTrack.STATE_UNINITIALIZED) {
             int minBufferSize = AudioTrack.getMinBufferSize(44100,
@@ -67,7 +71,7 @@ public class BackgroundNoiseController {
     }
 
     /**
-     * Sets up the MediaPlayer to be ready to play crowd noise
+     * Sets up the MediaPlayer
      */
     private void setupMediaPlayer() {
         if (mediaPlayer == null) // perform on separate thread because sometimes takes a few seconds to prepare
@@ -87,8 +91,7 @@ public class BackgroundNoiseController {
     }
 
     /**
-     * Play crowd noise on a new thread until the model is no longer in test mode. Does nothing if the model is not
-     * testing when this method is called.
+     * Play white noise on a new thread until iModel.testing() becomes false
      *
      * @param volume The volume at which the noise is to be played, 0 <= volume <= MAX_VOL
      */
@@ -113,7 +116,7 @@ public class BackgroundNoiseController {
     }
 
     /**
-     * Play crowd noise until the model is no longer in test mode
+     * Play crowd noise on a new thread until iModel.testing() becomes false
      *
      * @param volume The volume at which the noise is to be played, 0 <= volume <= MAX_VOL
      */

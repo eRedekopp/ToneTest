@@ -4,7 +4,7 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
 /**
- * A calibration test that uses WavTones
+ * Parent class for all CalibrationTests that use WavTones
  */
 public abstract class WavCalibrationTest extends CalibrationTest<WavTone> {
 
@@ -12,8 +12,8 @@ public abstract class WavCalibrationTest extends CalibrationTest<WavTone> {
         super(noiseType);
     }
 
+    @Override
     protected void playTone(WavTone tone) {
         this.playWav(tone);
     }
-
 }

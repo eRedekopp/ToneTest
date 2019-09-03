@@ -183,10 +183,17 @@ public class RampTestResults implements HearingTestResults {
         throw new IllegalArgumentException("Invalid equation ID number");
     }
 
+    /**
+     * @return a Collection containing all frequencies tested
+     */
     public Collection<Float> getTestedFreqs() {
         return this.allResults.keySet();
     }
 
+    /**
+     * @return an array containing one FreqVolPair for each frequency tested, with vol=the volume at which the 
+               user stopped the RampTest on the second try
+     */
     @SuppressWarnings("ConstantConditions")
     public FreqVolPair[] getResultsArray() {
         FreqVolPair[] outArr = new FreqVolPair[this.allResults.size()];
@@ -198,7 +205,7 @@ public class RampTestResults implements HearingTestResults {
     }
 
     /**
-     * Add a single trial result to these test results
+     * Add the result of a single RampTest trial to this container
      *
      * @param freq The frequency of the trial
      * @param vol1 The first volume selected by the user
@@ -224,6 +231,9 @@ public class RampTestResults implements HearingTestResults {
         return this.allResults.isEmpty();
     }
 
+    /**
+     * A class to store a pair of volumes 
+     */
     protected class VolPair {
 
         private final double vol1;

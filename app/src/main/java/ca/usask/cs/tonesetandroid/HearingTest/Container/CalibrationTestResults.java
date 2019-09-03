@@ -24,11 +24,19 @@ import ca.usask.cs.tonesetandroid.MainActivity;
 import ca.usask.cs.tonesetandroid.Control.Model;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
+/**
+ * A container class for storing the results of a CalibrationTest
+ */
 public class CalibrationTestResults implements HearingTestResults {
 
-    // each frequency tested mapped to its corresponding SingleFreqResult
+    /**
+     * Each frequency tested mapped to its corresponding SingleFreqResult
+     */
     private HashMap<Float, HearingTestSingleFreqResult> allResults;
 
+    /**
+     * The type of background noise played during the test
+     */
     private BackgroundNoiseType backgroundNoise;
 
     public CalibrationTestResults() {
@@ -52,9 +60,7 @@ public class CalibrationTestResults implements HearingTestResults {
         }
     }
 
-    /**
-     * @return true if there are no results stored in this container, else false
-     */
+    @Override
     public boolean isEmpty() {
         return allResults.isEmpty();
     }
@@ -109,7 +115,7 @@ public class CalibrationTestResults implements HearingTestResults {
 
     /**
      * Given a subset of the tested frequencies, return the probability of hearing a tone of the given frequency and
-     * volume modeled only based on the subset frequencies
+     * volume, as though the frequencies in subset
      *
      * @param freq The frequency of the tone whose probability is to be determined
      * @param vol The volume of the tone whose probability is to be determined
@@ -198,12 +204,16 @@ public class CalibrationTestResults implements HearingTestResults {
         return outArr;
     }
 
+    /**
+     * Is there a result stored in this container for the given frequency?
+     */
     public boolean freqTested(float freq) {
         return allResults.containsKey(freq);
     }
 
     /**
-     * Returns an estimate of the highest volume which has a 0% chance of being heard for the given frequency
+     * Returns an estimate of the highest volume which has a "0%" chance of 
+     * being heard for the given frequency
      *
      * @param freq The frequency whose volume floor is to be estimated
      * @return An estimate of the volume floor for the given frequency
@@ -226,7 +236,8 @@ public class CalibrationTestResults implements HearingTestResults {
     }
 
     /**
-     * Returns an estimate of the lowest volume which has a 100% percent chance of being heard for the given frequency
+     * Returns an estimate of the lowest volume which has a "100%" percent chance of 
+     * being heard for the given frequency
      *
      * @param freq The frequency whose volume ceiling is to be estimated
      * @return An estimate of the volume ceiling for the given frequency
@@ -301,7 +312,7 @@ public class CalibrationTestResults implements HearingTestResults {
      * @param nSamples The number of samples to test from the file (fewer samples -> faster, less precise)
      * @return An array of length nSamples containing the most prominent frequencies in each sample
      */
-    public static float[] topFrequencies(int wavResId, int nSamples) {
+    public static float[] topFrequencies(int wavResId, int nSamples) {  // todo move to model
         int sampleSize = 1000;
         InputStream rawPCM = MainActivity.context.getResources().openRawResource(wavResId);
         byte[] buf = new byte[2];
@@ -365,6 +376,9 @@ public class CalibrationTestResults implements HearingTestResults {
         return aResult.getNumSamples(aVol);
     }
 
+    /**
+     * @return The number of times that the given tone was tested
+     */
     public int getNumOfTrials(Tone tone) {
         try {
             return this.allResults.get(tone.freq()).getNumSamples(tone.vol());
@@ -388,13 +402,25 @@ public class CalibrationTestResults implements HearingTestResults {
      */
     protected class HearingTestSingleFreqResult {
 
+        /**
+         * The frequency of the tones that this result represents
+         */
         private final float freq;
 
-        // do not mutate these maps except in addResult()
-        private HashMap<Double, Integer> timesHeardPerVol;
+        /**
+         * Each volume at which this frequency was tested mapped to the number of trials in which it was heard
+         */
+        private HashMap<Double, Integer> timesHeardPerVol;  // do not mutate these maps except in addResult()
 
+        /**
+         * Each volume at which this frequency was tested mapped to the number of trials in which it was not heard
+         */
         private HashMap<Double, Integer> timesNotHeardPerVol;
 
+        /**
+         * Each volume at which this frequency was tested mapped to a list containing the user's responses to each
+         * trial in order
+         */
         private HashMap<Double, List<Boolean>> testResultsPerVol;
 
         private HearingTestSingleFreqResult(float freq) {
@@ -405,7 +431,7 @@ public class CalibrationTestResults implements HearingTestResults {
         }
 
         /**
-         * Add a new test result to this singleFreqResult
+         * Add a new test result to this SingleFreqResult
          *
          * @param vol The volume of the trial
          * @param heard Was the tone heard in the trial?
@@ -429,7 +455,8 @@ public class CalibrationTestResults implements HearingTestResults {
         }
 
         /**
-         * Get the probability of hearing a tone of this.freq Hz at the given volume
+         * Get the probability of hearing a tone of this.freq Hz at the given volume - estimates 
+         * linearly between the two nearest volumes
          *
          * @param vol The volume whose probability is to be found
          * @return The probability of hearing a tone of this.freq Hz at the given volume
@@ -598,7 +625,8 @@ public class CalibrationTestResults implements HearingTestResults {
          * @param key The key whose value is to be replaced
          * @param newValue The new value to associate with the key
          */
-        public void mapReplace(HashMap<Double, Integer> map, Double key, Integer newValue) {
+        public void mapReplace(HashMap<Double, Integer> map, Double key, Integer newValue) {  
+            // todo doesn't map.put() already do this?
             map.remove(key);
             map.put(key, newValue);
         }
@@ -613,6 +641,9 @@ public class CalibrationTestResults implements HearingTestResults {
             return (HashMap<Double, Integer>) this.timesNotHeardPerVol.clone();
         }
 
+        /**
+         * @return a Collection containing all volumes that were tested at this frequency
+         */
         public Collection<Double> getVolumes() {
             return this.testResultsPerVol.keySet();
         }

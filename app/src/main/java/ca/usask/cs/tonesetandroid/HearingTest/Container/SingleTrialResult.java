@@ -15,7 +15,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 public class SingleTrialResult {
 
     /**
-     * The time in seconds since 1970 at which setStartTime() was called
+     * The time in milliseconds at which setStartTime() was last called
      */
     private long startTime;
 
@@ -25,7 +25,7 @@ public class SingleTrialResult {
     private ArrayList<Click> clicks;
 
     /**
-     * The tone being played for this trial
+     * The tone that was played in this trial
      */
     private final Tone tone;
 

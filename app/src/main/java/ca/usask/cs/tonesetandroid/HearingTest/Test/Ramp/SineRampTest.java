@@ -8,8 +8,14 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.RampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
+/**
+ * A RampTest that tests simple sine waves
+ */
 public class SineRampTest extends RampTest<FreqVolPair> {
 
+    /**
+     * How many milliseconds should the tone play each time before the volume is increased
+     */
     protected static final int TIME_PER_VOL_MS = 50;
 
     public SineRampTest(BackgroundNoiseType noiseType) {

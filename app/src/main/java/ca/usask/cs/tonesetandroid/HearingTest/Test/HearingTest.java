@@ -21,10 +21,18 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 import ca.usask.cs.tonesetandroid.Control.Model;
 
+/**
+ * Parent class for all hearing tests, in which tones are played via the model and the
+ * user's answers are recorded as SingleTrialResults to be used later 
+ *
+ * @param <T> The type of tones to be played in this HearingTest
+ */
 public abstract class HearingTest<T extends Tone> {
 
     // constants
-    public static final float[] DEFAULT_CALIBRATION_FREQUENCIES = {200, 500, 1000, 2000, 4000};
+    protected static final float[] DEFAULT_CALIBRATION_FREQUENCIES = {200, 500, 1000, 2000, 4000};
+    protected static final float[] DEFAULT_CONFIDENCE_FREQUENCIES = {220, 440, 880, 1760, 3520}
+    protected static final int DEFAULT_TONE_DURATION_MS = 1500;
 
     public static final int DIRECTION_DOWN = -1;
     public static final int DIRECTION_FLAT =  0;
@@ -82,7 +90,7 @@ public abstract class HearingTest<T extends Tone> {
     protected abstract void run();
 
     /**
-     * @return true if all trials in this hearing test have been completed, else false
+     * @return true if all trials in this hearing test have been completed, else return false
      */
     public abstract boolean isComplete();
 

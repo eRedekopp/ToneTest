@@ -9,6 +9,9 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
+/**
+ * A ConfidenceTest that tests the user's ability to hear single piano tones
+ */
 public class PianoConfidenceTest extends WavConfidenceTest {
 
     public PianoConfidenceTest(CalibrationTestResults results, BackgroundNoiseType noiseType) {
@@ -22,8 +25,8 @@ public class PianoConfidenceTest extends WavConfidenceTest {
      */
     @Override
     @SuppressWarnings("unchecked")
-    protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies)
-            throws IllegalArgumentException {
+    protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies) 
+            throws IllegalArgumentException { // todo build tones here rather than using default constructors
 
         if (frequencies.length == 0) return;
 
@@ -78,7 +81,7 @@ public class PianoConfidenceTest extends WavConfidenceTest {
         this.testTones = allTrials;
 
         if (this.testTones.size() != trialsPerTone * frequencies.length * volsPerFreq)
-            Log.w("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length * volsPerFreq +
+            Log.e("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length * volsPerFreq +
                     " test pairs but generated " + this.testTones.size());
     }
 }

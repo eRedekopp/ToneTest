@@ -21,7 +21,7 @@ public class PianoReduceTest extends WavReduceTest {
      * wav resource (see WavTone constructor)
      */
     @Override
-    public void initialize(RampTestResults rampResults) throws IllegalStateException {
+    public void initialize(RampTestResults rampResults) throws IllegalStateException {  // todo get rid of default constructors and build WavTones here
         this.currentVolumes = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         this.results = new ReduceTestResults();

@@ -11,15 +11,21 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
-public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
+/**
+ * Parent class for all "Confidence Tests", in which we find "true" values of P(heard) for some tones by testing them
+ * many times, and compare the results to the predictions made by the stored CalibrationTestResults and RampTestResults
+ *
+ * @param <T> The type of tone being played in this ConfidenceTest
+ */
+public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
 
     /**
-     * The default number of times to test each tone
+     * The default number of times to test each individual tone
      */
     protected static final int DEFAULT_TRIALS_PER_TONE = 20;
 
     /**
-     * The default number of volumes at which to test each frequency
+     * The default number of volumes at which to test each pitch
      */
     protected static final int DEFAULT_VOLS_PER_FREQ = 1;
 
@@ -29,7 +35,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     protected int GRACE_PERIOD_MS = 0;  // no grace period by default
 
     /**
-     * Minimum time between end of one trial and setStartTime of another. MIN_WAIT_TIME_MS >= GRACE_PERIOD_MS
+     * Minimum time between end of one trial and start of another. MIN_WAIT_TIME_MS >= GRACE_PERIOD_MS
      */
     protected int MIN_WAIT_TIME_MS = 1000;
 
@@ -39,25 +45,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     protected int MAX_WAIT_TIME_MS = 3000;
 
     /**
-     * The default frequencies to be used in confidence tests
-     */
-    protected static final float[] DEFAULT_FREQUENCIES = {220, 440, 880, 1760, 3520};
-
-    /**
-     * The default test info the be displayed for confidence tests
-     */
-    protected static final String DEFAULT_TEST_INFO =
-            "In this test, tones of various frequencies and volumes will be played at random times. " +
-            "Please press the \"Heard Tone\" button each time that you hear a tone. ";
-
-    /**
-     * The results of the calibration test associated with this confidence test
-     */
-    protected CalibrationTestResults calibResults;
-
-    /**
-     * All tones to be tested, with duplicates for each time a tone is to be tested and shuffled
-     * if desired
+     * All tones to be tested, with duplicates for each individual time it is to be played
      */
     protected ArrayList<T> testTones;
 
@@ -67,18 +55,32 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     protected ListIterator<T> position;
 
     /**
+     * The default frequencies to be used in confidence tests
+     */
+    protected static final float[] DEFAULT_FREQUENCIES = DEFAULT_CONFIDENCE_FREQUENCIES;
+
+    protected static final String DEFAULT_TEST_INFO =
+            "In this test, tones of various frequencies and volumes will be played at random times. " +
+            "Please press the \"Heard Tone\" button each time that you hear a tone. ";
+
+    /**
+     * The results of the CalibrationTest to be used to generate volumes for trials in this test
+     */
+    protected CalibrationTestResults calibResults;
+
+    /**
      * Fill testTones with appropriate tones for this test
      */
     protected abstract void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies);
 
     /**
      * @return A runnable which plays a sample of all testable tones in this confidence test via
-     * the Model
+     *         the Model
      */
     public abstract Runnable sampleTones();
 
     /**
-     * Play a tone for this confidence test
+     * Play a tone of the appropriate type for this confidence test
      */
     protected abstract void playTone(T tone);
 
@@ -100,7 +102,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     }
 
     /**
-     * Prepare for this test to be performed
+     * Prepare for this ConfidenceTest to be started
      *
      * @param trialsPerTone The number of times to test each tone in this test
      * @param volsPerFreq The number of volumes at which to test each frequency
@@ -134,25 +136,28 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
             public void run() {
                 try {
                     iModel.setTestThreadActive(true);
-                    sleepThread(3000, 5000); // wait 3-5 seconds before playing first tone
-                    while (!isComplete()) {
-                        if (iModel.testPaused() || ! iModel.testing()) return;
+                    sleepThread(3000, 5000); // wait 3-5 seconds before playing tone
 
-                        iModel.resetAnswer();
-                        T current = position.next();
-                        saveLine();
-                        newCurrentTrial(current);
+                    while (!isComplete()) {
+                        if (iModel.testPaused() || ! iModel.testing()) return; // quit if user pauses or exits
+
+                        iModel.resetAnswer(); 
+                        T currentTone = position.next();
+                        saveLine(); // save previous trial immediately before starting next one to register all clicks
+                        newCurrentTrial(currentTone);
                         currentTrial.setStartTime();
-                        playTone(current);
+                        playTone(currentTone);
                         if (iModel.testPaused()) {  // return without doing anything if user paused during tone
                             currentTrial = null;    // remove current trial so it isn't added to list
                             return;
                         }
-                        sleepThread(GRACE_PERIOD_MS, GRACE_PERIOD_MS);
-                        currentTrial.setCorrect(wasCorrect());
-                        sleepThread(MIN_WAIT_TIME_MS - GRACE_PERIOD_MS, MAX_WAIT_TIME_MS - GRACE_PERIOD_MS);
+                        sleepThread(GRACE_PERIOD_MS, GRACE_PERIOD_MS);  // give user grace period after tone finishes
+                        currentTrial.setCorrect(wasCorrect()); 
+                        // finish sleeping
+                        sleepThread(MIN_WAIT_TIME_MS - GRACE_PERIOD_MS, MAX_WAIT_TIME_MS - GRACE_PERIOD_MS); 
                     }
 
+                    // Test complete - perform any remaining steps
                     controller.confidenceTestComplete();
 
                 } finally {
@@ -181,13 +186,16 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     }
 
     /**
-     * Call model.getCalibProbabliity for the given tone. Overload this method to get the appropriate overloaded
+     * Call model.getCalibProbabliity for the given tone. Overload this method to get the appropriate 
      * method from the model
      */
     protected double getModelCalibProbability(T t, int n) {
         return model.getCalibProbability(t, n);
     }
 
+    /**
+     * @return An array containing each tone that has been tested at least once 
+     */
     protected Tone[] allTones() {
         ArrayList<Tone> allTones = new ArrayList<>();
         for (SingleTrialResult t : this.completedTrials) if (! allTones.contains(t.tone())) allTones.add(t.tone());
@@ -196,6 +204,9 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
         return toneArr;
     }
 
+    /**
+     * @return An array of SingleToneResults, with one SingleToneResult for each tone tested so far
+     */
     @SuppressWarnings("ConstantConditions")
     protected SingleToneResult[] getConfResults() {
         HashMap<Float, SingleToneResult> allResults = new HashMap<>();
@@ -212,11 +223,19 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     }
 
     /**
-     * @return The basic statistics of this confidence test as a string - including values
-     * estimated by calibration and ramp models
+     * Return a String containing the results of this ConfidenceTest compared to the estimates from the 
+     * CalibrationTestResults and RampTestResults stored in the model. 
+     * 
+     * Prints out a batch for each 1 < n < calibrationTest.nTrialsPerTone, with each batch containing the confidence
+     * results and all estimates for each Tone tested in this ConfidenceTest. CalibrationTest estimates are made 
+     * based on the first n trial results in the stored CalibrationTest
+     *
+     * @throws IllegalStateException if this test is not yet complete
      */
     @SuppressWarnings({"unchecked"})
-    public String summaryStatsAsString() {
+    public String summaryStatsAsString() throws IllegalStateException {
+        if (! this.isComplete()) throw new IllegalStateException("Test not yet complete");
+
         StringBuilder builder = new StringBuilder();
         RampTestResults regularResults = model.getRampResults().getRegularRampResults();
         SingleToneResult[] confResults = this.getConfResults();
@@ -258,9 +277,24 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
         return builder.toString();
     }
 
+    /**
+     * An object containing the results from a single tone tested in this ConfidenceTest
+     */
     protected static class SingleToneResult {
+
+        /**
+         * The number of times that the user answered this tone correctly
+         */
         private int correct;
+
+        /**
+         * The number of times that the user answered this tone incorrectly
+         */
         private int incorrect;
+
+        /**
+         * The tone whose results are being stored
+         */
         public final Tone tone;
 
         public SingleToneResult(Tone tone) {
@@ -269,21 +303,32 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
             this.tone = tone;
         }
 
+        /**
+         * Indicate that the user answered this tone correctly 
+         */
         public void addCorrect() {
             this.correct++;
         }
 
+        /**
+         * Indicate that the user answered this tone incorrectly 
+         */
         public void addIncorrect() {
             this.incorrect++;
         }
 
+        /**
+         * @return The number of times that the user answered this tone correctly
+         */
         public int getCorrect() {
             return this.correct;
         }
 
+        /**
+         * @return The number of times that the user answered this tone incorrectly
+         */
         public int getIncorrect() {
             return this.incorrect;
         }
     }
-
 }

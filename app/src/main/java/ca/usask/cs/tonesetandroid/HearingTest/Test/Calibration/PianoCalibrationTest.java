@@ -10,6 +10,9 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
+/**
+ * A CalibrationTest that tests the user's ability to hear individual piano tones
+ */
 public class PianoCalibrationTest extends WavCalibrationTest {
 
                                           //        F4       C5       B5        G6        A7

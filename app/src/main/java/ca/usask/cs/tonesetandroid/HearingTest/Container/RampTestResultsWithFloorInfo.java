@@ -13,14 +13,20 @@ import ca.usask.cs.tonesetandroid.UtilFunctions;
  * A class for ramp test results that stores results from a reduce test and uses them to
  * calculate volume floors differently
  */
-public class RampTestResultsWithFloorInfo extends RampTestResults {
+public class RampTestResultsWithFloorInfo extends RampTestResults { 
 
+    /**
+     * The ReduceTest results that will be used to calculate volume floors
+     */
     private FreqVolPair[] reduceResults = null;
 
     public RampTestResultsWithFloorInfo() {
         super();
     }
 
+    /**
+     * Set the results of the ReduceTest that will be used to calculate volume floors
+     */
     public void setReduceResults(FreqVolPair[] reduceResults) {
         this.reduceResults = reduceResults;
     }

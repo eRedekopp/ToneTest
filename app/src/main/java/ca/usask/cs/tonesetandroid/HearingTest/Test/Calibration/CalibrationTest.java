@@ -16,7 +16,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
  * A hearing test that performs the "main" portion of a calibration test
  * @param <T> The type of tones being played in this test
  */
-public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
+public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> {
 
     /**
      * The default number of volumes at which to test each frequency in a calibration test
@@ -24,7 +24,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     protected static final int DEFAULT_N_VOL_PER_FREQ  = 5;
 
     /**
-     * The default number of trials to perform for each frequency-volume combination in this test
+     * The default number of trials to perform for each tone in this test
      */
     protected static final int DEFAULT_N_TRIAL_PER_VOL = 5;
 
@@ -61,7 +61,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     }
 
     /**
-     * Prepare this test to be run
+     * Prepare for this test to be run
      *
      * @param rampResults The results of the ramp test run previous to this calibration test
      * @param reduceResults The results of the reduce test run previous to this calibration test
