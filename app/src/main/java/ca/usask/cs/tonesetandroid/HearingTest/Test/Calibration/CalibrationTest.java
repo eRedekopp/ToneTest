@@ -136,7 +136,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
     @Override
     protected String getLineEnd(SingleTrialResult result) {
 
-        return String.format("freq(Hz) %.1f, vol %.4f, %s, %d clicks: %s",  // todo use Click.arrToString or similar
+        return String.format("freq(Hz) %.1f, vol %.4f, %s, %d clicks: %s",
                 this.currentTrial.tone().freq(),
                 this.currentTrial.tone().vol(),
                 this.currentTrial.wasCorrect() ? "Heard" : "NotHeard",
