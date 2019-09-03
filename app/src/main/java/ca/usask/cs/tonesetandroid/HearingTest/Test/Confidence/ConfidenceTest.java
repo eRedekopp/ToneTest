@@ -166,8 +166,10 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     @Override
     public String getLineEnd(SingleTrialResult trial) {
         return String.format("%s, %s, %d clicks: %s",
-                trial.tone().toString(), trial.wasCorrect() ? "Correct" : "Incorrect", trial.nClicks(),
-                Arrays.toString(trial.clickTimes()));
+                trial.tone().toString(),
+                trial.wasCorrect() ? "Correct" : "Incorrect",
+                trial.nClicks(),
+                trial.getClicksAsString());
     }
 
     /**

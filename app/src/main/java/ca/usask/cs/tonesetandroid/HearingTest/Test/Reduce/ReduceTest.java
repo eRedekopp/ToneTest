@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
@@ -16,6 +15,10 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
+
+    protected static final String DEFAULT_TEST_INFO =
+            "In this phase of the test, tones of various pitches and volumes will play at random times. " +
+            "Please press the \"Heard Tone\" button each time that you hear a tone";
 
     private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
 
@@ -29,6 +32,7 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
 
     public ReduceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
+        this.testInfo = DEFAULT_TEST_INFO;
     }
 
     protected abstract void playTone(T tone);
@@ -84,9 +88,11 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
     @Override
     protected final String getLineEnd(SingleTrialResult result) {
         return String.format("freq: %.2f, vol: %.2f, %s, %d clicks: %s",
-                this.currentTrial.tone().freq(), this.currentTrial.tone().vol(),
-                this.currentTrial.wasCorrect() ? "Heard" : "NotHeard", this.currentTrial.nClicks(),
-                Arrays.toString(this.currentTrial.clickTimes()));
+                this.currentTrial.tone().freq(),
+                this.currentTrial.tone().vol(),
+                this.currentTrial.wasCorrect() ? "Heard" : "NotHeard",
+                this.currentTrial.nClicks(),
+                this.currentTrial.getClicksAsString());
     }
 
     @Override

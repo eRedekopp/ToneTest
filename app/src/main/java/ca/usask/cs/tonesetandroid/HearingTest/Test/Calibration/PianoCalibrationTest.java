@@ -18,7 +18,7 @@ public class PianoCalibrationTest extends WavCalibrationTest {
 
     public PianoCalibrationTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "piano-single-tone-conf";
+        this.testTypeName = "single-piano-calibration";
     }
 
     @Override

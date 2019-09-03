@@ -106,8 +106,10 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
     @Override
     public String getLineEnd(SingleTrialResult trial) {
         return String.format("%s, %s, %d clicks: %s",
-                trial.tone().toString(), trial.wasCorrect() ? "Heard" : "NotHeard", trial.nClicks(),
-                Arrays.toString(trial.clickTimes()));
+                trial.tone().toString(),
+                trial.wasCorrect() ? "Heard" : "NotHeard",
+                trial.nClicks(),
+                trial.getClicksAsString());
     }
 
     @Override

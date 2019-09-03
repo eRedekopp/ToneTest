@@ -5,6 +5,7 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
@@ -194,7 +195,7 @@ public abstract class HearingTest<T extends Tone> {
                                                                                      // sines
                         writeBuf[i] = sample;
                     }
-                    model.lineOut.write(writeBuf, 0, 1000);                 // write sample to line out
+                    model.lineOut.write(writeBuf, 0, 1000);    // write sample to line out
                 }
             } catch (IOException e) {
                 Log.e("playWav", "Error playing wav file");
@@ -209,29 +210,56 @@ public abstract class HearingTest<T extends Tone> {
      * Save the current trial to the output file with the default line-end formatting via the FileIOController
      */
     protected void saveLine() {
-        if (this.currentTrial != null) this.saveLine(this.getLineEnd(this.currentTrial));
+
+        if (this.currentTrial != null)
+            this.saveLine(String.format("%s %s", getLineBeginning(), this.getLineEnd(this.currentTrial)));
     }
 
     /**
-     * Save a line to the output file with the given string as the line-end via the FileIOController
-     * @param lineEnd The String to be written after the header in the new line
+     * Save the given string on its own line via the FileIOController
      */
-    protected void saveLine(String lineEnd) {
+    protected void saveLine(String line) {
 
         if (this.backgroundNoiseType == null || this.testTypeName == null) // sanity check
             throw new IllegalStateException("Test not properly initialized: " +
                     (this.backgroundNoiseType == null ? "BackgroundNoiseType = null " : "") +
                     (this.testTypeName == null ? "TestTypeName = null" : ""));
 
-        fileController.saveLine(lineEnd);
+        fileController.saveLine(line);
+    }
+
+    /**
+     * @return Given the state of model and iModel, return a String with subject ID, current date/time, test type
+     * name, and background noise type/volume
+     */
+    protected static String getLineBeginning() {
+        Long startTime = null;
+        SimpleDateFormat dateFormat = null;
+        String formattedDateTime = null;
+
+        try {
+            startTime = iModel.getCurrentTest().getLastTrialStartTime();
+            dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+            formattedDateTime = dateFormat.format(startTime);
+        } catch (NullPointerException e) {
+            Log.e("getLineBeginning", "Nullpointerexception caused - dateFormat = " +
+                    (dateFormat == null ? "null" : dateFormat.toPattern()) + " Date = " +
+                    (startTime == null ? "null" : startTime.toString()));
+            e.printStackTrace();
+            formattedDateTime = "TimeFetchError";
+        }
+
+        return String.format("%s Subject %d, Test %s, Noise %s,",
+                formattedDateTime, model.getSubjectId(), iModel.getCurrentTest().getTestTypeName(),
+                iModel.getCurrentTest().getBackgroundNoiseType().toString());
     }
 
     /**
      * Adds a new Click object to this test's results for the current earcon if a test is currently being performed
      * @param answer An int representing the answer associated with this click
      */
-    public void handleAnswerClick(int answer) {
-        Click newClick = new Click(answer);
+    public void handleAnswerClick(int answer, boolean wasTouchInput) {
+        Click newClick = new Click(answer, wasTouchInput);
         if (this.currentTrial == null) {
             Log.e("handleAnswerClick", "No current trial set");
             return;

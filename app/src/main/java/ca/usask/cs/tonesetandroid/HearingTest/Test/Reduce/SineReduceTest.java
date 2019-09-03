@@ -14,8 +14,6 @@ public class SineReduceTest extends ReduceTest<FreqVolPair> {
 
     public SineReduceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testInfo = "In this phase of the test, tones of various pitches and volumes will play at random times. " +
-                        "Please press the \"Heard Tone\" button each time that you hear a tone";
         this.testTypeName = "sine-reduce";
     }
 
@@ -34,6 +32,6 @@ public class SineReduceTest extends ReduceTest<FreqVolPair> {
 
     @Override
     protected void playTone(FreqVolPair tone) {
-        playSine((FreqVolPair) tone, SINE_DURATION_MS);
+        playSine(tone, SINE_DURATION_MS);
     }
 }

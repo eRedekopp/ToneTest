@@ -252,10 +252,7 @@ public class Model {
                 for (int j = 0; j < sampleSize; j++, i++) {      // populate pcm for current set of samples
                     rawPCM.read(buf, 0, 2);       // read data from stream
 
-                    byte b = buf[0];              // convert to big-endian
-                    buf[0] = buf[1];
-                    buf[1] = b;
-                    short sample = ByteBuffer.wrap(buf).getShort();   // convert to short todo use more efficient method
+                    short sample = (short) (buf[1] << 8 | buf[0] & 0xFF);  // convert to short
                     pcm[j] = (float) sample / (float) Short.MIN_VALUE;
                 }
 

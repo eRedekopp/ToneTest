@@ -136,9 +136,9 @@ public class HearingTestInteractionModel {
         this.notifySubscribers();
     }
 
-    public void addClick(int answer) {
+    public void addClick(int answer, boolean fromTouchInput) {
         if (this.currentTest == null) throw new IllegalStateException("There is no test currently stored");
-        this.currentTest.handleAnswerClick(answer);
+        this.currentTest.handleAnswerClick(answer, fromTouchInput);
     }
 
     /**

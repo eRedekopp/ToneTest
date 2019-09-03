@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
+import android.util.Log;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.PianoCalibrationTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.SineCalibratonTest;
@@ -32,7 +33,7 @@ public class HearingTestController {
 
     Context context;
 
-    public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine"};
+    public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine", "Single Tone Piano"};
 
     public static final String[] CONF_TEST_OPTIONS =
             {"Single Tone Sine", "Interval Sine", "Melody Sine", "Single Tone Piano",
@@ -66,12 +67,13 @@ public class HearingTestController {
      * Prepare for a reduce test. Must only be called immediately after the ramp test is completed
      */
     public void rampTestComplete() {
-        iModel.getReduceTest().initialize(iModel.getRampTest().getResults());
-        iModel.setCurrentTest(iModel.getReduceTest());
-        iModel.setTestThreadActive(false);
-        iModel.notifySubscribers();
         iModel.setTestPaused(true);
         view.showInformationDialog(iModel.getReduceTest().getTestInfo());
+        iModel.getReduceTest().initialize(iModel.getRampTest().getResults());
+        iModel.setTestThreadActive(false);
+        iModel.notifySubscribers();
+        iModel.setCurrentTest(iModel.getReduceTest());
+
     }
 
     public void reduceTestComplete() {
@@ -195,40 +197,44 @@ public class HearingTestController {
         this.confidenceTest();
     }
 
-    public void handleUpClick() {
-        try {
-            this.iModel.addClick(HearingTest.ANSWER_UP);
-            this.iModel.setAnswer(HearingTest.ANSWER_UP);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
+    public void handleUpClick(boolean fromTouchInput) {
+        if (iModel.testing())
+            try {
+                this.iModel.addClick(HearingTest.ANSWER_UP, fromTouchInput);
+                this.iModel.setAnswer(HearingTest.ANSWER_UP);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
     }
 
-    public void handleDownClick() {
-        try {
-            this.iModel.addClick(HearingTest.ANSWER_DOWN);
-            this.iModel.setAnswer(HearingTest.ANSWER_DOWN);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
+    public void handleDownClick(boolean fromTouchInput) {
+        if (iModel.testing())
+            try {
+                this.iModel.addClick(HearingTest.ANSWER_DOWN, fromTouchInput);
+                this.iModel.setAnswer(HearingTest.ANSWER_DOWN);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
     }
 
     public void handleFlatClick() {
-        try {
-            this.iModel.addClick(HearingTest.ANSWER_FLAT);
-            this.iModel.setAnswer(HearingTest.ANSWER_FLAT);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
+        if (iModel.testing())
+            try {
+                this.iModel.addClick(HearingTest.ANSWER_FLAT, true);
+                this.iModel.setAnswer(HearingTest.ANSWER_FLAT);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
     }
 
-    public void handleHeardClick() {
-        try {
-            this.iModel.addClick(HearingTest.ANSWER_HEARD);
-            this.iModel.setAnswer(HearingTest.ANSWER_HEARD);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
+    public void handleHeardClick(boolean fromTouchInput) {
+        if (iModel.testing())
+            try {
+                this.iModel.addClick(HearingTest.ANSWER_HEARD, fromTouchInput);
+                this.iModel.setAnswer(HearingTest.ANSWER_HEARD);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
     }
 
     //////////////////////////////////// accessor/mutator ////////////////////////////////////////////

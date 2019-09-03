@@ -104,7 +104,6 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                         T current = position.next();
                         saveLine();
                         newCurrentTrial(current);
-                        Log.i("CalibrationTest", "Testing tone: " + current.toString());
                         currentTrial.start();
                         playTone(current);
                         if (iModel.testPaused()) {  // return without doing anything if user paused during tone
@@ -142,7 +141,7 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                 this.currentTrial.tone().vol(),
                 this.currentTrial.wasCorrect() ? "Heard" : "NotHeard",
                 this.currentTrial.nClicks(),
-                Arrays.toString(this.currentTrial.clickTimes()));
+                this.currentTrial.getClicksAsString());
     }
 
     @Override

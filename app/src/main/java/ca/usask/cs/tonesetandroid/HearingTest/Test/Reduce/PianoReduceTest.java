@@ -13,6 +13,7 @@ public class PianoReduceTest extends WavReduceTest {
 
     public PianoReduceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
+        this.testTypeName = "piano-reduce";
     }
 
     /**
