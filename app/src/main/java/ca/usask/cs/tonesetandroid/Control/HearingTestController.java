@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
+import android.util.Log;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.PianoCalibrationTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.SineCalibratonTest;
@@ -196,40 +197,44 @@ public class HearingTestController {
         this.confidenceTest();
     }
 
-    public void handleUpClick() {
-        try {
-            this.iModel.addClick(HearingTest.ANSWER_UP);
-            this.iModel.setAnswer(HearingTest.ANSWER_UP);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
+    public void handleUpClick(boolean fromTouchInput) {
+        if (iModel.testing())
+            try {
+                this.iModel.addClick(HearingTest.ANSWER_UP, fromTouchInput);
+                this.iModel.setAnswer(HearingTest.ANSWER_UP);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
     }
 
-    public void handleDownClick() {
-        try {
-            this.iModel.addClick(HearingTest.ANSWER_DOWN);
-            this.iModel.setAnswer(HearingTest.ANSWER_DOWN);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
+    public void handleDownClick(boolean fromTouchInput) {
+        if (iModel.testing())
+            try {
+                this.iModel.addClick(HearingTest.ANSWER_DOWN, fromTouchInput);
+                this.iModel.setAnswer(HearingTest.ANSWER_DOWN);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
     }
 
     public void handleFlatClick() {
-        try {
-            this.iModel.addClick(HearingTest.ANSWER_FLAT);
-            this.iModel.setAnswer(HearingTest.ANSWER_FLAT);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
+        if (iModel.testing())
+            try {
+                this.iModel.addClick(HearingTest.ANSWER_FLAT, true);
+                this.iModel.setAnswer(HearingTest.ANSWER_FLAT);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
     }
 
-    public void handleHeardClick() {
-        try {
-            this.iModel.addClick(HearingTest.ANSWER_HEARD);
-            this.iModel.setAnswer(HearingTest.ANSWER_HEARD);
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
+    public void handleHeardClick(boolean fromTouchInput) {
+        if (iModel.testing())
+            try {
+                this.iModel.addClick(HearingTest.ANSWER_HEARD, fromTouchInput);
+                this.iModel.setAnswer(HearingTest.ANSWER_HEARD);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
     }
 
     //////////////////////////////////// accessor/mutator ////////////////////////////////////////////

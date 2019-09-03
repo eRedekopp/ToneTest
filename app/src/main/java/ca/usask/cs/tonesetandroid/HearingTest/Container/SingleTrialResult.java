@@ -11,7 +11,6 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 /**
  * A class to store information about one specific trial of a Hearing Test
- * @param <T> The tone type of this trial's associated HearingTest
  */
 public class SingleTrialResult {
 
@@ -103,18 +102,28 @@ public class SingleTrialResult {
     }
 
     /**
-     * eg. "Up 200, Down 250, Flat 275"
+     * eg. "[<Up 200>, (Down 250), <Flat 275>]"
      *
-     * @return A string containing the direction and offset in milliseconds from the start time for each click
+     * @return A string containing the direction and offset in milliseconds from the start time for each click, with
+     * volume-rocker and shake inputs surrounded by "<>" and touchscreen inputs surrounded by "()". Returns empty
+     * string if no clicks
      */
     public String getClicksAsString() {
+        if (this.clicks.size() == 0) return "";
+
         StringBuilder builder = new StringBuilder();
+        builder.append('[');
         for (Click click : this.clicks) {
+            char[] braces = click.wasTouchInput ? new char[]{'(', ')'} : new char[]{'<', '>'};
+            builder.append(braces[0]);
             builder.append(HearingTest.answerAsString(click.answer));
             builder.append(' ');
             builder.append(click.time - this.startTime);
+            builder.append(braces[1]);
             builder.append(", ");
         }
+        builder.delete(builder.length() - 2, builder.length()); // remove trailing ", "
+        builder.append(']');
         return builder.toString();
     }
 

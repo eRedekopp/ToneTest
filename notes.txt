@@ -1,5 +1,6 @@
 Todo:
-    - Alternate input methods:
+	- System.currentTimeMillis() for more accurate click registration?
+	- Alternate input methods:
         - Register "heard tone" with accelerometer (slap bag with phone in it, or bump phone under a towel)
         - Register "up"/"down" with volume up/down buttons?
             - "BroadcastReceiver" event (?)

@@ -195,7 +195,7 @@ public abstract class HearingTest<T extends Tone> {
                                                                                      // sines
                         writeBuf[i] = sample;
                     }
-                    model.lineOut.write(writeBuf, 0, 1000);                 // write sample to line out
+                    model.lineOut.write(writeBuf, 0, 1000);    // write sample to line out
                 }
             } catch (IOException e) {
                 Log.e("playWav", "Error playing wav file");
@@ -258,8 +258,8 @@ public abstract class HearingTest<T extends Tone> {
      * Adds a new Click object to this test's results for the current earcon if a test is currently being performed
      * @param answer An int representing the answer associated with this click
      */
-    public void handleAnswerClick(int answer) {
-        Click newClick = new Click(answer);
+    public void handleAnswerClick(int answer, boolean wasTouchInput) {
+        Click newClick = new Click(answer, wasTouchInput);
         if (this.currentTrial == null) {
             Log.e("handleAnswerClick", "No current trial set");
             return;

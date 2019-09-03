@@ -104,7 +104,7 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
     }
 
     @Override
-    public void handleAnswerClick(int answer) {
+    public void handleAnswerClick(int answer, boolean fromTouchInput) {
         // RampTests have no need for this method because they do not track click times
     }
 

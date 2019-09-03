@@ -17,8 +17,14 @@ public class Click {
      */
     public final int answer;
 
-    public Click(int answer) {
+    /**
+     * was this click registered via the touchscreen?
+     */
+    public final boolean wasTouchInput;
+
+    public Click(int answer, boolean wasTouchInput) {
         this.time = Calendar.getInstance().getTime().getTime();
         this.answer = answer;
+        this.wasTouchInput = wasTouchInput;
     }
 }

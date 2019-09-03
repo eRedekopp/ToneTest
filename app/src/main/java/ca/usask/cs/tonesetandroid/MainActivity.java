@@ -5,6 +5,10 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Handler;
@@ -16,6 +20,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.ContentFrameLayout;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -39,7 +44,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
  *
  * @author redekopp
  */
-public class MainActivity extends AppCompatActivity implements ModelListener, HearingTestView {
+public class MainActivity extends AppCompatActivity implements ModelListener, HearingTestView, SensorEventListener {
 
     public static final int REQUEST_PERMISSIONS = 1;
 
@@ -64,6 +69,17 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             confidenceButton,
             resetButton,
             pauseButton;
+
+    private SensorManager sensorManager;
+    private Sensor accelerometer;
+    private long lastAccelEventTime = 0,  // vars for keeping track of volume rockers and accelerometer
+                 lastShakeTime      = 0,
+                 lastUpClickTime    = 0,
+                 lastDownClickTime  = 0;
+    private float last_x = 0,
+                  last_y = 0,
+                  last_z = 0;
+    private static final int SHAKE_SENSITIVITY = 250;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -119,6 +135,11 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.model.addSubscriber(this);                 // model listeners
         this.iModel.addSubscriber(this);
 
+        // set up accelerometer
+        this.sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        this.accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+
         // set up view elements for main screen
         calibButton =       findViewById(R.id.calibButton);
         downButton =        findViewById(R.id.downButton);
@@ -146,14 +167,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         upButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                controller.handleUpClick();
+                controller.handleUpClick(true);
             }
         });
 
         downButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                controller.handleDownClick();
+                controller.handleDownClick(true);
             }
         });
 
@@ -167,7 +188,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         heardButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                controller.handleHeardClick();
+                controller.handleHeardClick(true);
             }
         });
 
@@ -259,6 +280,46 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         });
     }
 
+    /**
+     * Register shake events with accelerometer
+     */
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        Sensor sensor = event.sensor;
+
+        if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+
+            long curTime = System.currentTimeMillis();
+            long timeDiff = curTime - this.lastAccelEventTime;
+
+            if (timeDiff > 200) {
+
+                this.lastAccelEventTime = curTime;
+
+                float x = event.values[0];
+                float y = event.values[1];
+                float z = event.values[2];
+
+                float speed = Math.abs(x + y + z - this.last_x - this.last_y - this.last_z) / timeDiff * 10000;
+
+                if (speed > SHAKE_SENSITIVITY && curTime - this.lastShakeTime > 250) {  // only allow shake events
+                    this.lastShakeTime = curTime;                                       // every 250ms
+                    Log.d("onSensorChanged", "shake registered");
+                    this.controller.handleHeardClick(false);
+                }
+
+                this.last_x = x;
+                this.last_y = y;
+                this.last_z = z;
+            }
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+
     public void setModel(Model model) {
         this.model = model;
     }
@@ -277,6 +338,29 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     public void setNoiseController(BackgroundNoiseController noiseController) {
         this.noiseController = noiseController;
+    }
+
+    /**
+     * Override volume rocker functionality
+     */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        long curTime = System.currentTimeMillis();
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            if (curTime - this.lastDownClickTime > 250) { // only allow clicks every 250ms
+                this.controller.handleDownClick(false);
+                this.lastDownClickTime = curTime;
+                return true;
+            } else return false;
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+            if (curTime - this.lastUpClickTime > 250) {    // only allow clicks every 250ms
+                this.controller.handleUpClick(false);
+                this.lastUpClickTime = curTime;
+                return true;
+            } else return false;
+        } else {
+            return super.onKeyDown(keyCode, event);
+        }
     }
 
     /**
