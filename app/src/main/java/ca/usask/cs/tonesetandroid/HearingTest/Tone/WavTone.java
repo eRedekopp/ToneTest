@@ -5,16 +5,23 @@ import android.support.annotation.NonNull;
 import ca.usask.cs.tonesetandroid.R;
 
 /**
- * A class for a tone whose audio data is stored in a .wav file
+ * A class for a tone whose audio data is stored in a .wav file. Wav files must be normalized such that the maximum
+ * peak in the waveform is the maximum possible PCM value.
  */
 public class WavTone extends Tone {
 
+    /**
+     * The frequency of the first pitch in the wav file associated with this Tone
+     */
     protected float freq;
 
+    /**
+     * The volume of this Tone
+     */
     protected double vol;
 
     /**
-     * The android resource ID of the wav file associated with this WavTone
+     * The android resource ID of the wav file associated with this WavTone (eg. R.raw.*)
      */
     protected final int wavID;
 
@@ -35,7 +42,7 @@ public class WavTone extends Tone {
     public WavTone(float freq, double vol) throws IllegalArgumentException {
         switch ((int) freq) {
             case 349:  // F4 ~= 349 Hz
-                this.wavID = R.raw.f4piano;
+                this.wavID = R.raw.f4piano;  // todo move this to configureTestTones
                 break;
             case 523:  // C5 ~= 523 Hz
                 this.wavID = R.raw.c5piano;

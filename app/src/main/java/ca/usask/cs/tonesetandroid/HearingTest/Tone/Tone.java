@@ -2,12 +2,18 @@ package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
 
 /**
- * An interface for anything that can be used as a single trial for a tone test
+ * Parent class for all types that can be played in a hearing test
  */
 public abstract class Tone {
 
+    /**
+     * @return The volume of this Tone, where 0 is not audible at all and Double.MAX_VALUE is the maximum
+     */
     public abstract double vol();
 
+    /**
+     * @return The frequency in Hz of the first pitch of this Tone
+     */
     public abstract float freq();
 
     /**
@@ -18,9 +24,9 @@ public abstract class Tone {
     /**
      * Given a list of FreqVolPairs, return the volume associated with the given frequency in a pair
      *
-     * @param list A list of freqvolpairs
+     * @param list An array of Tones
      * @param freq The frequency whose corresponding volume is to be returned
-     * @return The volume of the first freqvolpair with the given frequency in the list
+     * @return The volume of the first Tone with the given frequency in the list
      * @throws IllegalArgumentException if there is no pair with the given frequency
      */
     public static double getVolForFreq(Tone[] list, Float freq) throws IllegalArgumentException {

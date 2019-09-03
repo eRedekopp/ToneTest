@@ -1,33 +1,49 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
+import android.support.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 
 /**
- * A class for storing the pitches and their associated durations in a melody. "Melody" in this case is defined as
+ * A class for storing the pitches and their associated durations in a melody. "Melody", in this case, is defined as
  * any group of 2 or more pitches with associated durations
  */
 public class Melody extends Tone implements Cloneable {
 
     /**
-     * How long should each melody last in total?
+     * How long should the melody last in total?
      */
     protected static final int MELODY_DURATION_MS = 1500;
 
+    /**
+     * The frequencies, volumes, and durations of each note in this melody
+     */
     protected List<FreqVolDurTrio> notes;
 
+    /**
+     * The volume of this melody
+     */
     protected double vol;
 
+    /**
+     * Is the last note of this melody lower, equal, or higher than the first? Must be one of HearingTest.DIRECTION_*
+     */
     protected int direction;
 
     public Melody(List<FreqVolDurTrio> notes, double vol) {
         this.notes = notes;
         this.vol = vol;
-        if (notes.get(0).freq() > this.notes.get(this.notes.size()-1).freq()) this.direction = HearingTest.DIRECTION_DOWN;
-        else if (notes.get(0).freq() < this.notes.get(this.notes.size()-1).freq()) this.direction = HearingTest.DIRECTION_UP;
-        else this.direction = HearingTest.DIRECTION_FLAT;
+        float firstFreq = notes.get(0).freq();
+        float lastFreq  = notes.get(notes.size() - 1).freq();
+        if (firstFreq > lastFreq)
+            this.direction = HearingTest.DIRECTION_DOWN;
+        else if (firstFreq < lastFreq)
+            this.direction = HearingTest.DIRECTION_UP;
+        else
+            this.direction = HearingTest.DIRECTION_FLAT;
     }
 
     /**
@@ -35,7 +51,7 @@ public class Melody extends Tone implements Cloneable {
      * given volume
      *
      * @param identifier The String identifier for the desired melody (see source code for options)
-     * @param freq1 The frequency at which to start this melody
+     * @param freq1 The frequency (pitch) of the first note of the new melody
      * @param vol The volume at which to play this melody
      */
     public Melody(String identifier, float freq1, double vol) {
@@ -92,13 +108,13 @@ public class Melody extends Tone implements Cloneable {
         switch (identifier) {
             case "maj-triad-up":
                 // Major triad first inversion upward, 2 quarter notes + half note
-                // starting note -> min 3rd up from start -> min6 up from start
+                // starting note -> min 3rd up from setStartTime -> min6 up from setStartTime
                 float freq2 = 1.189207f * freq1;
                 float freq3 = 1.587401f * freq1;
                 return new float[]{freq1, freq2, freq3};
             case "maj-triad-down":
                 // Major triad first inversion downward, 2 quarter notes + half note
-                // starting note -> P4 down from start -> min6 down from start
+                // starting note -> P4 down from setStartTime -> min6 down from setStartTime
                 freq2 = freq1 / 1.334840f;
                 freq3 = freq1 / 1.587401f;
                 return new float[]{freq1, freq2, freq3};
@@ -113,33 +129,17 @@ public class Melody extends Tone implements Cloneable {
     /**
      * @return All FreqVolDurTrios in this melody
      */
-    public FreqVolDurTrio[] getNotes() {
+    public FreqVolDurTrio[] getTones() {
         return this.notes.toArray(new FreqVolDurTrio[this.notes.size()]);
-    }
-
-    /**
-     * @return The total number of FreqVolDurTrios in this melody
-     */
-    public int nNotes() {
-        return this.notes.size();
     }
 
     /**
      * @return All FreqVolDurTrios in this melody with volume != 0
      */
-    public FreqVolDurTrio[] getTones() {
+    public FreqVolDurTrio[] getAudibleTones() {
         ArrayList<FreqVolDurTrio> nonRestNotes = new ArrayList<>();
         for (FreqVolDurTrio note : this.notes) if (note.vol() != 0) nonRestNotes.add(note);
         return nonRestNotes.toArray(new FreqVolDurTrio[nonRestNotes.size()]);
-    }
-
-    /**
-     * @return The number of freqVolDurTrios in this melody, ignoring rests (tones with volume = 0)
-     */
-    public int nTones() {
-        int tally = 0;
-        for (FreqVolDurTrio note : this.notes) if (note.vol() != 0) tally++;
-        return tally;
     }
 
     /**

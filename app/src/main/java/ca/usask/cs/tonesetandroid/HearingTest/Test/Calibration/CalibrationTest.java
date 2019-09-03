@@ -1,9 +1,6 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration;
 
-import android.util.Log;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.ListIterator;
 
@@ -12,7 +9,6 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -34,22 +30,22 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
 
     /**
      * The tones that will be played in this calibration test - including duplicates for each
-     * time the tone will be played and shuffled if desired
+     * time the tone will be played
      */
     protected ArrayList<T> testTones;
 
     /**
      * An iterator for testTones to keep track of the current position
      */
-    private ListIterator<T> position;
+    protected ListIterator<T> position;
 
     /**
-     * Play a tone for this calibration test
+     * Play a tone of the appropriate type for this calibration test
      */
     protected abstract void playTone(T tone);
 
     /**
-     * Configure the tones that will be tested in this calibration test
+     * Populate testTones with a Tone for each individual trial that will be performed in this test
      */
     protected abstract void configureTestTones(RampTestResults rampResults,
                                             FreqVolPair[] reduceResults,
@@ -97,14 +93,14 @@ public abstract class CalibrationTest<T extends Tone> extends HearingTest<T> {
                     iModel.setTestThreadActive(true);
 
                     while (! isComplete()) {
-                        if (iModel.testPaused() || ! iModel.testing()) return;
+                        if (iModel.testPaused() || ! iModel.testing()) return;  // exit if paused or returned to login
 
-                        sleepThread(1800, 3000);
+                        sleepThread(1800, 3000); // wait before playing next tone
                         iModel.resetAnswer();
                         T current = position.next();
-                        saveLine();
+                        saveLine();  // save previous trial immediately before next to register all clicks
                         newCurrentTrial(current);
-                        currentTrial.start();
+                        currentTrial.setStartTime();
                         playTone(current);
                         if (iModel.testPaused()) {  // return without doing anything if user paused during tone
                             currentTrial = null;    // remove current trial so it isn't added to list

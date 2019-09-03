@@ -1,7 +1,6 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 import android.support.annotation.NonNull;
-import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -83,7 +82,7 @@ public class CalibrationTestResults implements HearingTestResults {
 
     @Override
     public double getProbability(Melody tone) {
-        FreqVolDurTrio[] tones = tone.getTones();
+        FreqVolDurTrio[] tones = tone.getAudibleTones();
         double[] probs = new double[tones.length];
         for (int i = 0; i < tones.length; i++) probs[i] = this.getProbability(tones[i]);
         return UtilFunctions.mean(probs);

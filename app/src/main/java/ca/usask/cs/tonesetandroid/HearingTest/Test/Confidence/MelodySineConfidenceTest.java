@@ -139,7 +139,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
 
     @Override
     protected void playTone(Melody tone) {
-        for (FreqVolDurTrio note : tone.getNotes())
+        for (FreqVolDurTrio note : tone.getTones())
             playSine(note, note.durationMs());
     }
 

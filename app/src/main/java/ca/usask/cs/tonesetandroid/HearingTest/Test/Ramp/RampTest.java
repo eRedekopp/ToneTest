@@ -1,7 +1,5 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp;
 
-import android.util.Log;
-
 import java.util.ArrayList;
 import java.util.ListIterator;
 
@@ -14,7 +12,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public abstract class RampTest<T extends Tone> extends HearingTest<T> {
 
-    protected double startingVol = 0.5; // start at volume 0.5 by default
+    protected double startingVol = 0.5; // setStartTime at volume 0.5 by default
 
     protected static final String DEFAULT_TEST_INFO =
             "In this phase of the test, tones will play quietly and slowly get louder. Please press the \"Heard " +
@@ -70,7 +68,7 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
                         // save result
                         currentTrial = new SingleRampTrialResult(currentTone.newVol(vol1),
                                                                  currentTone.newVol(heardVol));
-                        currentTrial.start();
+                        currentTrial.setStartTime();
 
                         saveLine();
                         ((RampTestResultsWithFloorInfo) results).addResult(currentTone.freq(), vol1, heardVol);
@@ -118,7 +116,7 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
      *
      * @param rateOfRamp The multiplier for the ramp speed (1.0 < rateOfRamp < ~1.1)
      * @param tone A Tone object representing the sound of the tone to be ramped up (tone.vol() disregarded)
-     * @param startingVol The volume at which to start the ramp (0 < startingVol <= Short.MAX_VALUE)
+     * @param startingVol The volume at which to setStartTime the ramp (0 < startingVol <= Short.MAX_VALUE)
      * @return The volume at which the user pressed "heard", or max volume if not pressed, or -1 if user paused test
      * during ramp
      */

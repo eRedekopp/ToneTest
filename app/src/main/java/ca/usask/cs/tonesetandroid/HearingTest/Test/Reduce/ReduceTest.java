@@ -1,9 +1,6 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce;
 
-import android.util.Log;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -57,7 +54,7 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
                             saveLine();
                             newCurrentTrial(trial);
                             iModel.resetAnswer();
-                            currentTrial.start();
+                            currentTrial.setStartTime();
                             playTone(trial);
                             if (iModel.testPaused()) {  // return without doing anything if user paused during tone
                                 currentTrial = null;    // remove current trial so it isn't added to list

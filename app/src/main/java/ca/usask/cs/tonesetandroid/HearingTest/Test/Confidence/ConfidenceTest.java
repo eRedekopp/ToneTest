@@ -1,7 +1,6 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.ListIterator;
 
@@ -30,12 +29,12 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
     protected int GRACE_PERIOD_MS = 0;  // no grace period by default
 
     /**
-     * Minimum time between end of one trial and start of another. MIN_WAIT_TIME_MS >= GRACE_PERIOD_MS
+     * Minimum time between end of one trial and setStartTime of another. MIN_WAIT_TIME_MS >= GRACE_PERIOD_MS
      */
     protected int MIN_WAIT_TIME_MS = 1000;
 
     /**
-     * Maximum time between end of one trial and start of another
+     * Maximum time between end of one trial and setStartTime of another
      */
     protected int MAX_WAIT_TIME_MS = 3000;
 
@@ -143,7 +142,7 @@ public abstract class ConfidenceTest<T extends Tone> extends HearingTest<T> {
                         T current = position.next();
                         saveLine();
                         newCurrentTrial(current);
-                        currentTrial.start();
+                        currentTrial.setStartTime();
                         playTone(current);
                         if (iModel.testPaused()) {  // return without doing anything if user paused during tone
                             currentTrial = null;    // remove current trial so it isn't added to list

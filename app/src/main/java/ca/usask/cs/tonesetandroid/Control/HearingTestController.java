@@ -42,7 +42,7 @@ public class HearingTestController {
     ////////////////////////////////////////// control /////////////////////////////////////////////
 
     /**
-     * Resume or start the current hearing test, if necessary
+     * Resume or setStartTime the current hearing test, if necessary
      */
     public void checkForHearingTestResume() {
         if (! iModel.testThreadActive() && iModel.testing() && ! iModel.testPaused())
@@ -133,7 +133,7 @@ public class HearingTestController {
 
     /**
      * Set up the iModel for a new calibration test of the appropriate type with the appropriate background noise,
-     * then start the test
+     * then setStartTime the test
      *
      * @param noise The background noise to be played during this test
      * @param testTypeID The type of test to begin: given as an index of CALIB_TEST_OPTIONS
@@ -162,7 +162,7 @@ public class HearingTestController {
 
     /**
      * Set up the iModel for a new confidence test of the appropriate type with the appropriate background noise,
-     * then start the test
+     * then setStartTime the test
      *
      * @param noise The background noise to be played during this test
      * @param testTypeID The type of test to begin: given as an index of CONF_TEST_OPTIONS

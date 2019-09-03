@@ -77,20 +77,6 @@ public final class UtilFunctions {
         return closest;
     }
 
-    /*    public static double findNearestAbove(double d, Collection<Double> dbls) throws IllegalArgumentException {
-        double closest = -1.0;
-        double distance = Double.MAX_VALUE;
-        for (double dbl : dbls) {
-            if (0 < dbl - d && dbl - d < distance) {
-                closest = dbl;
-                distance = dbl - d;
-            }
-        }
-        if (closest == -1) throw new IllegalArgumentException("No elements greater than d found");
-        else return closest;
-    }*/
-
-
     public static Tone findNearestAbove(float f, Tone[] lst) {
         Tone closest = null;
         double distance = Double.MAX_VALUE;
