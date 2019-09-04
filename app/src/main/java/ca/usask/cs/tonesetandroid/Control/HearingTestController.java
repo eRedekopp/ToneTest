@@ -69,7 +69,8 @@ public class HearingTestController {
     public void rampTestComplete() {
         iModel.setTestPaused(true);
         view.showInformationDialog(iModel.getReduceTest().getTestInfo());
-        iModel.getReduceTest().initialize(iModel.getRampTest().getResults());
+        iModel.getReduceTest().setRampResults(iModel.getRampTest().getResults());
+        iModel.getReduceTest().initialize();
         iModel.setTestThreadActive(false);
         iModel.notifySubscribers();
         iModel.setCurrentTest(iModel.getReduceTest());
@@ -81,8 +82,9 @@ public class HearingTestController {
         iModel.getRampTest().getResults().setReduceResults(iModel.getReduceTest().getLowestVolumes());
 
         // set up CalibrationTest to run next
-        iModel.getCalibrationTest().initialize(
-                iModel.getRampTest().getResults(), iModel.getReduceTest().getLowestVolumes());
+        iModel.getCalibrationTest().setRampResults(iModel.getRampTest().getResults());
+        iModel.getCalibrationTest().setReduceResults(iModel.getReduceTest().getLowestVolumes());
+        iModel.getCalibrationTest().initialize();
         iModel.setCurrentTest(iModel.getCalibrationTest());
         iModel.setTestThreadActive(false);
         iModel.notifySubscribers();

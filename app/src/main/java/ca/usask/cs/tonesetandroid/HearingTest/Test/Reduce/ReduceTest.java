@@ -8,6 +8,8 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.RampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleToneTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -39,6 +41,11 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
     protected ReduceTestResults results;
 
     /**
+     * The results from the RampTest that preceded this ReduceTest
+     */
+    protected RampTestResults rampResults;
+
+    /**
      * All tones to be played in the current round of the test 
      */
     protected ArrayList<T> currentVolumes;
@@ -55,14 +62,9 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
     }
 
     /**
-     * Play a tone of the appropriate type for this test via the model
-     */
-    protected abstract void playTone(T tone);  // todo make superclass for all non-ramp tests?
-
-    /**
      * Configure currentVolumes and timesNotHeardPerFreq in preparation for the test to begin
      */
-    public abstract void initialize(RampTestResults rampResults);
+    public abstract void initialize();
 
     @Override
     protected void run() {
@@ -147,6 +149,10 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
      */
     public FreqVolPair[] getLowestVolumes() {
         return this.results.getResults();
+    }
+
+    public void setRampResults(RampTestResults results) {
+        this.rampResults = results;
     }
 
     /**

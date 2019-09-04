@@ -9,6 +9,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleToneTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -29,28 +30,27 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
     protected static final int DEFAULT_N_TRIAL_PER_VOL = 5;
 
     /**
-     * The tones that will be played in this calibration test - including duplicates for each
-     * time the tone will be played
+     * The results of the RampTest that was performed before this CalibrationTest
      */
-    protected ArrayList<T> testTones;
+    protected RampTestResults rampResults;
 
     /**
-     * An iterator for testTones to keep track of the current position
+     * The results of the ReduceTest that was performed before this CalibrationTest
      */
-    protected ListIterator<T> position;
-
-    /**
-     * Play a tone of the appropriate type for this calibration test
-     */
-    protected abstract void playTone(T tone);
+    protected FreqVolPair[] reduceResults;
 
     /**
      * Populate testTones with a Tone for each individual trial that will be performed in this test
+     *
+     * @param rampResults The results of the ramp test run previous to this calibration test
+     * @param reduceResults The results of the reduce test run previous to this calibration test
+     * @param nVolsPerFreq The number of volumes at which to test each frequency
+     * @param nTrialsPerVol The number of times to test each tone
      */
     protected abstract void configureTestTones(RampTestResults rampResults,
-                                            FreqVolPair[] reduceResults,
-                                            int nVolsPerFreq,
-                                            int nTrialsPerVol);
+                                               FreqVolPair[] reduceResults,
+                                               int nVolsPerFreq,
+                                               int nTrialsPerVol);
 
     /**
      * @param noiseType The type of background noise in this calibration test
@@ -72,6 +72,9 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
                            FreqVolPair[] reduceResults,
                            int nVolsPerFreq,
                            int nTrialsPerVol) {
+
+        if (this.reduceResults == null || this.rampResults == null)
+            throw new IllegalStateException("reduce or ramp test results not yet configured");
         this.configureTestTones(rampResults, reduceResults, nVolsPerFreq, nTrialsPerVol);
         Collections.shuffle(this.testTones);
         this.position = testTones.listIterator(0);
@@ -80,8 +83,8 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
     /**
      * Initialize with default values
      */
-    public void initialize(RampTestResults rampResults, FreqVolPair[] reduceResults) {
-        initialize(rampResults, reduceResults, DEFAULT_N_VOL_PER_FREQ, DEFAULT_N_TRIAL_PER_VOL);
+    public void initialize() {
+        initialize(this.rampResults, this.reduceResults, DEFAULT_N_VOL_PER_FREQ, DEFAULT_N_TRIAL_PER_VOL);
     }
 
     @Override
@@ -143,5 +146,13 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
     @Override
     public int[] getRequiredButtons() {
         return new int[]{ANSWER_HEARD};
+    }
+
+    public void setRampResults(RampTestResults rampResults) {
+        this.rampResults = rampResults;
+    }
+
+    public void setReduceResults(FreqVolPair[] reduceResults) {
+        this.reduceResults = reduceResults;
     }
 }

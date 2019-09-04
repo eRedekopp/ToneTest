@@ -23,13 +23,18 @@ public class SineReduceTest extends ReduceTest<FreqVolPair> {
         this.testTypeName = "sine-reduce";
     }
 
+    /**
+     * @throws IllegalStateException If no ramp test results have been set
+     */
     @Override
-    public void initialize(RampTestResults rampResults) {
+    public void initialize() throws IllegalStateException {
+        if (this.rampResults == null) throw new IllegalStateException("rampResults not yet configured");
+
         this.currentVolumes = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         this.results = new ReduceTestResults();
 
-        for (FreqVolPair fvp : rampResults.getResultsArray()) {
+        for (FreqVolPair fvp : this.rampResults.getResultsArray()) {
             this.currentVolumes.add(fvp);
             this.timesNotHeardPerFreq.put(fvp.freq(), 0);
         }
