@@ -1,4 +1,7 @@
 Todo:
+    - HearingTest.getRequiredButtons() -> HearingTest.getPossibleResponses()
+    - Ramp-only calibration 
+    - Class for 3-phase calibration?
 	- System.currentTimeMillis() for more accurate click registration?
     - Look into improving audio (android dev site "high performance audio")
         - Write bigger buffers?

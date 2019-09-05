@@ -129,6 +129,10 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
         return ! this.position.hasNext();
     }
 
+    /**
+     * Note: All CalibrationTests MUST have line endings with the format "[freq-label] <freq> [vol-label] <vol> ..."
+     * else they will not be able to be loaded
+     */
     @Override
     protected String getLineEnd(SingleTrialResult result) {
 
