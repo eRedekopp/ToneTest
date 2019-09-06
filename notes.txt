@@ -1,6 +1,6 @@
 Todo:
-    - HearingTest.getRequiredButtons() -> HearingTest.getPossibleResponses()
     - Shorten confidence tests
+    - Melody.toString()
     - Ramp-only calibration 
     - Class for 3-phase calibration?
 	- System.currentTimeMillis() for more accurate click registration?
