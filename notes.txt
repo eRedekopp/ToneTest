@@ -1,5 +1,7 @@
 Todo:
+    - .wav earcon probabilities based on component tones (known beforehand) and FFT data
     - Shorten confidence tests
+    - Downward pluck-triad earcons? (saved on macbook somewhere?)
     - Ramp-only calibration
     - Look into improving audio (android dev site "high performance audio")
         - Write bigger buffers?
