@@ -12,7 +12,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.InputMismatchException;
 import java.util.List;
@@ -30,8 +29,6 @@ public class FileIOController {
 
     private Model model;
 
-    private HearingTestInteractionModel iModel;
-
     private Context context;
 
     /**
@@ -46,10 +43,6 @@ public class FileIOController {
 
     public void setModel(Model model) {
         this.model = model;
-    }
-
-    public void setiModel(HearingTestInteractionModel iModel) {
-        this.iModel = iModel;
     }
 
     /**
@@ -149,7 +142,7 @@ public class FileIOController {
         File subjectCalibDir = getSubjectCalibDir(subID);
 
         // get and format current date
-        Date date = Calendar.getInstance().getTime();
+        Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd_hh:mma");
         String formattedDate = dFormat.format(date);
 
@@ -170,7 +163,7 @@ public class FileIOController {
             throw new IllegalStateException("No directory exists for subject with ID " + subID);
 
         // get and format current date
-        Date date = Calendar.getInstance().getTime();
+        Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd_hh:mma");
         String formattedDate = dFormat.format(date);
 

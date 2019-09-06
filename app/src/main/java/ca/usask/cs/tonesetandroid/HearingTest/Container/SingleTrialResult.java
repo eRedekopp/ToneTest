@@ -3,7 +3,6 @@ package ca.usask.cs.tonesetandroid.HearingTest.Container;
 import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 
 import ca.usask.cs.tonesetandroid.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
@@ -55,7 +54,7 @@ public class SingleTrialResult {
      * in a test
      */
     public void setStartTime() {
-        this.startTime = Calendar.getInstance().getTime().getTime();
+        this.startTime = System.currentTimeMillis();
     }
 
     /**
