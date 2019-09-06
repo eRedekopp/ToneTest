@@ -24,36 +24,65 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.MainActivity;
 
 /**
- * Contains methods and values for audio output and stores/handles saved test results and the mathematical model for
- * calculating probabilities
+ * Contains methods and values for audio, and stores/handles saved test results
  *
  * @author redekopp, alexscott
  */
 @SuppressWarnings("JavadocReference")
 public class Model {
 
+    /**
+     * A list of ModelListeners to be notified when the state of this Model changes
+     */
     private ArrayList<ModelListener> subscribers;
 
-    private AudioManager audioManager;
+    /**
+     * The subject ID of the current test subject
+     */
+    private int subjectId = -1;     // -1 indicates not set
 
     /////////////// Stored hearing test results ///////////////
-    CalibrationTestResults calibrationTestResults;  // final results of calibration test
-    RampTestResultsWithFloorInfo rampResults;       // results from ramp test
+
+    /**
+     * Results of the most recently performed or loaded CalibrationTest
+     */
+    CalibrationTestResults calibrationTestResults;
+
+    /**
+     * Results of the most recently performed or loaded ConfidenceTest
+     */
+    RampTestResultsWithFloorInfo rampResults;     
+
 
     /////////////// Vars/values for audio ///////////////
+
+    /**
+     * AudioManager for audio output
+     */
+    private AudioManager audioManager;
+
+    /**
+     * The AudioTrack through which to play audio
+     */ 
     public AudioTrack lineOut;
-    public static final int OUTPUT_SAMPLE_RATE  = 44100;  // output samples at 44.1 kHz always
+
+    public static final int OUTPUT_SAMPLE_RATE  = 44100;
+
     public static final int INPUT_SAMPLE_RATE = 16384;    // smaller input sample rate for faster fft
+    
+    /**
+     * Minimum size for the audio buffer for lineOut
+     */ 
     public static int MIN_AUDIO_BUF_SIZE =
                 AudioTrack.getMinBufferSize(OUTPUT_SAMPLE_RATE,
                                                 AudioFormat.CHANNEL_OUT_MONO,
                                                 AudioFormat.ENCODING_PCM_16BIT);
-    public static byte[] buf = new byte[2 * MIN_AUDIO_BUF_SIZE];// a byte buffer that will always be in memory
-                                                                // For some reason, using a buf saved in a function's
-                                                                // scope will occasionally crash the entire app
 
-    /////////////// Vars for file io ///////////////
-    private int subjectId = -1;     // -1 indicates not set
+    /**
+     * A byte buffer that is always in memory - necessary for writing to lineOut because locally stored
+     * buffers cause everything to crash 
+     */
+    public static byte[] buf = new byte[2 * MIN_AUDIO_BUF_SIZE];
 
     public Model() {
         subscribers = new ArrayList<>();
@@ -61,18 +90,15 @@ public class Model {
     }
 
     /**
-     * Resets this model to its just-initialized state.
+     * Resets this model to its just-initialized state. Does not affect the list of ModelListeners
      */
     public void reset() {
-        resetCalibrationTestResults();
-    }
-
-    public void resetCalibrationTestResults() {
         this.calibrationTestResults = null;
+        this.rampResults = null;
     }
 
     /**
-     * @return True if this model has hearing test results saved to it, else false
+     * @return True if this model has ConfidenceTest and RampTest results saved to it, else false
      */
     public boolean hasResults() {
         return (this.calibrationTestResults != null && ! this.calibrationTestResults.isEmpty()
@@ -101,6 +127,9 @@ public class Model {
         }
     }
 
+    /**
+     * @return The number of trials performed for each Tone in the stored CalibrationTestResults
+     */
     public int getNumCalibrationTrials() {
         if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
         else return this.calibrationTestResults.getNumOfTrials();
@@ -141,6 +170,10 @@ public class Model {
 
     /**
      * Get the probability of hearing or differentiating the given tone, given the ramp results stored in this model
+     *
+     * @param tone The Tone whose probability is to be determined
+     * @param withFloorResults Should the probability be calculated using ReduceTest results info?
+     * @return The probability of hearing or differentiating the given tone 
      */
     public double getRampProbability(Tone tone, boolean withFloorResults) {
         if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
@@ -269,24 +302,6 @@ public class Model {
     }
 
     /**
-     * For testing: return PCM samples of a sine wave with the given frequency at INPUT_SAMPLE_RATE
-     *
-     * @param nSamples The number of samples to generate
-     * @param freq The frequency of the sine wave
-     * @return PCM float values corresponding to a sine wave of the given frequency
-     */
-    public static float[] sineWave(float freq, int nSamples, float amplitude) {
-        float[] output = new float[nSamples];
-        float period = Model.INPUT_SAMPLE_RATE / freq;
-
-        for (int i = 0; i < nSamples; i++) {
-            float angle = 2.0f * (float) Math.PI * i / period;
-            output[i] = (float) Math.sin(angle) * amplitude;
-        }
-        return output;
-    }
-
-    /**
      * Perform first time setup of the audio track - does nothing if audio track already initialized
      */
     public void setUpLineOut() {
@@ -305,17 +320,20 @@ public class Model {
     }
 
     /**
-     * Forces the volume of the output stream to max
+     * Set the volume of the output stream to max if not already done
      */
     public void enforceMaxVolume() {
         int maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
         if (audioManager.getStreamVolume(AudioManager.STREAM_MUSIC) != maxVol)
-            audioManager.setStreamVolume( // pin volume to max if not already done
+            audioManager.setStreamVolume( 
                     AudioManager.STREAM_MUSIC,
                     maxVol,
                     AudioManager.FLAG_PLAY_SOUND);
     }
 
+    /**
+     * Add a new ModelListener to the internal list
+     */
     public void addSubscriber(ModelListener newSub) {
         subscribers.add(newSub);
     }
@@ -332,6 +350,9 @@ public class Model {
         this.audioManager = audioManager;
     }
 
+    /**
+     * Pause the AudioTrack
+     */
     public void pauseAudio() {
         try {
             this.lineOut.pause();
@@ -345,12 +366,15 @@ public class Model {
         this.calibrationTestResults = calibrationTestResults;
     }
 
+    /**
+     * Un-pause the AudioTrack 
+     */
     public void startAudio() {
         this.lineOut.play();
     }
 
     /**
-     * Print the contents of calibrationTestResults to the console (for testing)
+     * Print a string representation of the currently stored test results
      */
     public void printResultsToConsole() {
         Log.i("printResultsToConsole", String.format("Subject ID: %d", this.subjectId));
@@ -375,6 +399,9 @@ public class Model {
         this.rampResults = rampResults;
     }
 
+    /**
+     * Notify all ModelListeners that the current state has changed
+     */
     public void notifySubscribers() {
         for (ModelListener m : this.subscribers) m.modelChanged();
     }
