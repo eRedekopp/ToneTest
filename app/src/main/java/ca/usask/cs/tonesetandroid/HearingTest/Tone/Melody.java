@@ -189,4 +189,10 @@ public class Melody extends Tone implements Cloneable {
             return new Melody(this.notes, this.vol);
         }
     }
+
+    @Override
+    @NonNull
+    public String toString() {
+        return String.format("freq: %.2f, vol: %.2f, direction: %s", this.freq(), this.vol(), this.directionAsString());
+    }
 }
