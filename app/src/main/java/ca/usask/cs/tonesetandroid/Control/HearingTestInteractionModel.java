@@ -225,7 +225,7 @@ public class HearingTestInteractionModel {
      */
     public int[] getCurrentRequiredButtons() {
         if (this.currentTest == null) return new int[]{};
-        else return this.currentTest.getRequiredButtons();
+        else return this.currentTest.getPossibleResponses();
     }
 
     /** 

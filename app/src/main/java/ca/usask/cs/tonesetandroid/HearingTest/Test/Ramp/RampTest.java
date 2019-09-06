@@ -124,7 +124,7 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
     }
 
     @Override
-    public int[] getRequiredButtons() {
+    public int[] getPossibleResponses() {
         return new int[]{ANSWER_HEARD};
     }
 

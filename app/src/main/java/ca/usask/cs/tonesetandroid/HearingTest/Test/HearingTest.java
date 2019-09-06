@@ -31,7 +31,7 @@ public abstract class HearingTest<T extends Tone> {
 
     // constants
     protected static final float[] DEFAULT_CALIBRATION_FREQUENCIES = {200, 500, 1000, 2000, 4000};
-    protected static final float[] DEFAULT_CONFIDENCE_FREQUENCIES = {220, 440, 880, 1760, 3520};
+    protected static final float[] DEFAULT_CONFIDENCE_FREQUENCIES =  {220, 440, 880, 1760, 3520};
     protected static final int DEFAULT_TONE_DURATION_MS = 1500;
 
     public static final int DIRECTION_DOWN = -1;
@@ -97,7 +97,7 @@ public abstract class HearingTest<T extends Tone> {
     /**
      * @return A list of all possible answer values for this particular test (ie. HearingTest.ANSWER_*)
      */
-    public abstract int[] getRequiredButtons();
+    public abstract int[] getPossibleResponses();
 
     /**
      * Return the information to be written after the header in the save file for the given trial

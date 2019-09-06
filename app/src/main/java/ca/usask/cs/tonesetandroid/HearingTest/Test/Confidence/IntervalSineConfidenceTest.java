@@ -139,7 +139,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
     }
 
     @Override
-    public int[] getRequiredButtons() {
+    public int[] getPossibleResponses() {
         return new int[]{ANSWER_UP, ANSWER_DOWN};
     }
 

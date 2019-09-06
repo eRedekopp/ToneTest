@@ -119,7 +119,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
     }
 
     @Override
-    public int[] getRequiredButtons() {
+    public int[] getPossibleResponses() {
         return new int[]{ANSWER_HEARD};
     }
 }

@@ -164,7 +164,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
     }
 
     @Override
-    public int[] getRequiredButtons() {
+    public int[] getPossibleResponses() {
         return new int[]{ANSWER_UP, ANSWER_DOWN, ANSWER_FLAT};
     }
 

@@ -123,7 +123,7 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
     }
 
     @Override
-    public int[] getRequiredButtons() {
+    public int[] getPossibleResponses() {
         return new int[]{ANSWER_HEARD};
     }
 
