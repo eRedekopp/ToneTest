@@ -5,8 +5,10 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.HearingTestController;
@@ -73,6 +75,12 @@ public abstract class HearingTest<T extends Tone> {
      * The results of this test
      */
     protected HearingTestResults results;
+
+    /**
+     * The time in milliseconds since the start of the epoch at which setStartTime() was first called, or -1 if
+     * setStartTime() has not yet been called
+     */
+    protected long startTime = -1;
 
     /**
      * The current trial being performed in this test, or null if not applicable
@@ -286,6 +294,25 @@ public abstract class HearingTest<T extends Tone> {
      */
     public long getLastTrialStartTime() {
         return this.currentTrial.getStartTime();
+    }
+
+    /**
+     * Set startTime to the current time. Only changes startTime on the first call - any subsequent calls will do
+     * nothing
+     */
+    public void setStartTime() {
+        if (this.startTime == -1) // only change startTime if setStartTime has not been called yet
+            this.startTime = System.currentTimeMillis();
+    }
+
+    /**
+     * @return startTime formatted as yyyy-MM-dd-hh:mm
+     */
+    public String getFormattedStartTime() {
+        if (this.startTime == -1) return "Start_time_not_set";
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd-HH:mm");
+        Date date = new Date(this.startTime);
+        return format.format(date);
     }
 
     public BackgroundNoiseType getBackgroundNoiseType() {
