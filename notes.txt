@@ -1,17 +1,15 @@
 Todo:
-	- System.currentTimeMillis() for more accurate click registration?
-	- Alternate input methods:
-        - Register "heard tone" with accelerometer (slap bag with phone in it, or bump phone under a towel)
-        - Register "up"/"down" with volume up/down buttons?
-            - "BroadcastReceiver" event (?)
+    - .wav earcon probabilities based on component tones (known beforehand) and FFT data
+    - Shorten confidence tests
+    - Downward pluck-triad earcons? (saved on macbook somewhere?)
+    - Ramp-only calibration
     - Look into improving audio (android dev site "high performance audio")
         - Write bigger buffers?
         - Sine wave : write entire sine at once?
         - Calling play() at the wrong time?
         - Something to do with pausing/unpausing the line a bunch?
-    - Save confidence analysis in different file than test results
     - Look into whether internal mixer affects waveform
-    - Improve code aesthetics / code style / documentation / write developer guide
+    - Developer guide
     - Find a way to eliminate break in crowd noise (low priority) (silence at end of wav?)
     - Normalize background noise types to same volume scale as sines/earcons (wait to hear from Carl about final
       test format - don't bother if we aren't using the background noise generator in the real thing)

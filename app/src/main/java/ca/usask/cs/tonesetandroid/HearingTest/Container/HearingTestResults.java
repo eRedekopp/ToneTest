@@ -5,6 +5,10 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
+/**
+ * Interface for all HearingTest results container classes whose results can be used
+ * to generate probabilities.
+ */
 public interface HearingTestResults {
 
     /**
@@ -22,5 +26,8 @@ public interface HearingTestResults {
 
     double getProbability(WavTone tone) throws IllegalStateException;
 
+    /**
+     * Are there any results stored in this container?
+     */ 
     boolean isEmpty();
 }

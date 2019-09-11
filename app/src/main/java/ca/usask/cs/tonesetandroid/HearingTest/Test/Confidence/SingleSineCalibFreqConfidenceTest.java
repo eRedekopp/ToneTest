@@ -5,7 +5,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.CalibrationTest;
 
 /**
- *  A SingleSineConfidenceTest that tests CalibrationTest.DEFAULT_CALIBRATION_FREQUENCIES instead of ConfidenceTest.DEFAULT_FREQUENCIES
+ *  A SingleSineConfidenceTest that tests DEFAULT_CALIBRATION_FREQUENCIES
  */
 public class SingleSineCalibFreqConfidenceTest extends SingleSineConfidenceTest {
 
@@ -16,7 +16,6 @@ public class SingleSineCalibFreqConfidenceTest extends SingleSineConfidenceTest 
 
     @Override
     public void initialize() {
-        this.initialize(DEFAULT_TRIALS_PER_TONE, DEFAULT_VOLS_PER_FREQ,
-                CalibrationTest.DEFAULT_CALIBRATION_FREQUENCIES);
+        this.initialize(DEFAULT_TRIALS_PER_TONE, DEFAULT_VOLS_PER_FREQ, DEFAULT_CALIBRATION_FREQUENCIES);
     }
 }

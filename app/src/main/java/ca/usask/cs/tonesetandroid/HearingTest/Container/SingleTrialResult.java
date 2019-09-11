@@ -3,7 +3,6 @@ package ca.usask.cs.tonesetandroid.HearingTest.Container;
 import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 
 import ca.usask.cs.tonesetandroid.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
@@ -15,7 +14,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 public class SingleTrialResult {
 
     /**
-     * The time in seconds since 1970 at which start() was called
+     * The time in milliseconds at which setStartTime() was last called
      */
     private long startTime;
 
@@ -25,7 +24,7 @@ public class SingleTrialResult {
     private ArrayList<Click> clicks;
 
     /**
-     * The tone being played for this trial
+     * The tone that was played in this trial
      */
     private final Tone tone;
 
@@ -54,12 +53,13 @@ public class SingleTrialResult {
      * Set the start time to the current millisecond on the clock. Call this method immediately before the tone plays
      * in a test
      */
-    public void start() {
-        this.startTime = Calendar.getInstance().getTime().getTime();
+    public void setStartTime() {
+        this.startTime = System.currentTimeMillis();
     }
 
     /**
      * Add a single click to this result
+     *
      * @param click A new click object representing the click to be added
      */
     public void addClick(Click click) {
@@ -92,7 +92,7 @@ public class SingleTrialResult {
     }
 
     /**
-     * @return An array of integers containing the offset in milliseconds from the start of the tone to each click,
+     * @return An array of integers containing the offset in milliseconds from the setStartTime of the tone to each click,
      * in chronological order
      */
     public long[] clickTimes() {
@@ -104,7 +104,7 @@ public class SingleTrialResult {
     /**
      * eg. "[<Up 200>, (Down 250), <Flat 275>]"
      *
-     * @return A string containing the direction and offset in milliseconds from the start time for each click, with
+     * @return A string containing the direction and offset in milliseconds from the setStartTime time for each click, with
      * volume-rocker and shake inputs surrounded by "<>" and touchscreen inputs surrounded by "()". Returns empty
      * string if no clicks
      */

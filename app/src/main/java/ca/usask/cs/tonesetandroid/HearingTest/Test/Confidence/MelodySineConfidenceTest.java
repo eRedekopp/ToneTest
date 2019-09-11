@@ -13,7 +13,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 /**
- * A hearing test that tests the user hearing Melody objects
+ * A hearing test that tests the user's ability to hear Melodies composed of sine waves
  */
 public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
 
@@ -139,7 +139,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
 
     @Override
     protected void playTone(Melody tone) {
-        for (FreqVolDurTrio note : tone.getNotes())
+        for (FreqVolDurTrio note : tone.getTones())
             playSine(note, note.durationMs());
     }
 
@@ -164,7 +164,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
     }
 
     @Override
-    public int[] getRequiredButtons() {
+    public int[] getPossibleResponses() {
         return new int[]{ANSWER_UP, ANSWER_DOWN, ANSWER_FLAT};
     }
 
@@ -178,12 +178,18 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
                 trial.getClicksAsString());
     }
 
+    /**
+     * @return The average vol floor estimate of the given frequencies
+     */
     protected double getFloorEstimateAvg(float[] freqs) {
         double[] estimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++) estimates[i] = calibResults.getVolFloorEstimateForFreq(freqs[i]);
         return UtilFunctions.mean(estimates);
     }
 
+    /**
+     * @return The average vol ceiling estimate of the given frequencies
+     */
     protected double getCeilingEstimateAvg(float[] freqs) {
         double[] estimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++) estimates[i] = calibResults.getVolCeilingEstimateForFreq(freqs[i]);

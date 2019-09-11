@@ -19,7 +19,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.PianoConfidenceTes
 import ca.usask.cs.tonesetandroid.HearingTestView;
 
 /**
- * A class for performing PureTone and RampUp tests, and handling clicks on the main menu
+ * A class for performing HearingTests and handling UI events
  *
  * @author redekopp, alexscott
  */
@@ -30,14 +30,19 @@ public class HearingTestController {
     HearingTestView view;
     BackgroundNoiseController noiseController;
     FileIOController fileController;
-
     Context context;
 
+    /**
+     * Human-readable names of all CalibrationTest type options
+     */
     public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine", "Single Tone Piano"};
 
+    /**
+     * Human-readable names of all ConfidenceTest type options
+     */
     public static final String[] CONF_TEST_OPTIONS =
             {"Single Tone Sine", "Interval Sine", "Melody Sine", "Single Tone Piano",
-                    "Single Sine w/ Calibration Pitches"};
+             "Single Sine w/ Calibration Pitches"};
 
     ////////////////////////////////////////// control /////////////////////////////////////////////
 
@@ -50,9 +55,9 @@ public class HearingTestController {
     }
 
     /**
-     * Begin the full calibration test. iModel.rampTest must be configured before calling this method. This method is
-     * only used to begin a new calibration test directly after getting user to input test information. To resume a
-     * test, use checkForHearingTestResume
+     * Begin the full 3-phase calibration. iModel.rampTest must be fully configured before calling this method. 
+     * This method is only used to begin a new calibration test directly after getting user to input test information. 
+     * To resume a test, use checkForHearingTestResume
      */
     public void calibrationTest() {
         this.model.configureAudio();
@@ -64,32 +69,38 @@ public class HearingTestController {
     }
 
     /**
-     * Prepare for a reduce test. Must only be called immediately after the ramp test is completed
+     * Perform any necessary steps to finalize the RampTest and prepare the ReduceTest
+     * Only call immediately after completing a RampTest
      */
     public void rampTestComplete() {
         iModel.setTestPaused(true);
         view.showInformationDialog(iModel.getReduceTest().getTestInfo());
-        iModel.getReduceTest().initialize(iModel.getRampTest().getResults());
+        iModel.getReduceTest().setRampResults(iModel.getRampTest().getResults());
+        iModel.getReduceTest().initialize();
         iModel.setTestThreadActive(false);
         iModel.notifySubscribers();
         iModel.setCurrentTest(iModel.getReduceTest());
-
     }
 
+    /**
+     * Perform any necessary steps to finalize the ReduceTest and prepare the RampTest.
+     * Only call immediately after completing a ReduceTest
+     */
     public void reduceTestComplete() {
         // add these results to RampTest
         iModel.getRampTest().getResults().setReduceResults(iModel.getReduceTest().getLowestVolumes());
 
         // set up CalibrationTest to run next
-        iModel.getCalibrationTest().initialize(
-                iModel.getRampTest().getResults(), iModel.getReduceTest().getLowestVolumes());
+        iModel.getCalibrationTest().setRampResults(iModel.getRampTest().getResults());
+        iModel.getCalibrationTest().setReduceResults(iModel.getReduceTest().getLowestVolumes());
+        iModel.getCalibrationTest().initialize();
         iModel.setCurrentTest(iModel.getCalibrationTest());
         iModel.setTestThreadActive(false);
         iModel.notifySubscribers();
     }
 
     /**
-     * Perform any final actions that need to be done before the calibration test is officially "complete"
+     * Perform any final actions that need to be done before the calibration test is officially complete
      */
     public void calibrationTestComplete() {
         this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
@@ -119,7 +130,7 @@ public class HearingTestController {
     }
 
     /**
-     * Perform any final actions that need to be done before the confidence test is officially "complete"
+     * Perform any final actions that need to be done before the confidence test is officially complete
      */
     public void confidenceTestComplete() {
         this.model.audioTrackCleanup();
@@ -132,11 +143,12 @@ public class HearingTestController {
     //////////////////////////////////// click handlers ////////////////////////////////////////////
 
     /**
-     * Set up the iModel for a new calibration test of the appropriate type with the appropriate background noise,
-     * then start the test
+     * Set up the iModel for a new 3-phase calibration of the appropriate type with the 
+     * appropriate background noise, then begin the test
      *
      * @param noise The background noise to be played during this test
-     * @param testTypeID The type of test to begin: given as an index of CALIB_TEST_OPTIONS
+     * @param testTypeID The type of test to begin: given as an index of CALIB_TEST_OPTIONS 
+     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
      */
     public void handleCalibClick(BackgroundNoiseType noise, int testTypeID) {
 
@@ -162,10 +174,11 @@ public class HearingTestController {
 
     /**
      * Set up the iModel for a new confidence test of the appropriate type with the appropriate background noise,
-     * then start the test
+     * then begin the test
      *
      * @param noise The background noise to be played during this test
      * @param testTypeID The type of test to begin: given as an index of CONF_TEST_OPTIONS
+     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
      */
     public void handleConfClick(BackgroundNoiseType noise, int testTypeID) {
         if (! model.hasResults()) throw new IllegalStateException("No results stored in model");
@@ -197,6 +210,11 @@ public class HearingTestController {
         this.confidenceTest();
     }
 
+    /**
+     * Register a UI event with the answer "up"
+     *
+     * @param fromTouchInput Was the UI event a touchscreen button press?
+     */
     public void handleUpClick(boolean fromTouchInput) {
         if (iModel.testing())
             try {
@@ -207,6 +225,11 @@ public class HearingTestController {
             }
     }
 
+    /**
+     * Register a UI event with the answer "down"
+     *
+     * @param fromTouchInput Was the UI event a touchscreen button press?
+     */
     public void handleDownClick(boolean fromTouchInput) {
         if (iModel.testing())
             try {
@@ -217,6 +240,11 @@ public class HearingTestController {
             }
     }
 
+    /**
+     * Register a UI event with the answer "flat"
+     *
+     * @param fromTouchInput Was the UI event a touchscreen button press?
+     */
     public void handleFlatClick() {
         if (iModel.testing())
             try {
@@ -227,6 +255,11 @@ public class HearingTestController {
             }
     }
 
+    /**
+     * Register a UI event with the answer "heard"
+     *
+     * @param fromTouchInput Was the UI event a touchscreen button press?
+     */
     public void handleHeardClick(boolean fromTouchInput) {
         if (iModel.testing())
             try {

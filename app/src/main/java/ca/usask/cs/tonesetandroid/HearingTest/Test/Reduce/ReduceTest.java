@@ -1,9 +1,6 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce;
 
-import android.util.Log;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
@@ -11,23 +8,52 @@ import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.RampTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleToneTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
-public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
+/**
+ * Parent class for "ReduceTests" in which tones are played quieter and quieter until the user stops indicating that
+ * they've heard the tone - used to get an estimate of "inaudible" volumes.
+ *
+ * @param <T> The type of tone being played in this ReduceTest
+ */
+public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
 
     protected static final String DEFAULT_TEST_INFO =
             "In this phase of the test, tones of various pitches and volumes will play at random times. " +
             "Please press the \"Heard Tone\" button each time that you hear a tone";
 
-    private static final float HEARING_TEST_REDUCE_RATE = 0.2f; // reduce by this percentage each time
+    /**
+     * Reduce by this percentage each time 
+     */
+    private static final float HEARING_TEST_REDUCE_RATE = 0.2f;
 
-    static final int TIMES_NOT_HEARD_BEFORE_STOP = 2;       // number of times listener must fail to hear a tone in the
-                                                            // reduction phase of the hearing test before the volume is
-                                                            // considered "inaudible"
+    /**
+     * The number of times that the user must fail to hear a tone before it is considered "inaudible"
+     */
+    static final int TIMES_NOT_HEARD_BEFORE_STOP = 2; 
 
+    /**
+     * The results of this ReduceTest
+     */
     protected ReduceTestResults results;
+
+    /**
+     * The results from the RampTest that preceded this ReduceTest
+     */
+    protected RampTestResults rampResults;
+
+    /**
+     * All tones to be played in the current round of the test 
+     */
     protected ArrayList<T> currentVolumes;
+
+    /**
+     * Each frequency in this test mapped to the number of times that the user has failed to hear a tone at 
+     * that frequency
+     */
     protected HashMap<Float, Integer> timesNotHeardPerFreq;
 
     public ReduceTest(BackgroundNoiseType noiseType) {
@@ -35,9 +61,10 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
         this.testInfo = DEFAULT_TEST_INFO;
     }
 
-    protected abstract void playTone(T tone);
-
-    public abstract void initialize(RampTestResults rampResults);
+    /**
+     * Configure currentVolumes and timesNotHeardPerFreq in preparation for the test to begin
+     */
+    public abstract void initialize();
 
     @Override
     protected void run() {
@@ -57,7 +84,7 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
                             saveLine();
                             newCurrentTrial(trial);
                             iModel.resetAnswer();
-                            currentTrial.start();
+                            currentTrial.setStartTime();
                             playTone(trial);
                             if (iModel.testPaused()) {  // return without doing anything if user paused during tone
                                 currentTrial = null;    // remove current trial so it isn't added to list
@@ -96,7 +123,7 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
     }
 
     @Override
-    public int[] getRequiredButtons() {
+    public int[] getPossibleResponses() {
         return new int[]{ANSWER_HEARD};
     }
 
@@ -116,8 +143,16 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
         Collections.shuffle(this.currentVolumes);
     }
 
+    /**
+     * Return an array of freqvolpairs representing each frequency and its associated "inaudible" volume found in
+     * this test
+     */
     public FreqVolPair[] getLowestVolumes() {
         return this.results.getResults();
+    }
+
+    public void setRampResults(RampTestResults results) {
+        this.rampResults = results;
     }
 
     /**
@@ -128,7 +163,7 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
      * @param key A valid key for that hashmap (not necessarily present in map)
      * @param newValue The new value with which to associate the key
      */
-    public void mapReplace(HashMap<Float, Integer> map, Float key, Integer newValue) {
+    public void mapReplace(HashMap<Float, Integer> map, Float key, Integer newValue) { // todo doesn't map.put() already do this?
         map.remove(key);
         map.put(key, newValue);
     }
@@ -147,6 +182,12 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
         }
     }
 
+    /*
+     * This is extremely over-engineered but not worth fixing
+     */
+    /**
+     * A class representing the results of a reduce test
+     */
     public static class ReduceTestResults  {
         ArrayList<FreqVolPair> results;
 
@@ -154,14 +195,22 @@ public abstract class ReduceTest<T extends Tone> extends HearingTest<T> {
             this.results = new ArrayList<>();
         }
 
+        /**
+         * Add a result to this object
+         * 
+         * @param tone A tone with the appropriate frequency and volume representing the "inaudible" volume found for 
+         *             tone.freq()
+         */
         public void addResult(Tone tone) {
             results.add(new FreqVolPair(tone.freq(), tone.vol()));
         }
 
+        /**
+         * @return An array with one FreqVolPair for each tested frequency, with vol= the "inaudible" volume found for freq 
+         */
         public FreqVolPair[] getResults() {
             return results.toArray(new FreqVolPair[]{});
         }
-
     }
 
     /**

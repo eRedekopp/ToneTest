@@ -21,28 +21,44 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 import ca.usask.cs.tonesetandroid.Control.Model;
 
+/**
+ * Parent class for all hearing tests, in which tones are played via the model and the
+ * user's answers are recorded as SingleTrialResults to be used later 
+ *
+ * @param <T> The type of tones to be played in this HearingTest
+ */
 public abstract class HearingTest<T extends Tone> {
 
     // constants
-    public static final float[] DEFAULT_CALIBRATION_FREQUENCIES = {200, 500, 1000, 2000, 4000};
+    protected static final float[] DEFAULT_CALIBRATION_FREQUENCIES = {200, 500, 1000, 2000, 4000};
+    protected static final float[] DEFAULT_CONFIDENCE_FREQUENCIES =  {220, 440, 880, 1760, 3520};
+    protected static final int DEFAULT_TONE_DURATION_MS = 1500;
 
     public static final int DIRECTION_DOWN = -1;
     public static final int DIRECTION_FLAT =  0;
     public static final int DIRECTION_UP   =  1;
 
+    public static final int ANSWER_NULL = 0;
+    public static final int ANSWER_UP = 1;
+    public static final int ANSWER_DOWN = 2;
+    public static final int ANSWER_FLAT = 3;
+    public static final int ANSWER_HEARD = 4;
+
     // mvc elements
     protected static Model model;
     protected static HearingTestView view;
-    protected static Context context; // todo memory leak?
+    protected static Context context;
     protected static HearingTestInteractionModel iModel;
     protected static FileIOController fileController;
     protected static HearingTestController controller;
 
-    // Identifiers for individual tests
+    /**
+     * The background noise to be played during this test
+     */
     protected BackgroundNoiseType backgroundNoiseType;
 
     /**
-     * A unique string identifying the type of test, to be used in save files and logs.
+     * A string identifying the type of test, to be used in save files and logs.
      * All ramp tests must contain the word "ramp", reduce tests must contain the
      * word "reduce", confidence tests must contain the word "confidence"
      */
@@ -51,15 +67,15 @@ public abstract class HearingTest<T extends Tone> {
     /**
      * Human-readable info about the format of this test
      */
-    protected String testInfo; // info about this test to be displayed for user
+    protected String testInfo;
 
     /**
-     * A container to store the results of this test
+     * The results of this test
      */
     protected HearingTestResults results;
 
     /**
-     * The current trial being performed in this test, or null if test not running
+     * The current trial being performed in this test, or null if not applicable
      */
     protected SingleTrialResult currentTrial = null;
 
@@ -68,58 +84,26 @@ public abstract class HearingTest<T extends Tone> {
      */
     protected ArrayList<SingleTrialResult> completedTrials;
 
-    public static final int ANSWER_NULL = 0;
-    public static final int ANSWER_UP = 1;
-    public static final int ANSWER_DOWN = 2;
-    public static final int ANSWER_FLAT = 3;
-    public static final int ANSWER_HEARD = 4;
-
-
-    public static void setModel(Model theModel) {
-        model = theModel;
-    }
-
-    public static void setView(HearingTestView theView) {
-        view = theView;
-    }
-
-    public static void setContext(Context theContext) {
-        context = theContext;
-    }
-
-    public static void setIModel(HearingTestInteractionModel theIModel) {
-        iModel = theIModel;
-    }
-
-    public static void setFileController(FileIOController theFileController) {
-        fileController = theFileController;
-    }
-
-    public static void setController(HearingTestController theController) {
-        controller = theController;
-    }
-
     /**
      * Begin or resume this hearing test on a new thread
      */
     protected abstract void run();
 
-
     /**
-     * @return true if all trials in this hearing test have been completed, else false
+     * @return true if all trials in this hearing test have been completed, else return false
      */
     public abstract boolean isComplete();
 
     /**
      * @return A list of all possible answer values for this particular test (ie. HearingTest.ANSWER_*)
      */
-    public abstract int[] getRequiredButtons();
+    public abstract int[] getPossibleResponses();
 
     /**
      * Return the information to be written after the header in the save file for the given trial
      *
      * @param result The individual trial result to be saved
-     * @return A string with the information to write after the header in the line
+     * @return A string with information relating specifically to result to be written after the line's header
      */
     protected abstract String getLineEnd(SingleTrialResult result);
 
@@ -129,7 +113,7 @@ public abstract class HearingTest<T extends Tone> {
     }
 
     /**
-     * Resume the test if necessary, else do nothing
+     * Resume the test if necessary, or do nothing
      */
     public void checkForHearingTestResume() {
         if (    ! iModel.testThreadActive() &&
@@ -171,10 +155,9 @@ public abstract class HearingTest<T extends Tone> {
     }
 
     /**
-     * Play the audio from the WavTone's resource id
+     * Play the audio from the WavTone's resource id via the model
      */
     protected void playWav(WavTone tone) {
-
         try {
             byte[] buf = Model.buf;
             short[] writeBuf = new short[1000];
@@ -207,10 +190,9 @@ public abstract class HearingTest<T extends Tone> {
     }
 
     /**
-     * Save the current trial to the output file with the default line-end formatting via the FileIOController
+     * Save information on the current trial to the output file via the FileIOController
      */
     protected void saveLine() {
-
         if (this.currentTrial != null)
             this.saveLine(String.format("%s %s", getLineBeginning(), this.getLineEnd(this.currentTrial)));
     }
@@ -219,20 +201,14 @@ public abstract class HearingTest<T extends Tone> {
      * Save the given string on its own line via the FileIOController
      */
     protected void saveLine(String line) {
-
-        if (this.backgroundNoiseType == null || this.testTypeName == null) // sanity check
-            throw new IllegalStateException("Test not properly initialized: " +
-                    (this.backgroundNoiseType == null ? "BackgroundNoiseType = null " : "") +
-                    (this.testTypeName == null ? "TestTypeName = null" : ""));
-
         fileController.saveLine(line);
     }
 
     /**
      * @return Given the state of model and iModel, return a String with subject ID, current date/time, test type
-     * name, and background noise type/volume
+     * name, and background noise type/volume to be written at the beginning of a line for an individual trial
      */
-    protected static String getLineBeginning() {
+    protected String getLineBeginning() {
         Long startTime = null;
         SimpleDateFormat dateFormat = null;
         String formattedDateTime = null;
@@ -250,13 +226,17 @@ public abstract class HearingTest<T extends Tone> {
         }
 
         return String.format("%s Subject %d, Test %s, Noise %s,",
-                formattedDateTime, model.getSubjectId(), iModel.getCurrentTest().getTestTypeName(),
-                iModel.getCurrentTest().getBackgroundNoiseType().toString());
+                formattedDateTime,
+                model.getSubjectId(),
+                iModel.getCurrentTest().getTestTypeName(),
+                this.getBackgroundNoiseType().toString());
     }
 
     /**
-     * Adds a new Click object to this test's results for the current earcon if a test is currently being performed
+     * If a test is currently being performed, add a new click to its current trial with the associated answer value
+     *
      * @param answer An int representing the answer associated with this click
+     * @param wasTouchInput Was this "click" from an onscreen button press?
      */
     public void handleAnswerClick(int answer, boolean wasTouchInput) {
         Click newClick = new Click(answer, wasTouchInput);
@@ -280,8 +260,8 @@ public abstract class HearingTest<T extends Tone> {
     }
 
     /**
-     * Given an int representing a test response, return a string representing the meaning of that response (eg.
-     * "Up", "Down")
+     * Given an int representing a test response (eg, ANSWER_UP, ANSWER_DOWN), return a string representing the meaning
+     * of that response (eg. "Up", "Down")
      */
     public static String answerAsString(int answer) {
         switch (answer) {
@@ -318,5 +298,29 @@ public abstract class HearingTest<T extends Tone> {
 
     public HearingTestResults getResults() {
         return this.results;
+    }
+
+    public static void setModel(Model theModel) {
+        model = theModel;
+    }
+
+    public static void setView(HearingTestView theView) {
+        view = theView;
+    }
+
+    public static void setContext(Context theContext) {
+        context = theContext;
+    }
+
+    public static void setIModel(HearingTestInteractionModel theIModel) {
+        iModel = theIModel;
+    }
+
+    public static void setFileController(FileIOController theFileController) {
+        fileController = theFileController;
+    }
+
+    public static void setController(HearingTestController theController) {
+        controller = theController;
     }
 }

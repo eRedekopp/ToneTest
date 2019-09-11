@@ -18,7 +18,6 @@ import android.support.annotation.Nullable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.ContentFrameLayout;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -27,7 +26,6 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseController;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
@@ -48,19 +46,26 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     public static final int REQUEST_PERMISSIONS = 1;
 
+    /*
+    * Android Studio doesn't like that there's a Context in a static field, but since this is such a small
+    * application, the memory leaking issues shouldn't be much of a problem
+    * */
     public static Context context; // for passing to other classes from inner methods
 
+    // mvc elements
     Model model;
     HearingTestInteractionModel iModel;
     HearingTestController controller;
     FileIOController fileController;
     BackgroundNoiseController noiseController;
 
-    private int dialogSelectedItem;  // for selecting background noise configurations
+    // instance variables for keeping track of the state of pre-test dialog boxes
+    private int dialogSelectedItem;
     private int dialogTestTypeID;
     private int dialogNoiseID;
     private int dialogVolume;
 
+    // ui elements
     Button  calibButton,
             upButton,
             downButton,
@@ -70,9 +75,10 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             resetButton,
             pauseButton;
 
+    // vars for accelerometer / volume rocker
     private SensorManager sensorManager;
     private Sensor accelerometer;
-    private long lastAccelEventTime = 0,  // vars for keeping track of volume rockers and accelerometer
+    private long lastAccelEventTime = 0,
                  lastShakeTime      = 0,
                  lastUpClickTime    = 0,
                  lastDownClickTime  = 0;
@@ -236,7 +242,8 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     }
 
     /**
-     * Enable/disable the buttons given the new status of the Model and iModel
+     * Enable/disable the buttons given the new status of the Model and iModel, and check if a test needs to be
+     * started / resumed
      */
     public void modelChanged() {
         // Always run on UI thread
@@ -267,7 +274,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                         }
                     }
 
-                // set other buttons depending on current state
+                // set other buttons
                 calibButton.setEnabled(!iModel.testing());
                 confidenceButton.setEnabled(model.hasResults() && !iModel.testing());
                 resetButton.setEnabled(!iModel.testing() || iModel.testPaused());
@@ -286,13 +293,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
-
         if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 
             long curTime = System.currentTimeMillis();
             long timeDiff = curTime - this.lastAccelEventTime;
 
-            if (timeDiff > 200) {
+            if (timeDiff > 200) {   // only accept sensor events every 200ms
 
                 this.lastAccelEventTime = curTime;
 
@@ -317,27 +323,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
-
-    }
-
-    public void setModel(Model model) {
-        this.model = model;
-    }
-
-    public void setIModel(HearingTestInteractionModel iModel) {
-        this.iModel = iModel;
-    }
-
-    public void setController(HearingTestController controller) {
-        this.controller = controller;
-    }
-
-    public void setFileController(FileIOController fileController) {
-        this.fileController = fileController;
-    }
-
-    public void setNoiseController(BackgroundNoiseController noiseController) {
-        this.noiseController = noiseController;
+        // not used
     }
 
     /**
@@ -364,7 +350,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     }
 
     /**
-     * Starts an InitActivity which initializes the model with an ID number and possibly data
+     * Clear the mvc elements and go to the "login" screen
      */
     private void goToInit() {
         Intent initIntent = new Intent(this, InitActivity.class);
@@ -410,20 +396,24 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.modelChanged();
     }
 
+    /**
+     * This gets called after asking for permissions: show an error message if something went wrong, else do nothing
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        if (requestCode == REQUEST_PERMISSIONS) {
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.i("mainActivity","Permission successfully granted");
-            }
-            else Log.i("mainActivity", "Permission not granted");
-        }
-        else {
+
+        if (requestCode == REQUEST_PERMISSIONS && grantResults[0] != PackageManager.PERMISSION_GRANTED)
+            Log.e("mainActivity", "Permission not granted");
+        else
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
     }
 
+    /**
+     * Show a dialog prompting the user to select a test type, then call the next step to setStartTime the test
+     *
+     * @param isCalib Is the new test to be started a calibration test? If not, it is a confidence test
+     */
     private void getTestTypeAndBegin(final boolean isCalib) {
         AlertDialog.Builder optBuilder = new AlertDialog.Builder(this);
         setDialogSelectedItem(0);
@@ -450,8 +440,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     }
 
     /**
-     * Show dialogs to get a background noise type from the user, then pass them to the model and begin the
-     * appropriate test
+     * Show a dialog prompting the user to select a background noise type, then call the next step to setStartTime the test
      *
      * @param isCalib Is the new test to be started a calibration test? If not, it is a confidence test
      */
@@ -472,7 +461,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             public void onClick(DialogInterface dialogInterface, int i) {
                 setDialogNoiseID();
                 dialogInterface.cancel();
-                getBackgroundNoiseAndBeginTest_2(isCalib);
+                getNoiseVolAndBeginTest(isCalib);
             }
         });
         builder.setTitle("Select the background noise type for this test");
@@ -480,10 +469,12 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     }
 
     /**
-     * Show the second dialog (if required) for beginning a background noise test. This method should only be called
-     * by getBackgroundNoiseAndBeginTest
+     * Show a dialog prompting the user for a background noise volume if necessary, then call the appropriate method
+     * in HearingTestController to begin the test
+     *
+     * @param isCalib Is the new test to be started a calibration test? If not, it is a confidence test
      */
-    private void getBackgroundNoiseAndBeginTest_2(final boolean isCalib) {
+    private void getNoiseVolAndBeginTest(final boolean isCalib) {
         if (this.dialogNoiseID == BackgroundNoiseType.NOISE_TYPE_NONE) {    // set volume to 0 and continue if no noise
             this.setDialogSelectedItem(0);
             this.setDialogVolume();
@@ -510,7 +501,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                             @Override
                             public void onClick(DialogInterface dialogInterface, int i) {
                                 dialogInterface.cancel();
-                                getBackgroundNoiseAndBeginTest_2(isCalib);
+                                getNoiseVolAndBeginTest(isCalib);
                             }
                         });
                         return;
@@ -523,7 +514,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                                     @Override
                                     public void onClick(DialogInterface dialogInterface, int i) {
                                         dialogInterface.cancel();
-                                        getBackgroundNoiseAndBeginTest_2(isCalib);
+                                        getNoiseVolAndBeginTest(isCalib);
                                     }
                                 });
                     } else {
@@ -552,23 +543,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         warningBuilder.show();
     }
 
-    public void showErrorDialog(String message) {
-        showErrorDialog(message, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.cancel();
-            }
-        });
-    }
-
-    /**
-     * Show a dialog with the title "Information" and the given message
-     *
-     * This method sets model.testPaused to true just to be sure, but for concurrency reasons it will likely have to
-     * be set to true in the caller thread as well
-     *
-     * @param message The message to be displayed
-     */
+    @Override
     public void showInformationDialog(final String message) {
         new Handler(Looper.getMainLooper()).post(new Runnable() {
             @Override
@@ -595,6 +570,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         });
     }
 
+    @Override
     public void showSampleDialog(final Runnable r, final String message) {
         final String sampleMessage =
                 "To hear a sample of the tones that will be played in this test, press the \"Play Samples\" button. " +
@@ -657,9 +633,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         listener.start();
     }
 
-    /**
-     * Keep track of dialogs in GetBackgroundNoiseAndBeginTest - had to do it this way because of scoping issues
-     */
+    // Keep track of dialogs in GetBackgroundNoiseAndBeginTest - had to do it this way because of scoping issues
     private void setDialogSelectedItem(int dialogSelectedItem) {
         this.dialogSelectedItem = dialogSelectedItem;
     }
@@ -674,5 +648,26 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     public void setDialogTestTypeID() {
         this.dialogTestTypeID = this.dialogSelectedItem;
+    }
+
+    // mutators for mvc elements
+    public void setModel(Model model) {
+        this.model = model;
+    }
+
+    public void setIModel(HearingTestInteractionModel iModel) {
+        this.iModel = iModel;
+    }
+
+    public void setController(HearingTestController controller) {
+        this.controller = controller;
+    }
+
+    public void setFileController(FileIOController fileController) {
+        this.fileController = fileController;
+    }
+
+    public void setNoiseController(BackgroundNoiseController noiseController) {
+        this.noiseController = noiseController;
     }
 }

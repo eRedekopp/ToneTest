@@ -3,9 +3,7 @@ package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 import android.support.annotation.NonNull;
 
 /**
- * A data structure for storing a frequency, volume pair
- *
- * @author alexscott, redekopp
+ * A class that stores a frequency and volume. Usually used to represent a sine wave
  */
 public class FreqVolPair extends Tone implements Cloneable {
 

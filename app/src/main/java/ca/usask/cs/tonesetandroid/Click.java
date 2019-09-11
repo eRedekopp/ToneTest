@@ -1,14 +1,12 @@
 package ca.usask.cs.tonesetandroid;
 
-import java.util.Calendar;
-
 /**
- * A class to store information about a specific button press
+ * A class to store information about a specific touchscreen button press, volume button press, or "shake" event
  */
 public class Click {
 
     /**
-     * the time in milliseconds since 1970 at which the click was registered
+     * the time in milliseconds at which the click was registered
      */
     public final long time;
 
@@ -23,7 +21,7 @@ public class Click {
     public final boolean wasTouchInput;
 
     public Click(int answer, boolean wasTouchInput) {
-        this.time = Calendar.getInstance().getTime().getTime();
+        this.time = System.currentTimeMillis();
         this.answer = answer;
         this.wasTouchInput = wasTouchInput;
     }

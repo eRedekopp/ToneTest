@@ -12,7 +12,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.InputMismatchException;
 import java.util.List;
@@ -24,36 +23,30 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 
 /**
- * A class for handling file IO. Methods for reading files are static; must be instantiated
- * to save files
- *
- * Note: Directory structure starts at resultsDir, then each subject gets a folder named
- * Subject##, which contains subdirectories CalibrationTestResults and ConfidenceTestResults
- *
- * @author redekopp, alexscott
+ * A class for saving and reading results 
  */
 public class FileIOController {
 
     private Model model;
 
-    private HearingTestInteractionModel iModel;
-
     private Context context;
 
+    /**
+     * The parent directory for all save files
+     */ 
     private static final File RESULTS_DIR = getResultsDir();
 
+    /**
+     * The current file to which saveString() will write
+     */
     private File currentFile;
 
     public void setModel(Model model) {
         this.model = model;
     }
 
-    public void setiModel(HearingTestInteractionModel iModel) {
-        this.iModel = iModel;
-    }
-
     /**
-     * Save the given string on its own line to the current file
+     * Save the given string with a newline appended
      */
     public void saveLine(final String line) {
         new Thread(new Runnable() {
@@ -86,14 +79,14 @@ public class FileIOController {
     }
 
     /**
-     * Close the current file and reset this.currentFile to null
+     * Set the current trial to null
      */
     public void closeFile() {
         this.currentFile = null;
     }
 
     /**
-     * Start a new save file for a new HearingTest and set it as this.currentFile
+     * Start a save file for a new HearingTest and set it as this.currentFile
      *
      * @param isCalib Is the new file for a calibration test?
      */
@@ -137,10 +130,8 @@ public class FileIOController {
     }
 
     /**
-     * Get the file where calibration results are to be saved. All parent directories of the file are
-     * guaranteed to exist if this method did not throw errors. Does not create the file
-     *
-     * @return The file where the calibration results are to be saved for the current model state
+     *  @return A new File object with a new path in the CalibrationTests directory. All parent directories
+     *          are guaranteed to exist if this method did not throw errors, but does not create the new file
      */
     private File getDestinationFileCalib() {
         int subID = this.model.getSubjectId();
@@ -151,7 +142,7 @@ public class FileIOController {
         File subjectCalibDir = getSubjectCalibDir(subID);
 
         // get and format current date
-        Date date = Calendar.getInstance().getTime();
+        Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd_hh:mma");
         String formattedDate = dFormat.format(date);
 
@@ -162,10 +153,8 @@ public class FileIOController {
     }
 
     /**
-     * Get the file where confidence results are to be saved. All parent directories of the file are guaranteed to
-     * exist if this method did not throw errors. Does not create the file
-     *
-     * @return The file where the confidence results are to be saved for the current model state
+     *  @return A new File object with a new path in the ConfidenceTests directory. All parent directories
+     *          are guaranteed to exist if this method did not throw errors, but does not create the new file
      */
     private File getDestinationFileConf() {
         int subID = this.model.getSubjectId();
@@ -174,7 +163,7 @@ public class FileIOController {
             throw new IllegalStateException("No directory exists for subject with ID " + subID);
 
         // get and format current date
-        Date date = Calendar.getInstance().getTime();
+        Date date = new Date(System.currentTimeMillis());
         SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd_hh:mma");
         String formattedDate = dFormat.format(date);
 
@@ -223,9 +212,8 @@ public class FileIOController {
     }
 
     /**
-     * Return a new File with the abstract pathname for the given subject's directory
-     *
-     * Note: does not check whether the directory exists
+     * Return a new File with the pathname for the given subject's directory. Does not check whether
+     * the directory exists
      *
      * @param id The id number of the subject whose directory is to be found
      * @return A new File with the abstract pathname for the given subject's directory
@@ -235,10 +223,8 @@ public class FileIOController {
     }
 
     /**
-     * Return a new File with the abstract pathname for the given subject's calibration
-     * test subdirectory
-     *
-     * Note: does not check whether the directory existsgetNoiseType
+     * Return a new File with the pathname for the given subject's calibration test subdirectory. Does not check
+     * whether the directory exists
      *
      * @param id The id number of the subject whose calibration directory is to be found
      * @return A new File with the abstract pathname for the given subject's calibration directory
@@ -248,10 +234,8 @@ public class FileIOController {
     }
 
     /**
-     * Return a new File with the abstract pathname for the given subject's confidence
-     * test subdirectory
-     *
-     * Note: does not check whether the directory exists
+     * Return a new File with the pathname for the given subject's calibration test subdirectory. Does not check
+     * whether the directory exists
      *
      * @param id The id number of the subject whose confidence directory is to be found
      * @return A new File with the abstract pathname for the given subject's confidence directory
@@ -261,8 +245,7 @@ public class FileIOController {
     }
 
     /**
-     * Return true if a folder named "subject##" found in the results directory (where ## is the
-     * subject's ID number)
+     * Check whether there is a directory for the subject with the given ID 
      *
      * @param id The id number of the subject being searched
      * @return True if the subject's folder was found, else false
@@ -273,7 +256,7 @@ public class FileIOController {
     }
 
     /**
-     * Return the directory which stores the results, and create it if it does not exist
+     * Return the parent directory for all save files, and create it if necessary
      */
     private static File getResultsDir() {
         File extDir = Environment.getExternalStorageDirectory();
@@ -291,11 +274,11 @@ public class FileIOController {
     }
 
     /**
-     * Set up directory structure for a new test subject. Directory must not already exist.
+     * Create all required directories for a new test subject
      *
-     * @param id The ID of the new test subject
+     * @throws IllegalArgumentException If directories already exist for the subject with the given ID
      */
-    public static void createDirForSubject(int id) {
+    public static void createDirForSubject(int id) throws IllegalArgumentException {
         File newSubjectDir = getSubjectParentDir(id);
         if (newSubjectDir.exists())
             throw new IllegalArgumentException("Directory already exists for subject with ID " + id);
@@ -313,15 +296,18 @@ public class FileIOController {
     }
 
     /**
-     * Given a model and a file, set model.calibrationTestResults to a new CalibrationTestResults containing the data
-     * in the file
+     * Given a model and a file, set the Model such that its stored results are identical to how they were
+     * immediately following the CalibrationTest whose results are stored in the file
+     * 
+     * @param model A Model object whose results are to be initialized from the file
+     * @param file A CalibrationTest save file
      * @throws InputMismatchException If the given file was not formatted correctly
      */
     public static void initializeModelFromFile(Model model, File file) throws InputMismatchException {
         // "%s Subject %d, Test %s, Noise %s,"              this.getLineBeginning()
         // "freq(Hz) %.1f, vol %.1f, %s, %d clicks: %s"     CalibrationTest.getLineEnd()
 
-        // very expensive (Scanners?) Redo this later if you have time
+        // todo very expensive (Scanners?) Redo this later if you have time
 
         Scanner scanner = null, subScanner = null;
 

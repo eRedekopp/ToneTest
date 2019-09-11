@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
+/**
+ * A ramp test which tests a single piano note
+ */
 public class PianoRampTest extends WavRampTest {
 
     // todo make these different than confidence freqs
@@ -30,20 +33,5 @@ public class PianoRampTest extends WavRampTest {
     @Override
     protected float getRampRate2() {
         return 1.5f;
-    }
-
-    @Override
-    protected double rampUp(double rateOfRamp, WavTone tone, double startingVol) {
-        model.startAudio();
-        try {
-            for (double volume = startingVol; volume < Short.MAX_VALUE; volume *= rateOfRamp) {
-                if (!iModel.testing() || iModel.testPaused()) return -1;
-                this.playWav(tone.newVol(volume));
-                if (iModel.answered()) return volume;
-            }
-            return Short.MAX_VALUE;
-        } finally {
-            model.pauseAudio();
-        }
     }
 }

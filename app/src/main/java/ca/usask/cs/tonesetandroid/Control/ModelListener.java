@@ -7,5 +7,5 @@ package ca.usask.cs.tonesetandroid.Control;
  * @author alexscott
  */
 public interface ModelListener {
-    public void modelChanged();
+    void modelChanged();
 }

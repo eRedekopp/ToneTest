@@ -2,25 +2,37 @@ package ca.usask.cs.tonesetandroid.HearingTest.Tone;
 
 import android.support.annotation.NonNull;
 
+/**
+ * A tone composed of two pitches at the same volume
+ */
 public class Interval extends Tone implements Cloneable {
 
+    /**
+     * The first frequency of the interval
+     */
     private final float freq1;
 
+    /**
+     * The second frequency of the interval
+     */
     private final float freq2;
 
+    /**
+     * The volume of the tones
+     */
     private final double vol;
-
-    private final boolean isUpward;
 
     public Interval(float freq1, float freq2, double vol) {
         this.freq1 = freq1;
         this.freq2 = freq2;
         this.vol = vol;
-        this.isUpward = freq1 < freq2;
     }
 
+    /**
+     * Is the second tone higher in pitch than the first?
+     */
     public boolean isUpward() {
-        return this.isUpward;
+        return this.freq1 < this.freq2;
     }
 
     @Override

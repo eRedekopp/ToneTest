@@ -10,9 +10,10 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
+/**
+ * A CalibrationTest that tests the user's ability to hear individual sine waves
+ */
 public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
-
-    private static final int TONE_DURATION_MS = 1500;
 
     public SineCalibratonTest(BackgroundNoiseType noiseType) {
         super(noiseType);
@@ -21,7 +22,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
     @Override
     protected void playTone(FreqVolPair tone) {
-        this.playSine(tone, TONE_DURATION_MS);
+        this.playSine(tone, DEFAULT_TONE_DURATION_MS);
     }
 
     @Override

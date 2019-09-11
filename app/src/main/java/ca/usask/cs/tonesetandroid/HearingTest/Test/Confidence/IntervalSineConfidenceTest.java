@@ -10,11 +10,17 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
+/**
+ * A ConfidenceTest that tests the user's ability to differentiate between upwward and downward pairs of sine waves
+ */
 public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
 
+    /**
+     * The ratio of the 2 notes in the intervals that will be tested (ie. the 'size' of the intervals)
+     */
     private static final float INTERVAL_FREQ_RATIO = 1.25f;  // freq ratio 5:4 = major third
 
-    private static final int INTERVAL_DURATION_MS = 1500;
+    private static final int INTERVAL_DURATION_MS = DEFAULT_TONE_DURATION_MS; // todo cut out the middle man
 
     public static final String INTERVAL_TEST_INFO =
             "In this test, pairs of tones of various frequencies and volumes will be played one after the other at " +
@@ -89,8 +95,9 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
         for (int i = 0; i < trialsPerTone; i++) allTrials.addAll(this.testTones);
         Collections.shuffle(allTrials);
         this.testTones = allTrials;
-
-        if (this.testTones.size() != trialsPerTone * frequencies.length * volsPerFreq * 2)  // sanity check
+        
+        // sanity check
+        if (this.testTones.size() != trialsPerTone * frequencies.length * volsPerFreq * 2) 
             Log.w("ConfigureTestPairs", "Error: " + "expected " + trialsPerTone * frequencies.length * volsPerFreq * 2 +
                     " test pairs but generated " + this.testTones.size());
     }
@@ -132,7 +139,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
     }
 
     @Override
-    public int[] getRequiredButtons() {
+    public int[] getPossibleResponses() {
         return new int[]{ANSWER_UP, ANSWER_DOWN};
     }
 
@@ -157,7 +164,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
     /**
      * @return The mean of CalibrationTestResults.getVolFloorEstimateForFreq for each frequency in freqs
      */
-    protected double getFloorEstimateAvg(float freq1, boolean isUpward) {
+    protected double getFloorEstimateAvg(float freq1, boolean isUpward) {  // todo use Tone as arg
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] floorEstimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++) floorEstimates[i] = calibResults.getVolFloorEstimateForFreq(freqs[i]);
@@ -167,7 +174,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
     /**
      * @return The mean of CalibrationTestResults.getVolCeilingestimateForFreq for each frequency in freqs
      */
-    protected double getCeilingEstimateAvg(float freq1, boolean isUpward) {
+    protected double getCeilingEstimateAvg(float freq1, boolean isUpward) { // todo use Tone as arg
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] ceilingEstimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++)

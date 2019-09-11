@@ -136,21 +136,13 @@ public class InitActivity extends Activity {
         warningBuilder.show();
     }
 
-    private void setDialogSelectedItem(String item) {
-        this.dialogSelectedString = item;
-    }
-
-    private String getDialogSelectedString() {
-        return this.dialogSelectedString;
-    }
-
     /**
      * Handler for "new calibration" click : return to MainActivity with the given subject id
-     * @param id The subject id with which to initalize the model
+     * @param id The subject id with which to initialize the model
      */
     private void handleSubjectIdClick(final int id) {
         if (id != 0 && FileIOController.directoryExistsForSubject(id)) // show warning dialog if ID already used
-            new AlertDialog.Builder(this)                                // unless it's subject ID 0 (dummy ID)
+            new AlertDialog.Builder(this)                      // unless it's subject ID 0 (dummy ID)
                     .setMessage("This subject ID has already been used")
                     .setTitle("Warning")
                     .setOnCancelListener(new DialogInterface.OnCancelListener() {
@@ -158,6 +150,12 @@ public class InitActivity extends Activity {
                         public void onCancel(DialogInterface dialog) {
                             dialog.dismiss();
                             returnToCaller(id, "");
+                        }
+                    })
+                    .setNeutralButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.cancel();
                         }
                     })
                     .show();
@@ -181,5 +179,13 @@ public class InitActivity extends Activity {
 
         // close this activity; shouldn't be called again until program restart
         this.finish();
+    }
+
+    private void setDialogSelectedItem(String item) {
+        this.dialogSelectedString = item;
+    }
+
+    private String getDialogSelectedString() {
+        return this.dialogSelectedString;
     }
 }
