@@ -27,6 +27,22 @@ public interface HearingTestResults {
     double getProbability(WavTone tone) throws IllegalStateException;
 
     /**
+     * Get an estimate for the highest volume with P(heard) = 0 for the given frequency
+     *
+     * @param freq A frequency
+     * @return An estimate for the highest volume with P(heard) = 0 for freq
+     */
+    double getVolFloorEstimate(float freq);
+
+    /**
+     * Get an estimate for the lowest volume with P(heard) = 1 for the given frequency
+     *
+     * @param freq A frequency
+     * @return An estimate for the lowest volume with P(heard) = 1 for freq
+     */
+    double getVolCeilingEstimate(float freq);
+
+    /**
      * Are there any results stored in this container?
      */ 
     boolean isEmpty();

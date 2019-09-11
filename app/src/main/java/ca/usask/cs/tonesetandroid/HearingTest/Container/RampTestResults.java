@@ -134,7 +134,7 @@ public class RampTestResults implements HearingTestResults {
      * Return an estimate for the volume floor (loudest volume which will be heard 0% of the
      * time) for the given frequency - must have results stored to call this method
      */
-    protected double getVolFloorEstimate(float freq) {
+    public double getVolFloorEstimate(float freq) {
         return this.getVolCeilingEstimate(freq) / 2.0;  // floor tends to be about 1/2 ceiling
     }
 
@@ -143,7 +143,7 @@ public class RampTestResults implements HearingTestResults {
      * time) for the given frequency - must have results stored to call this method
      */
     @SuppressWarnings("ConstantConditions")
-    protected double getVolCeilingEstimate(float freq) {
+    public double getVolCeilingEstimate(float freq) {
 
         // Return max ramp vol if freq tested
         if (this.allResults.containsKey(freq)) return this.allResults.get(freq).min();

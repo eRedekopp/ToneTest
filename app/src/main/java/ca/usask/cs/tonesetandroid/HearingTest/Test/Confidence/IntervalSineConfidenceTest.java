@@ -167,7 +167,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
     protected double getFloorEstimateAvg(float freq1, boolean isUpward) {  // todo use Tone as arg
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] floorEstimates = new double[freqs.length];
-        for (int i = 0; i < freqs.length; i++) floorEstimates[i] = calibResults.getVolFloorEstimateForFreq(freqs[i]);
+        for (int i = 0; i < freqs.length; i++) floorEstimates[i] = calibResults.getVolFloorEstimate(freqs[i]);
         return UtilFunctions.mean(floorEstimates);
     }
 
@@ -178,7 +178,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] ceilingEstimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++)
-            ceilingEstimates[i] = calibResults.getVolCeilingEstimateForFreq(freqs[i]);
+            ceilingEstimates[i] = calibResults.getVolCeilingEstimate(freqs[i]);
         return UtilFunctions.mean(ceilingEstimates);
     }
 }

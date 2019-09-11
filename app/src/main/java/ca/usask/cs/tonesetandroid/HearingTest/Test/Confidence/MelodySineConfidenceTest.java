@@ -183,7 +183,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
      */
     protected double getFloorEstimateAvg(float[] freqs) {
         double[] estimates = new double[freqs.length];
-        for (int i = 0; i < freqs.length; i++) estimates[i] = calibResults.getVolFloorEstimateForFreq(freqs[i]);
+        for (int i = 0; i < freqs.length; i++) estimates[i] = calibResults.getVolFloorEstimate(freqs[i]);
         return UtilFunctions.mean(estimates);
     }
 
@@ -192,7 +192,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
      */
     protected double getCeilingEstimateAvg(float[] freqs) {
         double[] estimates = new double[freqs.length];
-        for (int i = 0; i < freqs.length; i++) estimates[i] = calibResults.getVolCeilingEstimateForFreq(freqs[i]);
+        for (int i = 0; i < freqs.length; i++) estimates[i] = calibResults.getVolCeilingEstimate(freqs[i]);
         return UtilFunctions.mean(estimates);
     }
 }

@@ -219,7 +219,7 @@ public class CalibrationTestResults implements HearingTestResults {
      * @return An estimate of the volume floor for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolFloorEstimateForFreq(float freq) {
+    public double getVolFloorEstimate(float freq) {
         if (this.freqTested(freq)) return this.allResults.get(freq).getVolFloor();
 
         float nearestBelow = UtilFunctions.findNearestBelow(freq, this.getTestedFreqs());
@@ -243,7 +243,7 @@ public class CalibrationTestResults implements HearingTestResults {
      * @return An estimate of the volume ceiling for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolCeilingEstimateForFreq(float freq) {
+    public double getVolCeilingEstimate(float freq) {
         if (this.freqTested(freq)) return this.allResults.get(freq).getVolCeiling();
 
         float nearestBelow = UtilFunctions.findNearestBelow(freq, this.getTestedFreqs());
@@ -268,7 +268,7 @@ public class CalibrationTestResults implements HearingTestResults {
         float[] topFreqs = topFrequencies(wavResId, nAudioSamples);
         double[] floorEstimates = new double[nAudioSamples];
 
-        for (int i = 0; i < nAudioSamples; i++) floorEstimates[i] = this.getVolFloorEstimateForFreq(topFreqs[i]);
+        for (int i = 0; i < nAudioSamples; i++) floorEstimates[i] = this.getVolFloorEstimate(topFreqs[i]);
 
         return UtilFunctions.mean(floorEstimates);
     }
@@ -282,7 +282,7 @@ public class CalibrationTestResults implements HearingTestResults {
         float[] topFreqs = topFrequencies(wavResId, nAudioSamples);
         double[] ceilingEstimates = new double[nAudioSamples];
 
-        for (int i = 0; i < nAudioSamples; i++) ceilingEstimates[i] = this.getVolCeilingEstimateForFreq(topFreqs[i]);
+        for (int i = 0; i < nAudioSamples; i++) ceilingEstimates[i] = this.getVolCeilingEstimate(topFreqs[i]);
 
         return UtilFunctions.mean(ceilingEstimates);
     }

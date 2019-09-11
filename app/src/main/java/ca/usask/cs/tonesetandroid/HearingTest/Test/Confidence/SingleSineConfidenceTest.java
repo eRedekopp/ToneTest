@@ -3,7 +3,6 @@ package ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
@@ -60,22 +59,22 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
         testTones.add(new FreqVolPair(      // add a test that will likely be heard every time
                 confFreqs.get(0),
-                this.calibResults.getVolCeilingEstimateForFreq(confFreqs.get(0))));
+                this.calibResults.getVolCeilingEstimate(confFreqs.get(0))));
 
         if (frequencies.length > 1)         // add a test that will likely not be heard at all
             testTones.add(new FreqVolPair(
                     confFreqs.get(1),
-                    this.calibResults.getVolFloorEstimateForFreq(confFreqs.get(1))));
+                    this.calibResults.getVolFloorEstimate(confFreqs.get(1))));
 
         if (frequencies.length > 2)         // add a test that very likely will be heard every time
             testTones.add(new FreqVolPair(
                     confFreqs.get(2),
-                    this.calibResults.getVolCeilingEstimateForFreq(confFreqs.get(2)) * 1.25));
+                    this.calibResults.getVolCeilingEstimate(confFreqs.get(2)) * 1.25));
 
         if (frequencies.length > 3)         // add a test that extremely likely will be heard every time
             testTones.add(new FreqVolPair(
                     confFreqs.get(3),
-                    this.calibResults.getVolCeilingEstimateForFreq(confFreqs.get(3)) * 1.5));
+                    this.calibResults.getVolCeilingEstimate(confFreqs.get(3)) * 1.5));
 
         int hardCodedCases = 4; // how many test cases are hard-coded like the ones above?
 
@@ -85,8 +84,8 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
         float jumpSize = (1 - pct) / (frequencies.length - hardCodedCases);
         for (int i = hardCodedCases; i < frequencies.length; i++, pct += jumpSize) {
             float freq = confFreqs.get(i);
-            double volFloor = this.calibResults.getVolFloorEstimateForFreq(freq);
-            double volCeiling = this.calibResults.getVolCeilingEstimateForFreq(freq);
+            double volFloor = this.calibResults.getVolFloorEstimate(freq);
+            double volCeiling = this.calibResults.getVolCeilingEstimate(freq);
             double testVol = volFloor + pct * (volCeiling - volFloor);
             this.testTones.add(new FreqVolPair(freq, testVol));
         }

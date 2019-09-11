@@ -44,7 +44,7 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
 
     @Override
     @SuppressWarnings("ConstantConditions")
-    protected double getVolFloorEstimate(float freq) {
+    public double getVolFloorEstimate(float freq) {
 
         if (this.reduceResults == null) throw new IllegalStateException("No reduce results stored");
 
