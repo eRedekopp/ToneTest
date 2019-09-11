@@ -1,4 +1,5 @@
 Todo:
+    - add piano note wavs for new frequencies (see piano calib/conf test frequencies)
     - .wav earcon probabilities based on component tones (known beforehand) and FFT data
     - Shorten confidence tests
     - Downward pluck-triad earcons? (saved on macbook somewhere?)

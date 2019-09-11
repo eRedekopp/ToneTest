@@ -10,10 +10,17 @@ public class EarconAudibilityConfidenceTest extends WavConfidenceTest {
 
     public EarconAudibilityConfidenceTest(CalibrationTestResults results, BackgroundNoiseType noiseType) {
         super(results, noiseType);
+        this.testTypeName = "earcon-audibility-confidence";
+        this.testInfo = DEFAULT_TEST_INFO;
     }
 
     @Override
     protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies) {
         // todo
+    }
+
+    @Override
+    public int[] getPossibleResponses() {
+        return new int[]{ANSWER_HEARD};
     }
 }

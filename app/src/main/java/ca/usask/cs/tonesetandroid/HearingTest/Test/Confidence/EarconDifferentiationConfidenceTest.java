@@ -10,10 +10,17 @@ public class EarconDifferentiationConfidenceTest extends WavConfidenceTest {
 
     public EarconDifferentiationConfidenceTest(CalibrationTestResults results, BackgroundNoiseType noiseType) {
         super(results, noiseType);
+        this.testTypeName = "earcon-differentiation-confidence";
+        this.testInfo = MelodySineConfidenceTest.TEST_INFO; // same test info as melody-sine
     }
 
     @Override
     protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies) {
         // todo
+    }
+
+    @Override
+    public int[] getPossibleResponses() {
+        return new int[]{ANSWER_UP, ANSWER_DOWN, ANSWER_FLAT};
     }
 }
