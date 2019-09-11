@@ -251,6 +251,7 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
 //        return builder.toString();
 
         return "Method not yet implemented"; // todo fix
+        // see note on iPad about new format
     }
 
     /**
