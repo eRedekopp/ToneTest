@@ -5,10 +5,7 @@ import java.util.HashMap;
 import java.util.ListIterator;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleToneTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -65,11 +62,6 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
             "Please press the \"Heard Tone\" button each time that you hear a tone. ";
 
     /**
-     * The results of the CalibrationTest to be used to generate volumes for trials in this test
-     */
-    protected CalibrationTestResults calibResults;
-
-    /**
      * Fill testTones with appropriate tones for this test
      */
     protected abstract void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies);
@@ -91,13 +83,11 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
     protected abstract boolean wasCorrect();
 
     /**
-     * @param calibResults The results of the calibration test associated with this confidence test
      * @param noiseType The background noise played during this confidence test
      */
-    public ConfidenceTest(CalibrationTestResults calibResults, BackgroundNoiseType noiseType) {
+    public ConfidenceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
         this.testInfo = DEFAULT_TEST_INFO;
-        this.calibResults = calibResults;
         this.testTones = new ArrayList<>();
         this.position = testTones.listIterator();
     }
@@ -178,23 +168,6 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
     }
 
     /**
-     * Call model.getRampProbability for the given tone. Overload this method to get the appropriate overloaded
-     * method from the Model. Gets the results from the ramp test that stores volume floor results if
-     * withFloorResults == true, else gets them from the regular RampTestResults
-     */
-    protected double getModelRampProbability(T t, boolean withFloorResults) {
-        return model.getRampProbability(t, withFloorResults);
-    }
-
-    /**
-     * Call model.getCalibProbabliity for the given tone. Overload this method to get the appropriate 
-     * method from the model
-     */
-    protected double getModelCalibProbability(T t, int n) {
-        return model.getCalibProbability(t, n);
-    }
-
-    /**
      * @return An array containing each tone that has been tested at least once 
      */
     protected Tone[] allTones() {
@@ -235,47 +208,49 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
      */
     @SuppressWarnings({"unchecked"})
     public String summaryStatsAsString() throws IllegalStateException {
-        if (! this.isComplete()) throw new IllegalStateException("Test not yet complete");
+//        if (! this.isComplete()) throw new IllegalStateException("Test not yet complete");
+//
+//        StringBuilder builder = new StringBuilder();
+//        RampTestResults regularResults = model.getRampResults().getRegularRampResults();
+//        SingleToneResult[] confResults = this.getConfResults();
+//
+//        for (int n = 1; n <= model.getNumCalibrationTrials(); n++)         {
+//            builder.append("########## n = ");
+//            builder.append(n);
+//            builder.append(" ##########\n");
+//            builder.append( "Tone confidenceProbability toneProbability rampProbabilityLinearWithReduceData " +
+//                            "rampProbabilityLinearWithoutReduceData rampProbabilityLogWithReduceData " +
+//                            "rampProbabilityLogWithoutReduceData\n");
+//            for (SingleToneResult result : confResults) {
+//                double  confProb = (double) result.getCorrect() / (result.getCorrect() + result.getIncorrect()),
+//                        calibProb,
+//                        rampProbLinFloor,
+//                        rampProbLinReg,
+//                        rampProbLogFloor,
+//                        rampProbLogReg;
+//
+//                // get all 4 ramp estimates
+//                Tone t = result.tone;
+//                regularResults.setModelEquation(0);
+//                model.getRampResults().setModelEquation(0);
+//                rampProbLinFloor = this.getModelRampProbability((T) t, true);
+//                rampProbLinReg = this.getModelRampProbability((T) t, false);
+//                model.getRampResults().setModelEquation(1);
+//                rampProbLogFloor = this.getModelRampProbability((T) t, true);
+//                rampProbLogReg = this.getModelRampProbability((T) t, false);
+//
+//                // get calib estimate
+//                calibProb = this.getModelCalibProbability((T) t, n);
+//
+//                builder.append(String.format("%s %.4f %.4f %.4f %.4f %.4f %.4f%n",
+//                        t.toString(), confProb, calibProb, rampProbLinFloor, rampProbLinReg, rampProbLogFloor,
+//                        rampProbLogReg));
+//            }
+//        }
+//
+//        return builder.toString();
 
-        StringBuilder builder = new StringBuilder();
-        RampTestResults regularResults = model.getRampResults().getRegularRampResults();
-        SingleToneResult[] confResults = this.getConfResults();
-
-        for (int n = 1; n <= model.getNumCalibrationTrials(); n++)         {
-            builder.append("########## n = ");
-            builder.append(n);
-            builder.append(" ##########\n");
-            builder.append( "Tone confidenceProbability toneProbability rampProbabilityLinearWithReduceData " +
-                            "rampProbabilityLinearWithoutReduceData rampProbabilityLogWithReduceData " +
-                            "rampProbabilityLogWithoutReduceData\n");
-            for (SingleToneResult result : confResults) {
-                double  confProb = (double) result.getCorrect() / (result.getCorrect() + result.getIncorrect()),
-                        calibProb,
-                        rampProbLinFloor,
-                        rampProbLinReg,
-                        rampProbLogFloor,
-                        rampProbLogReg;
-
-                // get all 4 ramp estimates
-                Tone t = result.tone;
-                regularResults.setModelEquation(0);
-                model.getRampResults().setModelEquation(0);
-                rampProbLinFloor = this.getModelRampProbability((T) t, true);
-                rampProbLinReg = this.getModelRampProbability((T) t, false);
-                model.getRampResults().setModelEquation(1);
-                rampProbLogFloor = this.getModelRampProbability((T) t, true);
-                rampProbLogReg = this.getModelRampProbability((T) t, false);
-
-                // get calib estimate
-                calibProb = this.getModelCalibProbability((T) t, n);
-
-                builder.append(String.format("%s %.4f %.4f %.4f %.4f %.4f %.4f%n",
-                        t.toString(), confProb, calibProb, rampProbLinFloor, rampProbLinReg, rampProbLogFloor,
-                        rampProbLogReg));
-            }
-        }
-
-        return builder.toString();
+        return "Method not yet implemented"; // todo fix
     }
 
     /**

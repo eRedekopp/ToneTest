@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResultsCollection;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
@@ -28,8 +28,8 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
             "higher than the first), press the \"Down\" button if the interval moved downward (ie. the second tone " +
             "was lower than the first), or do nothing if you couldn't tell.";
 
-    public IntervalSineConfidenceTest(CalibrationTestResults calibResults, BackgroundNoiseType noiseType) {
-        super(calibResults, noiseType);
+    public IntervalSineConfidenceTest(BackgroundNoiseType noiseType) {
+        super(noiseType);
         this.testInfo = INTERVAL_TEST_INFO;
         this.GRACE_PERIOD_MS = 1200;  // user gets 1.2 seconds after tone ends to register clicks
         this.MIN_WAIT_TIME_MS = 1500;
@@ -143,16 +143,6 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
         return new int[]{ANSWER_UP, ANSWER_DOWN};
     }
 
-    @Override
-    protected double getModelRampProbability(Interval t, boolean withFloorResults) {
-        return model.getRampProbability(t, withFloorResults);
-    }
-
-    @Override
-    protected double getModelCalibProbability(Interval t, int n) {
-        return model.getCalibProbability(t, n);
-    }
-
     /**
      * @return a new interval starting on the given frequency and going the requested direction
      */
@@ -164,21 +154,24 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
     /**
      * @return The mean of CalibrationTestResults.getVolFloorEstimateForFreq for each frequency in freqs
      */
-    protected double getFloorEstimateAvg(float freq1, boolean isUpward) {  // todo use Tone as arg
+    protected double getFloorEstimateAvg(float freq1, boolean isUpward) {
+        HearingTestResultsCollection results = model.getHearingTestResults();
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] floorEstimates = new double[freqs.length];
-        for (int i = 0; i < freqs.length; i++) floorEstimates[i] = calibResults.getVolFloorEstimate(freqs[i]);
+        for (int i = 0; i < freqs.length; i++)
+            floorEstimates[i] = results.getVolFloorEstimate(freqs[i], this.getBackgroundNoiseType());
         return UtilFunctions.mean(floorEstimates);
     }
 
     /**
      * @return The mean of CalibrationTestResults.getVolCeilingestimateForFreq for each frequency in freqs
      */
-    protected double getCeilingEstimateAvg(float freq1, boolean isUpward) { // todo use Tone as arg
+    protected double getCeilingEstimateAvg(float freq1, boolean isUpward) {
+        HearingTestResultsCollection results = model.getHearingTestResults();
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] ceilingEstimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++)
-            ceilingEstimates[i] = calibResults.getVolCeilingEstimate(freqs[i]);
+            ceilingEstimates[i] = results.getVolCeilingEstimate(freqs[i], this.getBackgroundNoiseType());
         return UtilFunctions.mean(ceilingEstimates);
     }
 }

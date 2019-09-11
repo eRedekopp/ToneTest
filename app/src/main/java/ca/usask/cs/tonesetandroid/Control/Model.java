@@ -15,6 +15,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResultsCollection;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResultsWithFloorInfo;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
@@ -43,15 +44,7 @@ public class Model {
 
     /////////////// Stored hearing test results ///////////////
 
-    /**
-     * Results of the most recently performed or loaded CalibrationTest
-     */
-    CalibrationTestResults calibrationTestResults;
-
-    /**
-     * Results of the most recently performed or loaded ConfidenceTest
-     */
-    RampTestResultsWithFloorInfo rampResults;     
+    private HearingTestResultsCollection hearingTestResults;
 
 
     /////////////// Vars/values for audio ///////////////
@@ -93,16 +86,14 @@ public class Model {
      * Resets this model to its just-initialized state. Does not affect the list of ModelListeners
      */
     public void reset() {
-        this.calibrationTestResults = null;
-        this.rampResults = null;
+        this.hearingTestResults = new HearingTestResultsCollection();
     }
 
     /**
      * @return True if this model has ConfidenceTest and RampTest results saved to it, else false
      */
     public boolean hasResults() {
-        return (this.calibrationTestResults != null && ! this.calibrationTestResults.isEmpty()
-               && this.rampResults != null && ! this.rampResults.isEmpty());
+        return ! this.hearingTestResults.isEmpty();
     }
 
     /**
@@ -125,82 +116,6 @@ public class Model {
             Log.i("audioTrackCleanup", "IllegalStateException caused");
             e.printStackTrace();
         }
-    }
-
-    /**
-     * @return The number of trials performed for each Tone in the stored CalibrationTestResults
-     */
-    public int getNumCalibrationTrials() {
-        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
-        else return this.calibrationTestResults.getNumOfTrials();
-    }
-
-    /**
-     * Get the probability of hearing or differentiating the given tone, given the calibration results stored in this
-     * model
-     *
-     * @param tone The tone whose probability is to be determined
-     * @param n The number of trials to use for the sample size (ie. will calculate probabilities based on the first
-     *          n trials of each tone from the confidence test), n <= confidence test sample size
-     * @return The probability of hearing or differentiating the given tone
-     * @throws IllegalArgumentException If n > confidence test sample size
-     */
-    public double getCalibProbability(Tone tone, int n) throws IllegalArgumentException {
-        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
-        else {
-            CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
-            return newCalibResults.getProbability(tone);
-        }    }
-
-    public double getCalibProbability(Interval tone, int n) {
-        if (! this.hasResults()) throw new IllegalStateException();
-        else {
-            CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
-            return newCalibResults.getProbability(tone);
-        }
-    }
-
-    public double getCalibProbability(WavTone tone, int n) {
-        if (! this.hasResults()) throw new IllegalStateException();
-        else {
-            CalibrationTestResults newCalibResults = this.calibrationTestResults.getSubsetResults(n);
-            return newCalibResults.getProbability(tone);
-        }
-    }
-
-    /**
-     * Get the probability of hearing or differentiating the given tone, given the ramp results stored in this model
-     *
-     * @param tone The Tone whose probability is to be determined
-     * @param withFloorResults Should the probability be calculated using ReduceTest results info?
-     * @return The probability of hearing or differentiating the given tone 
-     */
-    public double getRampProbability(Tone tone, boolean withFloorResults) {
-        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
-        else if (withFloorResults) {
-            return this.rampResults.getProbability(tone);
-        }
-        else {
-            return this.rampResults.getRegularRampResults().getProbability(tone);
-        }
-    }
-
-    public double getRampProbability(Interval interval, boolean withFloorResults) {
-        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
-        else if (withFloorResults) return this.rampResults.getProbability(interval);
-        else return this.rampResults.getRegularRampResults().getProbability(interval);
-    }
-
-    public double getRampProbability(Melody melody, boolean withFloorResults) {
-        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
-        else if (withFloorResults) return this.rampResults.getProbability(melody);
-        else return this.rampResults.getRegularRampResults().getProbability(melody);
-    }
-
-    public double getRampProbability(WavTone tone, boolean withFloorResults) {
-        if (! this.hasResults()) throw new IllegalStateException("No results stored in model");
-        else if (withFloorResults) return this.rampResults.getProbability(tone);
-        else return this.rampResults.getRegularRampResults().getProbability(tone);
     }
 
     /**
@@ -362,10 +277,6 @@ public class Model {
         }
     }
 
-    public void setCalibrationTestResults(CalibrationTestResults calibrationTestResults) {
-        this.calibrationTestResults = calibrationTestResults;
-    }
-
     /**
      * Un-pause the AudioTrack 
      */
@@ -374,35 +285,13 @@ public class Model {
     }
 
     /**
-     * Print a string representation of the currently stored test results
-     */
-    public void printResultsToConsole() {
-        Log.i("printResultsToConsole", String.format("Subject ID: %d", this.subjectId));
-        if (calibrationTestResults == null || calibrationTestResults.isEmpty()
-            || rampResults == null || rampResults.isEmpty())
-            Log.i("printResultsToConsole", "No results stored in model");
-        else {
-            Log.i("printResultsToConsole", String.format("Calibration Test Results:%n%s%nRamp Test " +
-                    "Results:%n%s", this.calibrationTestResults.toString(), this.rampResults.toString()));
-        }
-    }
-
-    public CalibrationTestResults getCalibrationTestResults() {
-        return this.calibrationTestResults;
-    }
-
-    public RampTestResultsWithFloorInfo getRampResults() {
-        return rampResults;
-    }
-
-    public void setRampResults(RampTestResultsWithFloorInfo rampResults) {
-        this.rampResults = rampResults;
-    }
-
-    /**
      * Notify all ModelListeners that the current state has changed
      */
     public void notifySubscribers() {
         for (ModelListener m : this.subscribers) m.modelChanged();
+    }
+
+    public HearingTestResultsCollection getHearingTestResults() {
+        return hearingTestResults;
     }
 }

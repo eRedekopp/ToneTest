@@ -24,6 +24,10 @@ public class HearingTestResultsCollection {
         resultsList.add(results);
     }
 
+    public boolean isEmpty() {
+        return this.resultsList.isEmpty();
+    }
+
     /**
      * Get an estimate for the highest volume with P(heard) = 0 for the given frequency in the
      * given background noise

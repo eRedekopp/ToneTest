@@ -8,8 +8,8 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
  */
 public class EarconDifferentiationConfidenceTest extends WavConfidenceTest {
 
-    public EarconDifferentiationConfidenceTest(CalibrationTestResults results, BackgroundNoiseType noiseType) {
-        super(results, noiseType);
+    public EarconDifferentiationConfidenceTest(BackgroundNoiseType noiseType) {
+        super(noiseType);
         this.testTypeName = "earcon-differentiation-confidence";
         this.testInfo = MelodySineConfidenceTest.TEST_INFO; // same test info as melody-sine
     }

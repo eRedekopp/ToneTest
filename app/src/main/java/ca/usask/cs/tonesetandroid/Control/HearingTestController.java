@@ -73,13 +73,15 @@ public class HearingTestController {
      * Only call immediately after completing a RampTest
      */
     public void rampTestComplete() {
-        iModel.setTestPaused(true);
-        view.showInformationDialog(iModel.getReduceTest().getTestInfo());
-        iModel.getReduceTest().setRampResults(iModel.getRampTest().getResults());
-        iModel.getReduceTest().initialize();
-        iModel.setTestThreadActive(false);
-        iModel.notifySubscribers();
-        iModel.setCurrentTest(iModel.getReduceTest());
+        this.iModel.setTestPaused(true);
+        // add to model.hearingTestResults without reduce results
+        this.model.getHearingTestResults().addResults(this.iModel.getRampTest().getResults().getRegularRampResults());
+        this.view.showInformationDialog(this.iModel.getReduceTest().getTestInfo());
+        this.iModel.getReduceTest().setRampResults(this.iModel.getRampTest().getResults());
+        this.iModel.getReduceTest().initialize();
+        this.iModel.setTestThreadActive(false);
+        this.iModel.notifySubscribers();
+        this.iModel.setCurrentTest(this.iModel.getReduceTest());
     }
 
     /**
@@ -87,26 +89,25 @@ public class HearingTestController {
      * Only call immediately after completing a ReduceTest
      */
     public void reduceTestComplete() {
-        // add these results to RampTest
-        iModel.getRampTest().getResults().setReduceResults(iModel.getReduceTest().getLowestVolumes());
+        // Add ramp results to model list again, but with floor info this time
+        this.iModel.getRampTest().getResults().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
+        this.model.getHearingTestResults().addResults(this.iModel.getRampTest().getResults());
 
         // set up CalibrationTest to run next
-        iModel.getCalibrationTest().setRampResults(iModel.getRampTest().getResults());
-        iModel.getCalibrationTest().setReduceResults(iModel.getReduceTest().getLowestVolumes());
-        iModel.getCalibrationTest().initialize();
-        iModel.setCurrentTest(iModel.getCalibrationTest());
-        iModel.setTestThreadActive(false);
-        iModel.notifySubscribers();
+        this.iModel.getCalibrationTest().setRampResults(this.iModel.getRampTest().getResults());
+        this.iModel.getCalibrationTest().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
+        this.iModel.getCalibrationTest().initialize();
+        this.iModel.setCurrentTest(this.iModel.getCalibrationTest());
+        this.iModel.setTestThreadActive(false);
+        this.iModel.notifySubscribers();
     }
 
     /**
      * Perform any final actions that need to be done before the calibration test is officially complete
      */
     public void calibrationTestComplete() {
-        this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
-        this.model.setRampResults(this.iModel.getRampTest().getResults());
+        this.model.getHearingTestResults().addResults(this.iModel.getCalibrationTest().getResults());
         this.iModel.reset();
-        this.model.printResultsToConsole();
         this.model.audioTrackCleanup();
         this.fileController.closeFile();
         this.iModel.notifySubscribers();
@@ -122,8 +123,9 @@ public class HearingTestController {
         this.iModel.setTestPaused(true);
         this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
         this.fileController.startNewSaveFile(false);
-        this.fileController.saveString(String.format("Calibration Results:%n%s%nRamp Results:%n%s%n",
-                                    this.model.calibrationTestResults.toString(), this.model.rampResults.toString()));
+        // todo
+//        this.fileController.saveString(String.format("Calibration Results:%n%s%nRamp Results:%n%s%n",
+//                                    this.model.calibrationTestResults.toString(), this.model.rampResults.toString()));
 
         this.view.showSampleDialog( this.iModel.getConfidenceTest().sampleTones(),
                                     this.iModel.getCurrentTest().getTestInfo());
@@ -187,19 +189,19 @@ public class HearingTestController {
 
         switch (testTypeID) {
             case 0:     // single sine
-                newTest = new SingleSineConfidenceTest(model.getCalibrationTestResults(), noise);
+                newTest = new SingleSineConfidenceTest(noise);
                 break;
             case 1:     // interval sine
-                newTest = new IntervalSineConfidenceTest(model.getCalibrationTestResults(), noise);
+                newTest = new IntervalSineConfidenceTest(noise);
                 break;
             case 2:     // melody sine
-                newTest = new MelodySineConfidenceTest(model.getCalibrationTestResults(), noise);
+                newTest = new MelodySineConfidenceTest(noise);
                 break;
             case 3:     // single piano
-                newTest = new PianoConfidenceTest(model.calibrationTestResults, noise);
+                newTest = new PianoConfidenceTest(noise);
                 break;
             case 4:     // single sine, test default calibration frequencies
-                newTest = new SingleSineCalibFreqConfidenceTest(model.calibrationTestResults, noise);
+                newTest = new SingleSineCalibFreqConfidenceTest(noise);
                 break;
             default:
                 throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
@@ -242,8 +244,6 @@ public class HearingTestController {
 
     /**
      * Register a UI event with the answer "flat"
-     *
-     * @param fromTouchInput Was the UI event a touchscreen button press?
      */
     public void handleFlatClick() {
         if (iModel.testing())

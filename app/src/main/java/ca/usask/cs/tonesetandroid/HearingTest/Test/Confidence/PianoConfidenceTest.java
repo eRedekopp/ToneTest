@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResultsCollection;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
 /**
@@ -14,8 +14,8 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
  */
 public class PianoConfidenceTest extends WavConfidenceTest {
 
-    public PianoConfidenceTest(CalibrationTestResults results, BackgroundNoiseType noiseType) {
-        super(results, noiseType);
+    public PianoConfidenceTest(BackgroundNoiseType noiseType) {
+        super(noiseType);
         this.testTypeName = "single-piano-conf";
     }
 
@@ -30,6 +30,8 @@ public class PianoConfidenceTest extends WavConfidenceTest {
 
         if (frequencies.length == 0) return;
 
+        HearingTestResultsCollection results = model.getHearingTestResults();
+
         // create a list containing one copy of freq for each volume at which freq should be tested
         this.testTones = new ArrayList<>();
         ArrayList<Float> confFreqs = new ArrayList<>();
@@ -38,25 +40,25 @@ public class PianoConfidenceTest extends WavConfidenceTest {
 
         testTones.add(new WavTone(  // add a test that will likely be heard every time
                 confFreqs.get(0),
-                this.calibResults.getVolCeilingEstimate(confFreqs.get(0))
+                results.getVolCeilingEstimate(confFreqs.get(0), this.getBackgroundNoiseType())
         ));
 
         if (frequencies.length > 1)
             testTones.add(new WavTone(  // add a test that will likely not be heard at all
                     confFreqs.get(1),
-                    this.calibResults.getVolFloorEstimate(confFreqs.get(1))
+                    results.getVolFloorEstimate(confFreqs.get(1), this.getBackgroundNoiseType())
             ));
 
         if (frequencies.length > 2)
             testTones.add(new WavTone(  // add a test that will very likely be heard every time
                     confFreqs.get(2),
-                    this.calibResults.getVolCeilingEstimate(confFreqs.get(2)) * 1.25
+                    results.getVolCeilingEstimate(confFreqs.get(2), this.getBackgroundNoiseType()) * 1.25
             ));
 
         if (frequencies.length > 3)
             testTones.add(new WavTone(  // add a test that will extremely likely be heard every time
                     confFreqs.get(3),
-                    this.calibResults.getVolCeilingEstimate(confFreqs.get(3)) * 1.5
+                    results.getVolCeilingEstimate(confFreqs.get(3), this.getBackgroundNoiseType()) * 1.5
             ));
 
         int hardCodedCases = 4; // how many test cases are hard-coded like the ones above?
@@ -67,8 +69,8 @@ public class PianoConfidenceTest extends WavConfidenceTest {
         float jumpSize = (1 - pct) / (frequencies.length - hardCodedCases);
         for (int i = hardCodedCases; i < frequencies.length; i++, pct += jumpSize) {
             float freq = confFreqs.get(i);
-            double volFloor = this.calibResults.getVolFloorEstimate(freq);
-            double volCeiling = this.calibResults.getVolCeilingEstimate(freq);
+            double volFloor = results.getVolFloorEstimate(freq, this.getBackgroundNoiseType());
+            double volCeiling = results.getVolCeilingEstimate(freq, this.getBackgroundNoiseType());
             double testVol = volFloor + pct * (volCeiling - volFloor);
             this.testTones.add(new WavTone(freq, testVol));
         }

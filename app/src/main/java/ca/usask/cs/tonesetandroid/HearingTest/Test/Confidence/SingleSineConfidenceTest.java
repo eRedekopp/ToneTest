@@ -7,6 +7,9 @@ import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResultsCollection;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 
@@ -15,8 +18,8 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
  */
 public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
-    public SingleSineConfidenceTest(CalibrationTestResults calibResults, BackgroundNoiseType noiseType) {
-        super(calibResults, noiseType);
+    public SingleSineConfidenceTest(BackgroundNoiseType noiseType) {
+        super(noiseType);
         this.testTypeName = "sine-single-tone-conf";
     }
 
@@ -51,6 +54,8 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
         if (frequencies.length == 0) return;
 
+        HearingTestResultsCollection results = model.getHearingTestResults();
+
         // create a list containing one copy of freq for each volume at which freq should be tested
         this.testTones = new ArrayList<>();
         ArrayList<Float> confFreqs = new ArrayList<>();
@@ -59,22 +64,22 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
         testTones.add(new FreqVolPair(      // add a test that will likely be heard every time
                 confFreqs.get(0),
-                this.calibResults.getVolCeilingEstimate(confFreqs.get(0))));
+                results.getVolCeilingEstimate(confFreqs.get(0), this.getBackgroundNoiseType())));
 
         if (frequencies.length > 1)         // add a test that will likely not be heard at all
             testTones.add(new FreqVolPair(
                     confFreqs.get(1),
-                    this.calibResults.getVolFloorEstimate(confFreqs.get(1))));
+                    results.getVolFloorEstimate(confFreqs.get(1), this.getBackgroundNoiseType())));
 
         if (frequencies.length > 2)         // add a test that very likely will be heard every time
             testTones.add(new FreqVolPair(
                     confFreqs.get(2),
-                    this.calibResults.getVolCeilingEstimate(confFreqs.get(2)) * 1.25));
+                    results.getVolCeilingEstimate(confFreqs.get(2), this.getBackgroundNoiseType()) * 1.25));
 
         if (frequencies.length > 3)         // add a test that extremely likely will be heard every time
             testTones.add(new FreqVolPair(
                     confFreqs.get(3),
-                    this.calibResults.getVolCeilingEstimate(confFreqs.get(3)) * 1.5));
+                    results.getVolCeilingEstimate(confFreqs.get(3), this.getBackgroundNoiseType()) * 1.5));
 
         int hardCodedCases = 4; // how many test cases are hard-coded like the ones above?
 
@@ -84,8 +89,8 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
         float jumpSize = (1 - pct) / (frequencies.length - hardCodedCases);
         for (int i = hardCodedCases; i < frequencies.length; i++, pct += jumpSize) {
             float freq = confFreqs.get(i);
-            double volFloor = this.calibResults.getVolFloorEstimate(freq);
-            double volCeiling = this.calibResults.getVolCeilingEstimate(freq);
+            double volFloor = results.getVolFloorEstimate(freq, this.getBackgroundNoiseType());
+            double volCeiling = results.getVolCeilingEstimate(freq, this.getBackgroundNoiseType());
             double testVol = volFloor + pct * (volCeiling - volFloor);
             this.testTones.add(new FreqVolPair(freq, testVol));
         }

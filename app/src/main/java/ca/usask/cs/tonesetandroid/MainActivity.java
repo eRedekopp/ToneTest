@@ -623,7 +623,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
             public void run() {
                 while (! model.hasResults()) continue;
                 alertDialog.cancel();
-                model.printResultsToConsole();
                 model.notifySubscribers();
             }
         });

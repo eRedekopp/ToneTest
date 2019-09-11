@@ -235,11 +235,6 @@ public class HearingTestInteractionModel {
         return currentTest;
     }
 
-    public CalibrationTestResults getCalibrationResults() {
-        if (this.calibrationTest == null) throw new IllegalStateException("No calibration test stored");
-        else return this.calibrationTest.getResults();
-    }
-
     public ConfidenceTest getConfidenceTest() {
         return confidenceTest;
     }

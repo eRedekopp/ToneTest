@@ -307,117 +307,119 @@ public class FileIOController {
         // "%s Subject %d, Test %s, Noise %s,"              this.getLineBeginning()
         // "freq(Hz) %.1f, vol %.1f, %s, %d clicks: %s"     CalibrationTest.getLineEnd()
 
-        // todo very expensive (Scanners?) Redo this later if you have time
+        throw new RuntimeException("Method not complete");
 
-        Scanner scanner = null, subScanner = null;
+        // todo fix this
 
-        try {
-
-            // todo fix this
-            CalibrationTestResults newCalibResults = new CalibrationTestResults(new BackgroundNoiseType(0, 0));
-            RampTestResultsWithFloorInfo newRampResults = new RampTestResultsWithFloorInfo(new BackgroundNoiseType(0, 0));
-            ReduceTest.ResultsBuilder reduceResultsBuilder = new ReduceTest.ResultsBuilder();
-
-            try {
-                scanner = new Scanner(file);
-                scanner.useDelimiter(",");
-            } catch (FileNotFoundException e) {
-                Log.e("initializeModel", "File not found");
-                e.printStackTrace();
-                return;
-            }
-
-            int subjectID = -1;
-
-            while (scanner.hasNext()) {
-
-                if (subjectID == -1) {  // set subject id if necessary
-                    String nextToken = scanner.next();
-                    subScanner = new Scanner(nextToken);
-                    subScanner.useDelimiter(" ");
-                    subScanner.next();
-                    subScanner.next();
-                    subjectID = subScanner.nextInt();
-                    subScanner.close();
-                } else {
-                    scanner.next();
-                }
-
-                String testName = scanner.next();  // skip test name
-                scanner.next();     // skip noise type
-
-                // Line is from a ramp test
-                if (testName.contains("ramp")) {
-                    subScanner = new Scanner(scanner.nextLine());
-                    subScanner.useDelimiter(" ");
-                    String s;
-                    subScanner.next();
-                    subScanner.next();  // skip "freq" label
-                    s = subScanner.next();
-                    s = s.substring(0, s.length() - 2);  // remove comma
-                    float freq = Float.parseFloat(s);
-                    subScanner.next();  // skip "vol1" label
-                    s = subScanner.next();
-                    s = s.substring(0, s.length() - 2);  // remove comma
-                    double vol1 = Double.parseDouble(s);
-                    subScanner.next();  // skip "vol2" label
-                    s = subScanner.next();
-                    s = s.substring(0, s.length() - 2);  // remove comma
-                    double vol2 = Double.parseDouble(s);
-                    newRampResults.addResult(freq, vol1, vol2);
-                    subScanner.close();
-                    continue;
-                }
-
-                // Line is from a reduce test
-                if (testName.contains("reduce")) {
-                    subScanner = new Scanner(scanner.nextLine());
-                    subScanner.useDelimiter(" ");
-                    String s;
-                    subScanner.next();
-                    subScanner.next();  // skip "freq" label
-                    s = subScanner.next();
-                    s = s.substring(0, s.length() - 2);  // remove comma
-                    float freq = Float.parseFloat(s);
-                    subScanner.next();  // skip "vol" label
-                    s = subScanner.next();
-                    s = s.substring(0, s.length() - 2);  // remove comma
-                    double vol = Double.parseDouble(s);
-                    reduceResultsBuilder.addResult(freq, vol);
-                    subScanner.close();
-                    continue;
-                }
-
-                // line is from a confidence test
-                String freqToken = scanner.next();
-                subScanner = new Scanner(freqToken);
-                subScanner.useDelimiter(" ");
-                subScanner.next();  // skip "freq" label
-                float trialFreq = subScanner.nextFloat();
-
-                String volToken = scanner.next();
-                subScanner = new Scanner(volToken);
-                subScanner.next();  // skip "vol" label
-                double trialVol = subScanner.nextDouble();
-
-                String heardString = scanner.next();
-                boolean trialHeard;
-                if (heardString.toLowerCase().matches("\\s*heard")) trialHeard = true;
-                else if (heardString.toLowerCase().matches("\\s*notheard")) trialHeard = false;
-                else throw new RuntimeException("Unknown 'heard' indicator in file: " + heardString);
-
-                newCalibResults.addResult(new FreqVolPair(trialFreq, trialVol), trialHeard);
-                scanner.nextLine();
-                subScanner.close();
-            }
-
-            model.setCalibrationTestResults(newCalibResults);
-            newRampResults.setReduceResults(reduceResultsBuilder.build().getResults());
-            model.setRampResults(newRampResults);
-
-        } finally {
-            if (subScanner != null) subScanner.close();
-            if (scanner != null) scanner.close();
-        }
+//
+//        Scanner scanner = null, subScanner = null;
+//
+//        try {
+//
+//            CalibrationTestResults newCalibResults = new CalibrationTestResults(new BackgroundNoiseType(0, 0));
+//            RampTestResultsWithFloorInfo newRampResults = new RampTestResultsWithFloorInfo(new BackgroundNoiseType(0, 0));
+//            ReduceTest.ResultsBuilder reduceResultsBuilder = new ReduceTest.ResultsBuilder();
+//
+//            try {
+//                scanner = new Scanner(file);
+//                scanner.useDelimiter(",");
+//            } catch (FileNotFoundException e) {
+//                Log.e("initializeModel", "File not found");
+//                e.printStackTrace();
+//                return;
+//            }
+//
+//            int subjectID = -1;
+//
+//            while (scanner.hasNext()) {
+//
+//                if (subjectID == -1) {  // set subject id if necessary
+//                    String nextToken = scanner.next();
+//                    subScanner = new Scanner(nextToken);
+//                    subScanner.useDelimiter(" ");
+//                    subScanner.next();
+//                    subScanner.next();
+//                    subjectID = subScanner.nextInt();
+//                    subScanner.close();
+//                } else {
+//                    scanner.next();
+//                }
+//
+//                String testName = scanner.next();  // skip test name
+//                scanner.next();     // skip noise type
+//
+//                // Line is from a ramp test
+//                if (testName.contains("ramp")) {
+//                    subScanner = new Scanner(scanner.nextLine());
+//                    subScanner.useDelimiter(" ");
+//                    String s;
+//                    subScanner.next();
+//                    subScanner.next();  // skip "freq" label
+//                    s = subScanner.next();
+//                    s = s.substring(0, s.length() - 2);  // remove comma
+//                    float freq = Float.parseFloat(s);
+//                    subScanner.next();  // skip "vol1" label
+//                    s = subScanner.next();
+//                    s = s.substring(0, s.length() - 2);  // remove comma
+//                    double vol1 = Double.parseDouble(s);
+//                    subScanner.next();  // skip "vol2" label
+//                    s = subScanner.next();
+//                    s = s.substring(0, s.length() - 2);  // remove comma
+//                    double vol2 = Double.parseDouble(s);
+//                    newRampResults.addResult(freq, vol1, vol2);
+//                    subScanner.close();
+//                    continue;
+//                }
+//
+//                // Line is from a reduce test
+//                if (testName.contains("reduce")) {
+//                    subScanner = new Scanner(scanner.nextLine());
+//                    subScanner.useDelimiter(" ");
+//                    String s;
+//                    subScanner.next();
+//                    subScanner.next();  // skip "freq" label
+//                    s = subScanner.next();
+//                    s = s.substring(0, s.length() - 2);  // remove comma
+//                    float freq = Float.parseFloat(s);
+//                    subScanner.next();  // skip "vol" label
+//                    s = subScanner.next();
+//                    s = s.substring(0, s.length() - 2);  // remove comma
+//                    double vol = Double.parseDouble(s);
+//                    reduceResultsBuilder.addResult(freq, vol);
+//                    subScanner.close();
+//                    continue;
+//                }
+//
+//                // line is from a confidence test
+//                String freqToken = scanner.next();
+//                subScanner = new Scanner(freqToken);
+//                subScanner.useDelimiter(" ");
+//                subScanner.next();  // skip "freq" label
+//                float trialFreq = subScanner.nextFloat();
+//
+//                String volToken = scanner.next();
+//                subScanner = new Scanner(volToken);
+//                subScanner.next();  // skip "vol" label
+//                double trialVol = subScanner.nextDouble();
+//
+//                String heardString = scanner.next();
+//                boolean trialHeard;
+//                if (heardString.toLowerCase().matches("\\s*heard")) trialHeard = true;
+//                else if (heardString.toLowerCase().matches("\\s*notheard")) trialHeard = false;
+//                else throw new RuntimeException("Unknown 'heard' indicator in file: " + heardString);
+//
+//                newCalibResults.addResult(new FreqVolPair(trialFreq, trialVol), trialHeard);
+//                scanner.nextLine();
+//                subScanner.close();
+//            }
+//
+//            model.setCalibrationTestResults(newCalibResults);
+//            newRampResults.setReduceResults(reduceResultsBuilder.build().getResults());
+//            model.setRampResults(newRampResults);
+//
+//        } finally {
+//            if (subScanner != null) subScanner.close();
+//            if (scanner != null) scanner.close();
+//        }
     }
 }
