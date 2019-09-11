@@ -57,7 +57,7 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
      */
     public CalibrationTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.results = new CalibrationTestResults();
+        this.results = new CalibrationTestResults(this.getBackgroundNoiseType());
     }
 
     /**

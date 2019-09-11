@@ -39,14 +39,14 @@ public class BackgroundNoiseController {
      * @throws IllegalStateException if the background noise is of an unknown type
      */
     public void playNoise(BackgroundNoiseType noise) throws IllegalStateException {
-        switch (noise.noiseType) {
+        switch (noise.noiseTypeID) {
             case BackgroundNoiseType.NOISE_TYPE_NONE:
                 break;
             case BackgroundNoiseType.NOISE_TYPE_WHITE:
                 this.playWhiteNoise(convertVolToInternal(noise.volume)); break;
             case BackgroundNoiseType.NOISE_TYPE_CROWD:
                 this.playCrowdNoise(convertVolToInternal(noise.volume)); break;
-            default: throw new IllegalStateException("Unknown noise type identifier: " + noise.noiseType);
+            default: throw new IllegalStateException("Unknown noise type identifier: " + noise.noiseTypeID);
         }
     }
 

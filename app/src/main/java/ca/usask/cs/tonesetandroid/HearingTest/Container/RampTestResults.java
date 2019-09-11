@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.Model;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
@@ -16,7 +17,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
-public class RampTestResults implements HearingTestResults {
+public class RampTestResults extends HearingTestResults {
 
     /**
      * Recognized values of equationID
@@ -37,7 +38,8 @@ public class RampTestResults implements HearingTestResults {
      */
     protected HashMap<Float, VolPair> allResults;
 
-    public RampTestResults() {
+    public RampTestResults(BackgroundNoiseType noiseType) {
+        super(noiseType);
         this.allResults = new HashMap<>();
     }
 

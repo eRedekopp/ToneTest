@@ -313,8 +313,9 @@ public class FileIOController {
 
         try {
 
-            CalibrationTestResults newCalibResults = new CalibrationTestResults();
-            RampTestResultsWithFloorInfo newRampResults = new RampTestResultsWithFloorInfo();
+            // todo fix this
+            CalibrationTestResults newCalibResults = new CalibrationTestResults(new BackgroundNoiseType(0, 0));
+            RampTestResultsWithFloorInfo newRampResults = new RampTestResultsWithFloorInfo(new BackgroundNoiseType(0, 0));
             ReduceTest.ResultsBuilder reduceResultsBuilder = new ReduceTest.ResultsBuilder();
 
             try {

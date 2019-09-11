@@ -27,19 +27,15 @@ import ca.usask.cs.tonesetandroid.UtilFunctions;
 /**
  * A container class for storing the results of a CalibrationTest
  */
-public class CalibrationTestResults implements HearingTestResults {
+public class CalibrationTestResults extends HearingTestResults {
 
     /**
      * Each frequency tested mapped to its corresponding SingleFreqResult
      */
     private HashMap<Float, HearingTestSingleFreqResult> allResults;
 
-    /**
-     * The type of background noise played during the test
-     */
-    private BackgroundNoiseType backgroundNoise;
-
-    public CalibrationTestResults() {
+    public CalibrationTestResults(BackgroundNoiseType backgroundNoise) {
+        super(backgroundNoise);
         allResults = new HashMap<>();
     }
 
@@ -360,7 +356,7 @@ public class CalibrationTestResults implements HearingTestResults {
                     "n = " + n + " is larger than the actual sample size = " + this.getNumOfTrials());
         else if (n == this.getNumOfTrials()) return this;
 
-        CalibrationTestResults newContainer = new CalibrationTestResults();
+        CalibrationTestResults newContainer = new CalibrationTestResults(this.getNoiseType());
         for (HearingTestSingleFreqResult htsr : this.allResults.values())
             newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));
         return newContainer;

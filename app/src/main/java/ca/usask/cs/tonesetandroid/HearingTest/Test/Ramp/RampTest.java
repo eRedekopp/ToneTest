@@ -61,7 +61,7 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
 
     public RampTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.results = new RampTestResultsWithFloorInfo();
+        this.results = new RampTestResultsWithFloorInfo(noiseType);
     }
 
     @Override
