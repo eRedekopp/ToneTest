@@ -118,7 +118,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.setFileController(newFController);
 
         this.fileController.setModel(this.model);       // FileIOController
-        this.fileController.setiModel(this.iModel);
         this.fileController.setContext(this);
 
         this.noiseController.setiModel(this.iModel);    // BackgroundNoiseController
