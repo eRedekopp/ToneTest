@@ -89,6 +89,7 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
 
     @Override
     protected void run() {
+        this.setStartTime();  // set the start time of this test (or do nothing if this has already been done)
         new Thread(new Runnable() {
             @Override
             public void run() {

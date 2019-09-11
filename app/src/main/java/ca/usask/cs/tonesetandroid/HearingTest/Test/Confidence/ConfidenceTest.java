@@ -122,6 +122,8 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
         else if (MIN_WAIT_TIME_MS < GRACE_PERIOD_MS) throw new RuntimeException("Grace period = " + GRACE_PERIOD_MS +
                 " is greater than the minimum wait time = " + MIN_WAIT_TIME_MS);
 
+        this.setStartTime();  // set the start time of this test (or do nothing if this has already been done)
+
         new Thread(new Runnable() {
             @Override
             public void run() {

@@ -67,6 +67,8 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
     @Override
     protected void run() {
 
+        this.setStartTime();  // set the start time of this test (or do nothing if this has already been done)
+
         // sanity check
         if (this.tones == null || this.position == null)
             throw new IllegalStateException(String.format(

@@ -61,14 +61,10 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
         this.testInfo = DEFAULT_TEST_INFO;
     }
 
-    /**
-     * Configure currentVolumes and timesNotHeardPerFreq in preparation for the test to begin
-     */
-    public abstract void initialize();
-
     @Override
     protected void run() {
         if (this.currentVolumes.isEmpty()) throw new IllegalStateException("Test not initialized");
+        this.setStartTime();  // set the start time of this test (or do nothing if this has already been done)
 
         new Thread(new Runnable() {
             @Override
@@ -210,6 +206,10 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
          */
         public FreqVolPair[] getResults() {
             return results.toArray(new FreqVolPair[]{});
+        }
+
+        public boolean isEmpty() {
+            return this.results.isEmpty();
         }
     }
 
