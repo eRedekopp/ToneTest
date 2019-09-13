@@ -166,16 +166,6 @@ public class HearingTestInteractionModel {
         this.currentTest.handleAnswerClick(answer, fromTouchInput);
     }
 
-    /**
-     * @return The results of the confidence test currently stored as a string, or the string "Confidence Statistics
-     * Unavailable" if none stored
-     */
-    public String getConfResultsAsString() {
-        if (this.getConfidenceTest() == null || ! this.getConfidenceTest().isComplete())
-            return "Confidence Statistics Unavailable";
-        return this.getConfidenceTest().summaryStatsAsString();
-    }
-
     public BackgroundNoiseType getCurrentNoise() {
         return this.currentTest.getBackgroundNoiseType();
     }

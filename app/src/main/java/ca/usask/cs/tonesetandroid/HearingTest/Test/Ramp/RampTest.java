@@ -61,7 +61,7 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
 
     public RampTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.results = new RampTestResultsWithFloorInfo(noiseType);
+        this.results = new RampTestResultsWithFloorInfo(noiseType, this.getTestTypeName());
     }
 
     @Override
@@ -148,7 +148,7 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
         // RampTests have no need for this method because they do not track click times
     }
 
-    public RampTestResultsWithFloorInfo getResults() {  // todo fix this dumb system
+    public RampTestResultsWithFloorInfo getResults() {
         return (RampTestResultsWithFloorInfo) this.results;
     }
 

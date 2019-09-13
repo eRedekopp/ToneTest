@@ -20,7 +20,11 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
     public SingleSineConfidenceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "sine-single-tone-conf";
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "sine-single-tone-conf";
     }
 
     @Override

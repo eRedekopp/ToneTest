@@ -17,7 +17,11 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
     public SineCalibratonTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "sine-calibration";
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "sine-calibration";
     }
 
     @Override

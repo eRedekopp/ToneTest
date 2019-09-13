@@ -10,8 +10,12 @@ public class EarconAudibilityConfidenceTest extends WavConfidenceTest {
 
     public EarconAudibilityConfidenceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "earcon-audibility-confidence";
         this.testInfo = DEFAULT_TEST_INFO;
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "earcon-audibility-confidence";
     }
 
     @Override

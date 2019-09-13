@@ -18,11 +18,15 @@ public class PianoRampTest extends WavRampTest {
         super(noiseType);
 
         this.testInfo = DEFAULT_TEST_INFO;
-        this.testTypeName = "piano-ramp";
         this.tones = new ArrayList<>();
         for (float freq : DEFAULT_WAV_FREQUENCIES) tones.add(new WavTone(freq, 0));
         this.position = tones.listIterator(0);
         this.startingVol = 3.0;
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "piano-ramp";
     }
 
     @Override

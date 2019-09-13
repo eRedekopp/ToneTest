@@ -1,15 +1,13 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 
 /**
- * Interface for all HearingTest results container classes whose results can be used
- * to generate probabilities.
+ * A class to store the results of any HearingTest
  */
 public abstract class HearingTestResults {
 
@@ -18,40 +16,20 @@ public abstract class HearingTestResults {
      */
     private BackgroundNoiseType noiseType;
 
-    public HearingTestResults(BackgroundNoiseType noiseType) {
+    /**
+     * The time at which this test started
+     */
+    private long startTime = -1;
+
+    /**
+     * The string identifier for the test type (ie. HearingTest.testTypeName)
+     */
+    private String testTypeName;
+
+    public HearingTestResults(BackgroundNoiseType noiseType, String testTypeName) {
         this.noiseType = noiseType;
+        this.testTypeName = testTypeName;
     }
-
-    /**
-     * Get the probability of hearing the given tone, given the results of these HearingTestResults
-     *
-     * @param tone The tone whose probability of being heard is to be estimated
-     * @return The estimated probability of hearing the tone, given these results
-     * @throws IllegalStateException If there is no data stored in these results
-     */
-    public abstract double getProbability(Tone tone) throws IllegalStateException;
-
-    public abstract double getProbability(Interval tone) throws IllegalStateException;
-
-    public abstract double getProbability(Melody tone) throws IllegalStateException;
-
-    public abstract double getProbability(WavTone tone) throws IllegalStateException;
-
-    /**
-     * Get an estimate for the highest volume with P(heard) = 0 for the given frequency
-     *
-     * @param freq A frequency
-     * @return An estimate for the highest volume with P(heard) = 0 for freq
-     */
-    public abstract double getVolFloorEstimate(float freq);
-
-    /**
-     * Get an estimate for the lowest volume with P(heard) = 1 for the given frequency
-     *
-     * @param freq A frequency
-     * @return An estimate for the lowest volume with P(heard) = 1 for freq
-     */
-    public abstract double getVolCeilingEstimate(float freq);
 
     /**
      * Are there any results stored in this container?
@@ -60,5 +38,31 @@ public abstract class HearingTestResults {
 
     public BackgroundNoiseType getNoiseType() {
         return noiseType;
+    }
+
+    /**
+     * @return The time at which the test started in milliseconds since the beginning of the epoch, or -1 if not yet
+     * set
+     */
+    public long getStartTime() {
+        return this.startTime;
+    }
+
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public String getTestTypeName() {
+        return this.testTypeName;
+    }
+
+    /**
+     * @return startTime formatted as yyyy-MM-dd-hh:mm
+     */
+    public String getFormattedStartTime() {
+        if (this.startTime == -1) return "Start_time_not_set";
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd-HH:mm");
+        Date date = new Date(this.startTime);
+        return format.format(date);
     }
 }

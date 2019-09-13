@@ -17,20 +17,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
-public class RampTestResults extends HearingTestResults {
-
-    /**
-     * Recognized values of equationID
-     */
-    public static final int[] EQUATION_ID_NUMS = {0, 1};
-
-    /**
-     * Which equation should be used to calculate probabilities?
-     *
-     * This is necessary in order to fit the getProbability(Tone) requirement for HearingTestResults. Although
-     * it's kind of clunky, it's really not worth the trouble to fix it
-     */
-    protected int equationID = 0;
+public class RampTestResults extends PredictorResults {
 
     /**
      * A mapping of each frequency tested to the first and second volumes selected by the user at
@@ -38,35 +25,30 @@ public class RampTestResults extends HearingTestResults {
      */
     protected HashMap<Float, VolPair> allResults;
 
-    public RampTestResults(BackgroundNoiseType noiseType) {
-        super(noiseType);
+    public RampTestResults(BackgroundNoiseType noiseType, String testTypeName) {
+        super(noiseType, testTypeName);
         this.allResults = new HashMap<>();
     }
 
     @Override
     public double getProbability(Tone tone) throws IllegalStateException {
-        if (equationID == 0) return getProbabilityLinear(tone);
-        if (equationID == 1) return getProbabilityLogarithmic(tone);
-        else throw new IllegalStateException("Equation ID set to invalid value: " + equationID);
+        return 0.0; // todo
     }
-    
-    @Override
-    public double getProbability(Interval tone) throws IllegalStateException {
+
+    protected double getProbability(Interval tone) throws IllegalStateException {
         double f1Prob = this.getProbability(new FreqVolPair(tone.freq(), tone.vol()));
         double f2Prob = this.getProbability(new FreqVolPair(tone.freq2(), tone.vol()));
         return UtilFunctions.mean(new double[]{f1Prob, f2Prob});
     }
 
-    @Override
-    public double getProbability(Melody tone) {
+    protected double getProbability(Melody tone) {
         FreqVolDurTrio[] tones = tone.getAudibleTones();
         double[] probs = new double[tones.length];
         for (int i = 0; i < tones.length; i++) probs[i] = this.getProbability(tones[i]);
         return UtilFunctions.mean(probs);
     }
 
-    @Override
-    public double getProbability(WavTone tone) {
+    protected double getProbability(WavTone tone) {
         // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
 
         int nAudioSamples = 50;
@@ -83,7 +65,6 @@ public class RampTestResults extends HearingTestResults {
 
         return UtilFunctions.mean(probEstimates);
     }
-
 
     /**
      * Return the probability of hearing the tone given these hearing test results, using the
@@ -171,21 +152,6 @@ public class RampTestResults extends HearingTestResults {
     }
 
     /**
-     * Set this results container such that all subsequent calls to getProbability will be
-     * calculated using the equation represented by the given ID
-     *
-     * @param equationID The id of the desired equation
-     * @throws IllegalArgumentException If an invalid ID is given (see EQUATION_ID_NUMS)
-     */
-    public void setModelEquation(int equationID) throws IllegalArgumentException {
-        for (int ID : EQUATION_ID_NUMS) if (equationID == ID) {
-            this.equationID = equationID;
-            return;
-        }
-        throw new IllegalArgumentException("Invalid equation ID number");
-    }
-
-    /**
      * @return a Collection containing all frequencies tested
      */
     public Collection<Float> getTestedFreqs() {
@@ -232,6 +198,13 @@ public class RampTestResults extends HearingTestResults {
     public boolean isEmpty() {
         return this.allResults.isEmpty();
     }
+
+    @Override
+    public String getPredictionString(Tone tone) {
+        return null; // todo
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * A class to store a pair of volumes 

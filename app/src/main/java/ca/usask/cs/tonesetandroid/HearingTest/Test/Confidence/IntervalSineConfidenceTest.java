@@ -33,7 +33,11 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
         this.testInfo = INTERVAL_TEST_INFO;
         this.GRACE_PERIOD_MS = 1200;  // user gets 1.2 seconds after tone ends to register clicks
         this.MIN_WAIT_TIME_MS = 1500;
-        this.testTypeName = "sine-interval-conf";
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "sine-interval-conf";
     }
 
     @Override

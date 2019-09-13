@@ -20,7 +20,11 @@ public class SineReduceTest extends ReduceTest<FreqVolPair> {
 
     public SineReduceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "sine-reduce";
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "sine-reduce";
     }
 
     /**

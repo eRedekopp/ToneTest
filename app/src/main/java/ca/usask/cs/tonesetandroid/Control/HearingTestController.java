@@ -123,10 +123,6 @@ public class HearingTestController {
         this.iModel.setTestPaused(true);
         this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
         this.fileController.startNewSaveFile(false);
-        // todo
-//        this.fileController.saveString(String.format("Calibration Results:%n%s%nRamp Results:%n%s%n",
-//                                    this.model.calibrationTestResults.toString(), this.model.rampResults.toString()));
-
         this.view.showSampleDialog( this.iModel.getConfidenceTest().sampleTones(),
                                     this.iModel.getCurrentTest().getTestInfo());
     }
@@ -136,7 +132,9 @@ public class HearingTestController {
      */
     public void confidenceTestComplete() {
         this.model.audioTrackCleanup();
-        this.fileController.saveString(this.iModel.getConfResultsAsString());
+        this.fileController.saveString(
+                this.model.getHearingTestResults().compareToConfidenceTest(
+                        this.iModel.getConfidenceTest().getConfResults()));
         this.fileController.closeFile();
         this.iModel.reset();
         this.iModel.notifySubscribers();

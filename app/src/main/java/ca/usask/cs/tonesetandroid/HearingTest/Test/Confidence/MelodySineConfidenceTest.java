@@ -29,10 +29,14 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
 
     public MelodySineConfidenceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "melody-sine-conf";
         this.testInfo = TEST_INFO;
         this.GRACE_PERIOD_MS = 1200;    // user gets 1.2 seconds after tone ends to enter a response
         this.MIN_WAIT_TIME_MS = 1500;
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "melody-sine-conf";
     }
 
     @Override

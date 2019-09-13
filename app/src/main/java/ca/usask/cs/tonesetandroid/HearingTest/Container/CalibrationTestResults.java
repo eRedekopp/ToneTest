@@ -27,15 +27,15 @@ import ca.usask.cs.tonesetandroid.UtilFunctions;
 /**
  * A container class for storing the results of a CalibrationTest
  */
-public class CalibrationTestResults extends HearingTestResults {
+public class CalibrationTestResults extends PredictorResults {
 
     /**
      * Each frequency tested mapped to its corresponding SingleFreqResult
      */
     private HashMap<Float, HearingTestSingleFreqResult> allResults;
 
-    public CalibrationTestResults(BackgroundNoiseType backgroundNoise) {
-        super(backgroundNoise);
+    public CalibrationTestResults(BackgroundNoiseType backgroundNoise, String testTypeName) {
+        super(backgroundNoise, testTypeName);
         allResults = new HashMap<>();
     }
 
@@ -75,23 +75,20 @@ public class CalibrationTestResults extends HearingTestResults {
         return getProbability(tone.freq(), tone.vol(), testedFreqsPrimitive);
     }
 
-    @Override
-    public double getProbability(Interval tone) throws IllegalStateException {
+    protected double getProbability(Interval tone) throws IllegalStateException {
         double f1Prob = getProbability(new FreqVolPair(tone.freq(), tone.vol()));
         double f2Prob = getProbability(new FreqVolPair(tone.freq2(), tone.vol()));
         return UtilFunctions.mean(new double[]{f1Prob, f2Prob});
     }
 
-    @Override
-    public double getProbability(Melody tone) {
+    protected double getProbability(Melody tone) {
         FreqVolDurTrio[] tones = tone.getAudibleTones();
         double[] probs = new double[tones.length];
         for (int i = 0; i < tones.length; i++) probs[i] = this.getProbability(tones[i]);
         return UtilFunctions.mean(probs);
     }
 
-    @Override
-    public double getProbability(WavTone tone) {
+    protected double getProbability(WavTone tone) {
         // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
 
         int nAudioSamples = 50;
@@ -356,7 +353,7 @@ public class CalibrationTestResults extends HearingTestResults {
                     "n = " + n + " is larger than the actual sample size = " + this.getNumOfTrials());
         else if (n == this.getNumOfTrials()) return this;
 
-        CalibrationTestResults newContainer = new CalibrationTestResults(this.getNoiseType());
+        CalibrationTestResults newContainer = new CalibrationTestResults(this.getNoiseType(), this.getTestTypeName());
         for (HearingTestSingleFreqResult htsr : this.allResults.values())
             newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));
         return newContainer;
@@ -389,6 +386,11 @@ public class CalibrationTestResults extends HearingTestResults {
         StringBuilder builder = new StringBuilder();
         for (HearingTestSingleFreqResult result : allResults.values()) builder.append(result.toString());
         return builder.toString();
+    }
+
+    @Override
+    public String getPredictionString(Tone tone) {
+        return null; // todo
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.ListIterator;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.ConfidenceTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleToneTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -41,6 +42,11 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
      * Maximum time between end of one trial and setStartTime of another
      */
     protected int MAX_WAIT_TIME_MS = 3000;
+
+    /**
+     * The results of this confidence test
+     */
+    protected ConfidenceTestResults results;
 
     /**
      * All tones to be tested, with duplicates for each individual time it is to be played
@@ -90,6 +96,7 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
         this.testInfo = DEFAULT_TEST_INFO;
         this.testTones = new ArrayList<>();
         this.position = testTones.listIterator();
+        this.results = new ConfidenceTestResults(noiseType, this.getTestTypeName());
     }
 
     /**
@@ -145,7 +152,8 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
                             return;
                         }
                         sleepThread(GRACE_PERIOD_MS, GRACE_PERIOD_MS);  // give user grace period after tone finishes
-                        currentTrial.setCorrect(wasCorrect()); 
+                        currentTrial.setCorrect(wasCorrect());
+                        results.addResult(currentTone, currentTrial.wasCorrect());
                         // finish sleeping
                         sleepThread(MIN_WAIT_TIME_MS - GRACE_PERIOD_MS, MAX_WAIT_TIME_MS - GRACE_PERIOD_MS); 
                     }
@@ -180,134 +188,7 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
         return toneArr;
     }
 
-    /**
-     * @return An array of SingleToneResults, with one SingleToneResult for each tone tested so far
-     */
-    @SuppressWarnings("ConstantConditions")
-    protected SingleToneResult[] getConfResults() {
-        HashMap<Float, SingleToneResult> allResults = new HashMap<>();
-
-        for (Tone t : this.allTones()) allResults.put(t.freq(), new SingleToneResult(t));
-
-        for (SingleTrialResult t : this.completedTrials)  // count the number of in/correct responses for each tone
-            if (t.wasCorrect()) allResults.get(t.tone().freq()).addCorrect();
-            else allResults.get(t.tone().freq()).addIncorrect();
-
-        SingleToneResult[] toneArr = new SingleToneResult[allResults.size()];
-        allResults.values().toArray(toneArr);
-        return toneArr;
-    }
-
-    /**
-     * Return a String containing the results of this ConfidenceTest compared to the estimates from the 
-     * CalibrationTestResults and RampTestResults stored in the model. 
-     * 
-     * Prints out a batch for each 1 < n < calibrationTest.nTrialsPerTone, with each batch containing the confidence
-     * results and all estimates for each Tone tested in this ConfidenceTest. CalibrationTest estimates are made 
-     * based on the first n trial results in the stored CalibrationTest
-     *
-     * @throws IllegalStateException if this test is not yet complete
-     */
-    @SuppressWarnings({"unchecked"})
-    public String summaryStatsAsString() throws IllegalStateException {
-//        if (! this.isComplete()) throw new IllegalStateException("Test not yet complete");
-//
-//        StringBuilder builder = new StringBuilder();
-//        RampTestResults regularResults = model.getRampResults().getRegularRampResults();
-//        SingleToneResult[] confResults = this.getConfResults();
-//
-//        for (int n = 1; n <= model.getNumCalibrationTrials(); n++)         {
-//            builder.append("########## n = ");
-//            builder.append(n);
-//            builder.append(" ##########\n");
-//            builder.append( "Tone confidenceProbability toneProbability rampProbabilityLinearWithReduceData " +
-//                            "rampProbabilityLinearWithoutReduceData rampProbabilityLogWithReduceData " +
-//                            "rampProbabilityLogWithoutReduceData\n");
-//            for (SingleToneResult result : confResults) {
-//                double  confProb = (double) result.getCorrect() / (result.getCorrect() + result.getIncorrect()),
-//                        calibProb,
-//                        rampProbLinFloor,
-//                        rampProbLinReg,
-//                        rampProbLogFloor,
-//                        rampProbLogReg;
-//
-//                // get all 4 ramp estimates
-//                Tone t = result.tone;
-//                regularResults.setModelEquation(0);
-//                model.getRampResults().setModelEquation(0);
-//                rampProbLinFloor = this.getModelRampProbability((T) t, true);
-//                rampProbLinReg = this.getModelRampProbability((T) t, false);
-//                model.getRampResults().setModelEquation(1);
-//                rampProbLogFloor = this.getModelRampProbability((T) t, true);
-//                rampProbLogReg = this.getModelRampProbability((T) t, false);
-//
-//                // get calib estimate
-//                calibProb = this.getModelCalibProbability((T) t, n);
-//
-//                builder.append(String.format("%s %.4f %.4f %.4f %.4f %.4f %.4f%n",
-//                        t.toString(), confProb, calibProb, rampProbLinFloor, rampProbLinReg, rampProbLogFloor,
-//                        rampProbLogReg));
-//            }
-//        }
-//
-//        return builder.toString();
-
-        return "Method not yet implemented"; // todo fix
-        // see note on iPad about new format
-    }
-
-    /**
-     * An object containing the results from a single tone tested in this ConfidenceTest
-     */
-    protected static class SingleToneResult {
-
-        /**
-         * The number of times that the user answered this tone correctly
-         */
-        private int correct;
-
-        /**
-         * The number of times that the user answered this tone incorrectly
-         */
-        private int incorrect;
-
-        /**
-         * The tone whose results are being stored
-         */
-        public final Tone tone;
-
-        public SingleToneResult(Tone tone) {
-            this.correct = 0;
-            this.incorrect = 0;
-            this.tone = tone;
-        }
-
-        /**
-         * Indicate that the user answered this tone correctly 
-         */
-        public void addCorrect() {
-            this.correct++;
-        }
-
-        /**
-         * Indicate that the user answered this tone incorrectly 
-         */
-        public void addIncorrect() {
-            this.incorrect++;
-        }
-
-        /**
-         * @return The number of times that the user answered this tone correctly
-         */
-        public int getCorrect() {
-            return this.correct;
-        }
-
-        /**
-         * @return The number of times that the user answered this tone incorrectly
-         */
-        public int getIncorrect() {
-            return this.incorrect;
-        }
+    public ConfidenceTestResults getConfResults() {
+        return this.results;
     }
 }

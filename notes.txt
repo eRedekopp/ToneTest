@@ -1,4 +1,10 @@
 Todo:
+
+    - Make sure all PredictorResults calculate probabilities correctly, also implement getPredictionString.
+    - File input from multiple files
+    - printResultsToConsole on login
+    - Test out new system
+
     - add piano note wavs for new frequencies (see piano calib/conf test frequencies)
     - .wav earcon probabilities based on component tones (known beforehand) and FFT data
     - Shorten confidence tests

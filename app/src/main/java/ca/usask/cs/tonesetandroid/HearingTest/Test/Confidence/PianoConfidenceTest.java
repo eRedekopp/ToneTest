@@ -16,7 +16,11 @@ public class PianoConfidenceTest extends WavConfidenceTest {
 
     public PianoConfidenceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "single-piano-conf";
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "single-piano-conf";
     }
 
     /**

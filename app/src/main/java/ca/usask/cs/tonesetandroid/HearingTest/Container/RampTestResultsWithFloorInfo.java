@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
@@ -21,8 +20,8 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
      */
     private FreqVolPair[] reduceResults = null;
 
-    public RampTestResultsWithFloorInfo(BackgroundNoiseType noiseType) {
-        super(noiseType);
+    public RampTestResultsWithFloorInfo(BackgroundNoiseType noiseType, String testTypeName) {
+        super(noiseType, testTypeName);
     }
 
     /**
@@ -37,8 +36,7 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
      */
     @SuppressWarnings("unchecked")
     public RampTestResults getRegularRampResults() {
-        RampTestResults newResults = new RampTestResults(this.getNoiseType());
-        newResults.equationID = this.equationID;
+        RampTestResults newResults = new RampTestResults(this.getNoiseType(), this.getTestTypeName());
         newResults.allResults = (HashMap<Float, VolPair>) this.allResults.clone();
         return newResults;
     }

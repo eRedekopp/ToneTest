@@ -10,8 +10,12 @@ public class EarconDifferentiationConfidenceTest extends WavConfidenceTest {
 
     public EarconDifferentiationConfidenceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "earcon-differentiation-confidence";
         this.testInfo = MelodySineConfidenceTest.TEST_INFO; // same test info as melody-sine
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "earcon-differentiation-confidence";
     }
 
     @Override

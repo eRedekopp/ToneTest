@@ -11,7 +11,11 @@ public class SingleSineCalibFreqConfidenceTest extends SingleSineConfidenceTest 
 
     public SingleSineCalibFreqConfidenceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "sine-single-tone-conf-calib-freqs";
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "sine-single-tone-conf-calib-freqs";
     }
 
     @Override

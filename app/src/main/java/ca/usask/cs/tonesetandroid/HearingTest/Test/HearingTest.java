@@ -60,13 +60,6 @@ public abstract class HearingTest<T extends Tone> {
     protected BackgroundNoiseType backgroundNoiseType;
 
     /**
-     * A string identifying the type of test, to be used in save files and logs.
-     * All ramp tests must contain the word "ramp", reduce tests must contain the
-     * word "reduce", confidence tests must contain the word "confidence"
-     */
-    protected String testTypeName;
-
-    /**
      * Human-readable info about the format of this test
      */
     protected String testInfo;
@@ -78,7 +71,7 @@ public abstract class HearingTest<T extends Tone> {
 
     /**
      * The time in milliseconds since the start of the epoch at which setStartTime() was first called, or -1 if
-     * setStartTime() has not yet been called
+     * setStartTime() has not yet been called. Used as an identifier for the test
      */
     protected long startTime = -1;
 
@@ -106,6 +99,14 @@ public abstract class HearingTest<T extends Tone> {
      * @return A list of all possible answer values for this particular test (ie. HearingTest.ANSWER_*)
      */
     public abstract int[] getPossibleResponses();
+
+    /**
+     * Return a string identifying the type of test, to be used in save files and logs.
+     * All ramp tests must contain the word "ramp", reduce tests must contain the
+     * word "reduce", confidence tests must contain the word "confidence", and calibration
+     * tests must contain the word "calibration"
+     */
+    public abstract String getTestTypeName();
 
     /**
      * Return the information to be written after the header in the save file for the given trial
@@ -285,10 +286,6 @@ public abstract class HearingTest<T extends Tone> {
         return this.testInfo;
     }
 
-    public String getTestTypeName() {
-        return this.testTypeName;
-    }
-
     /**
      * @return The time in seconds since 1970 at which the current trial was started
      */
@@ -303,16 +300,7 @@ public abstract class HearingTest<T extends Tone> {
     public void setStartTime() {
         if (this.startTime == -1) // only change startTime if setStartTime has not been called yet
             this.startTime = System.currentTimeMillis();
-    }
-
-    /**
-     * @return startTime formatted as yyyy-MM-dd-hh:mm
-     */
-    public String getFormattedStartTime() {
-        if (this.startTime == -1) return "Start_time_not_set";
-        DateFormat format = new SimpleDateFormat("yyyy-MM-dd-HH:mm");
-        Date date = new Date(this.startTime);
-        return format.format(date);
+        this.results.setStartTime(this.startTime);
     }
 
     public BackgroundNoiseType getBackgroundNoiseType() {

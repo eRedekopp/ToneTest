@@ -42,7 +42,7 @@ public class WavTone extends Tone {
     public WavTone(float freq, double vol) throws IllegalArgumentException {
         switch ((int) freq) {
             case 349:  // F4 ~= 349 Hz
-                this.wavID = R.raw.f4piano;  // todo move this to configureTestTones
+                this.wavID = R.raw.f4piano;
                 break;
             case 523:  // C5 ~= 523 Hz
                 this.wavID = R.raw.c5piano;

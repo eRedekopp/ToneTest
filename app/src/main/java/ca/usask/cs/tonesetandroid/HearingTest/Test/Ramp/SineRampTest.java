@@ -22,10 +22,14 @@ public class SineRampTest extends RampTest<FreqVolPair> {
         super(noiseType);
 
         this.testInfo = DEFAULT_TEST_INFO;
-        this.testTypeName = "sine-ramp";
         this.tones = new ArrayList<>();
         for (float freq : DEFAULT_CALIBRATION_FREQUENCIES) tones.add(new FreqVolPair(freq, 0));
         this.position = tones.listIterator(0);
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "sine-ramp";
     }
 
     @Override
