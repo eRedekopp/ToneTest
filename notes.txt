@@ -1,6 +1,5 @@
 Todo:
 
-    - Make sure all PredictorResults calculate probabilities correctly, also implement getPredictionString.
     - File input from multiple files
     - printResultsToConsole on login
     - Test out new system

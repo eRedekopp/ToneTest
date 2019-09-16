@@ -65,4 +65,12 @@ public abstract class HearingTestResults {
         Date date = new Date(this.startTime);
         return format.format(date);
     }
+
+    /**
+     * @return A string identifying the particular test that these results are referencing - includes the test type
+     * name and the time at which the test was performed
+     */
+    public String getTestIdentifier() {
+        return this.getTestTypeName() + " at " + this.getFormattedStartTime();
+    }
 }

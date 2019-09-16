@@ -624,6 +624,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 while (! model.hasResults()) continue;
                 alertDialog.cancel();
                 model.notifySubscribers();
+                model.printResultsToConsole();
             }
         });
 

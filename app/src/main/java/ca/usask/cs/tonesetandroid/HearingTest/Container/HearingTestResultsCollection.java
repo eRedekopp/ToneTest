@@ -187,7 +187,8 @@ public class HearingTestResultsCollection {
     public String toString() {
         if (this.isEmpty()) return "No results stored";
         StringBuilder builder = new StringBuilder();
-        for (HearingTestResults results : resultsList) {
+        builder.append("Results stored to model:\n");
+        for (PredictorResults results : resultsList) {
             builder.append(results.toString());
             builder.append("///////////////////////////////////\n");
         }

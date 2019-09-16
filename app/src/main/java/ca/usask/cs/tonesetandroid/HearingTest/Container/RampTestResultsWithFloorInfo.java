@@ -77,9 +77,7 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
     }
 
     @Override
-    public String getPredictionString(Tone tone) {
-        return String.format("%s with ramp data at %s: linear %.4f log %.4f",
-                this.getTestTypeName(), this.getFormattedStartTime(), this.getProbabilityLinear(tone),
-                this.getProbabilityLogarithmic(tone));
+    public String getTestIdentifier() {
+        return this.getTestTypeName() + " sans ramp data at " + this.getFormattedStartTime();
     }
 }

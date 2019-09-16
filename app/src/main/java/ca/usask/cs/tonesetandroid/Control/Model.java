@@ -318,6 +318,10 @@ public class Model {
         }
     }
 
+    public void printResultsToConsole() {
+        Log.i("Model", this.getHearingTestResults().toString());
+    }
+
     /**
      * Un-pause the AudioTrack 
      */

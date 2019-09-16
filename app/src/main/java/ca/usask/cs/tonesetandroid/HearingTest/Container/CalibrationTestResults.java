@@ -332,14 +332,15 @@ public class CalibrationTestResults extends PredictorResults {
     @NonNull
     public String toString() {
         StringBuilder builder = new StringBuilder();
+        builder.append("");
         for (HearingTestSingleFreqResult result : allResults.values()) builder.append(result.toString());
         return builder.toString();
     }
 
     @Override
     public String getPredictionString(Tone tone) {
-        return String.format("%s at %s: %.4f",
-                this.getTestTypeName(), this.getFormattedStartTime(), this.getProbability(tone));
+        return String.format("%s: %.4f",
+                this.getTestIdentifier(), this.getFormattedStartTime(), this.getProbability(tone));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
