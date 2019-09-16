@@ -258,7 +258,7 @@ public class CalibrationTestResults extends PredictorResults {
 
         int nAudioSamples = 50;
 
-        float[] topFreqs = topFrequencies(wavResId, nAudioSamples);
+        float[] topFreqs = Model.topFrequencies(wavResId, nAudioSamples);
         double[] floorEstimates = new double[nAudioSamples];
 
         for (int i = 0; i < nAudioSamples; i++) floorEstimates[i] = this.getVolFloorEstimate(topFreqs[i]);
@@ -272,7 +272,7 @@ public class CalibrationTestResults extends PredictorResults {
 
         int nAudioSamples = 50;
 
-        float[] topFreqs = topFrequencies(wavResId, nAudioSamples);
+        float[] topFreqs = Model.topFrequencies(wavResId, nAudioSamples);
         double[] ceilingEstimates = new double[nAudioSamples];
 
         for (int i = 0; i < nAudioSamples; i++) ceilingEstimates[i] = this.getVolCeilingEstimate(topFreqs[i]);
@@ -296,47 +296,6 @@ public class CalibrationTestResults extends PredictorResults {
             }
         if (curClosest == -1) throw new RuntimeException("Found unexpected value -1");
         return curClosest;
-    }
-
-    /**
-     * Given an ID for a .wav file, return the most prominent frequencies present in the audio
-     *
-     * @param wavResId The resource ID for the wav file to be tested
-     * @param nSamples The number of samples to test from the file (fewer samples -> faster, less precise)
-     * @return An array of length nSamples containing the most prominent frequencies in each sample
-     */
-    public static float[] topFrequencies(int wavResId, int nSamples) {  // todo move to model
-        int sampleSize = 1000;
-        InputStream rawPCM = MainActivity.context.getResources().openRawResource(wavResId);
-        byte[] buf = new byte[2];
-        float[] pcm = new float[sampleSize];
-        float[] results = new float[nSamples];
-        int nSamplesTaken = 0;
-
-        try {
-            int size = rawPCM.available() / 2; // /2 because each sample is 2 bytes
-            for (int i = 0;
-                 i < size - sampleSize;
-                 i += (size - nSamples * sampleSize) / nSamples) {
-
-                for (int j = 0; j < sampleSize; j++, i++) {      // populate pcm for current set of samples
-                    rawPCM.read(buf, 0, 2);       // read data from stream
-
-                    byte b = buf[0];              // convert to big-endian
-                    buf[0] = buf[1];
-                    buf[1] = b;
-                    short sample = ByteBuffer.wrap(buf).getShort();           // convert to short
-                    pcm[j] = (float) sample / (float) Short.MIN_VALUE;
-                }
-
-                FreqVolPair[] periodogram = Model.getPeriodogramFromPcmData(pcm);   // get fft of pcm data
-                FreqVolPair max = FreqVolPair.maxVol(periodogram);
-                results[nSamplesTaken++] = max.freq();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return results;
     }
 
     /**
@@ -369,17 +328,6 @@ public class CalibrationTestResults extends PredictorResults {
         return aResult.getNumSamples(aVol);
     }
 
-    /**
-     * @return The number of times that the given tone was tested
-     */
-    public int getNumOfTrials(Tone tone) {
-        try {
-            return this.allResults.get(tone.freq()).getNumSamples(tone.vol());
-        } catch (NullPointerException e) {
-            return 0;
-        }
-    }
-
     @Override
     @NonNull
     public String toString() {
@@ -390,7 +338,8 @@ public class CalibrationTestResults extends PredictorResults {
 
     @Override
     public String getPredictionString(Tone tone) {
-        return null; // todo
+        return String.format("%s at %s: %.4f",
+                this.getTestTypeName(), this.getFormattedStartTime(), this.getProbability(tone));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -443,13 +392,12 @@ public class CalibrationTestResults extends PredictorResults {
             // update to timesHeard / timesNotHeard
             if (heard)
                 if (timesHeardPerVol.containsKey(vol))
-                    mapReplace(timesHeardPerVol, vol, timesHeardPerVol.get(vol) + 1);
-
+                    timesHeardPerVol.put(vol, timesHeardPerVol.get(vol) + 1);
                 else timesHeardPerVol.put(vol, 1);
             else
-            if (timesNotHeardPerVol.containsKey(vol))
-                mapReplace(timesNotHeardPerVol, vol, timesNotHeardPerVol.get(vol) + 1);
-            else timesNotHeardPerVol.put(vol, 1);
+                if (timesNotHeardPerVol.containsKey(vol))
+                    timesNotHeardPerVol.put(vol, timesNotHeardPerVol.get(vol) + 1);
+                else timesNotHeardPerVol.put(vol, 1);
         }
 
         /**
@@ -564,22 +512,20 @@ public class CalibrationTestResults extends PredictorResults {
         public HearingTestSingleFreqResult getSubsetResult(int n) {
             ListIterator<Boolean> iter = null;
             HearingTestSingleFreqResult newResult = null;
-            double curvol = -1;
-                newResult = new HearingTestSingleFreqResult(this.freq);
-                for (Double vol : this.getVolumes()) {
-                    curvol = vol;
-                    // addResult for the first n responses in the hearing test
-                    iter  = this.testResultsPerVol.get(vol).listIterator();
-                        for (int i = 0; i < n; i++) {
-                            try {
-                                newResult.addResult(vol, iter.next());
-                            } catch (NoSuchElementException e) {
-                                break;  // if not enough trials for volume, use as many samples
-                                        // as possible
-                            }
+            newResult = new HearingTestSingleFreqResult(this.freq);
+            for (Double vol : this.getVolumes()) {
+                // addResult for the first n responses in the hearing test
+                iter  = this.testResultsPerVol.get(vol).listIterator();
+                    for (int i = 0; i < n; i++) {
+                        try {
+                            newResult.addResult(vol, iter.next());
+                        } catch (NoSuchElementException e) {
+                            break;  // if not enough trials for volume, use as many samples
+                                    // as possible
                         }
-                }
-                return newResult;
+                    }
+            }
+            return newResult;
         }
 
         @Override
@@ -613,20 +559,6 @@ public class CalibrationTestResults extends PredictorResults {
                 builder.append(String.format("%.4f\n", pHeard));
             }
             return builder.toString();
-        }
-
-        /**
-         * Delete any mapping from the given key if it exists, then add a mapping between the given key and the new
-         * value in the given map
-         *
-         * @param map The map to be affected
-         * @param key The key whose value is to be replaced
-         * @param newValue The new value to associate with the key
-         */
-        public void mapReplace(HashMap<Double, Integer> map, Double key, Integer newValue) {  
-            // todo doesn't map.put() already do this?
-            map.remove(key);
-            map.put(key, newValue);
         }
 
         @SuppressWarnings("unchecked")

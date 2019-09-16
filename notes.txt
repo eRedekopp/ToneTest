@@ -4,6 +4,7 @@ Todo:
     - File input from multiple files
     - printResultsToConsole on login
     - Test out new system
+    - Move RampTestResults into a single class
 
     - add piano note wavs for new frequencies (see piano calib/conf test frequencies)
     - .wav earcon probabilities based on component tones (known beforehand) and FFT data

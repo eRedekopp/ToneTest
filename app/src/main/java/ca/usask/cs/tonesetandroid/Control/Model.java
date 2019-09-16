@@ -217,6 +217,47 @@ public class Model {
     }
 
     /**
+     * Given an ID for a .wav file, return the most prominent frequencies present in the audio
+     *
+     * @param wavResId The resource ID for the wav file to be tested
+     * @param nSamples The number of samples to test from the file (fewer samples -> faster, less precise)
+     * @return An array of length nSamples containing the most prominent frequencies in each sample
+     */
+    public static float[] topFrequencies(int wavResId, int nSamples) {
+        int sampleSize = 1000;
+        InputStream rawPCM = MainActivity.context.getResources().openRawResource(wavResId);
+        byte[] buf = new byte[2];
+        float[] pcm = new float[sampleSize];
+        float[] results = new float[nSamples];
+        int nSamplesTaken = 0;
+
+        try {
+            int size = rawPCM.available() / 2; // /2 because each sample is 2 bytes
+            for (int i = 0;
+                 i < size - sampleSize;
+                 i += (size - nSamples * sampleSize) / nSamples) {
+
+                for (int j = 0; j < sampleSize; j++, i++) {      // populate pcm for current set of samples
+                    rawPCM.read(buf, 0, 2);       // read data from stream
+
+                    byte b = buf[0];              // convert to big-endian
+                    buf[0] = buf[1];
+                    buf[1] = b;
+                    short sample = ByteBuffer.wrap(buf).getShort();           // convert to short
+                    pcm[j] = (float) sample / (float) Short.MIN_VALUE;
+                }
+
+                FreqVolPair[] periodogram = Model.getPeriodogramFromPcmData(pcm);   // get fft of pcm data
+                FreqVolPair max = FreqVolPair.maxVol(periodogram);
+                results[nSamplesTaken++] = max.freq();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return results;
+    }
+
+    /**
      * Perform first time setup of the audio track - does nothing if audio track already initialized
      */
     public void setUpLineOut() {

@@ -185,6 +185,7 @@ public class HearingTestResultsCollection {
     @Override
     @NonNull
     public String toString() {
+        if (this.isEmpty()) return "No results stored";
         StringBuilder builder = new StringBuilder();
         for (HearingTestResults results : resultsList) {
             builder.append(results.toString());

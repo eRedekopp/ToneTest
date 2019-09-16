@@ -75,4 +75,11 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
 
         return volBelow + pctBetween * (volAbove - volBelow);
     }
+
+    @Override
+    public String getPredictionString(Tone tone) {
+        return String.format("%s with ramp data at %s: linear %.4f log %.4f",
+                this.getTestTypeName(), this.getFormattedStartTime(), this.getProbabilityLinear(tone),
+                this.getProbabilityLogarithmic(tone));
+    }
 }
