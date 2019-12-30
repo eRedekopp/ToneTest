@@ -64,7 +64,7 @@ public class HearingTestController {
         this.iModel.setTestPaused(true);
         this.iModel.setCurrentTest(this.iModel.getRampTest());
         this.noiseController.playNoise(this.iModel.getCurrentNoise());
-        this.fileController.startNewSaveFile(true);
+        this.fileController.setCurrentCalib(this.model.getCurrentParticipant());
         this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
     }
 
@@ -75,7 +75,8 @@ public class HearingTestController {
     public void rampTestComplete() {
         this.iModel.setTestPaused(true);
         // add to model.hearingTestResults without reduce results
-        this.model.getHearingTestResults().addResults(this.iModel.getRampTest().getResults().getRegularRampResults());
+        this.model.getCurrentParticipant().getResults().addResults(
+                this.iModel.getRampTest().getResults().getRegularRampResults());
         this.view.showInformationDialog(this.iModel.getReduceTest().getTestInfo());
         this.iModel.getReduceTest().setRampResults(this.iModel.getRampTest().getResults());
         this.iModel.getReduceTest().initialize();
@@ -91,7 +92,8 @@ public class HearingTestController {
     public void reduceTestComplete() {
         // Add ramp results to model list again, but with floor info this time
         this.iModel.getRampTest().getResults().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
-        this.model.getHearingTestResults().addResults(this.iModel.getRampTest().getResults());
+        // TODO figure out how to handle this
+        this.model.getCurrentParticipant().getResults().addResults(this.iModel.getRampTest().getResults());
 
         // set up CalibrationTest to run next
         this.iModel.getCalibrationTest().setRampResults(this.iModel.getRampTest().getResults());
@@ -106,10 +108,9 @@ public class HearingTestController {
      * Perform any final actions that need to be done before the calibration test is officially complete
      */
     public void calibrationTestComplete() {
-        this.model.getHearingTestResults().addResults(this.iModel.getCalibrationTest().getResults());
+        this.model.getCurrentParticipant().getResults().addResults(this.iModel.getCalibrationTest().getResults());
         this.iModel.reset();
         this.model.audioTrackCleanup();
-        this.fileController.closeFile();
         this.iModel.notifySubscribers();
     }
 
@@ -122,7 +123,7 @@ public class HearingTestController {
         this.model.configureAudio();
         this.iModel.setTestPaused(true);
         this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
-        this.fileController.startNewSaveFile(false);
+        this.fileController.setCurrentConf(this.model.getCurrentParticipant());
         this.view.showSampleDialog( this.iModel.getConfidenceTest().sampleTones(),
                                     this.iModel.getCurrentTest().getTestInfo());
     }
@@ -133,9 +134,8 @@ public class HearingTestController {
     public void confidenceTestComplete() {
         this.model.audioTrackCleanup();
         this.fileController.saveString(
-                this.model.getHearingTestResults().compareToConfidenceTest(
+                this.model.getCurrentParticipant().getResults().compareToConfidenceTest(
                         this.iModel.getConfidenceTest().getConfResults()));
-        this.fileController.closeFile();
         this.iModel.reset();
         this.iModel.notifySubscribers();
     }

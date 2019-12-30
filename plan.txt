@@ -1,0 +1,43 @@
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Login screen interaction:
+
+    New Participant
+        - Use ID in text box
+        - If participant with that number already exists, ask to overwrite
+            - Archive old file, just in case
+    Load Participant
+        - Use ID in text box
+        - If noticed a half-finished test, ask to resume (in case of crashes)
+    Skip This Step
+        - Login with default user
+
+The login screen returns to the main activity with only a participant ID. Participant files are guaranteed to exist when
+control returns to the main activity - if creating a new participant, empty files are created by the login screen before
+returning. Files are loaded by the main activity
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Individual participant files are kept in one folder per participant, which contains a single calibration file containing
+information about all calibrations taken by this participant, and one file per confidence test
+
+Calibration result file (one per participant):
+    Named Calibration_N where N is the participant number
+
+    START-TEST <TEST-TYPE> <NOISE> <DATE>
+    <TIME> <FREQ> <VOL> <DIRECTION> <CORRECT?> <NUM-CLICKS> <CLICK-STRING>
+    ...
+    END-TEST
+
+Confidence result file (one per test):
+    Named Confidence_DATE_N where DATE is the current date/time and N is the participant number
+
+    START-TEST <TEST-TYPE> <NOISE> <DATE>
+    <TIME> <FREQ> <VOL> <DIRECTION> <CORRECT?> <NUM-CLICKS> <CLICK-STRING>
+    ...
+    END-TEST
+
+    ResultsAsString, like in the previous version
+    Other metadata and stats

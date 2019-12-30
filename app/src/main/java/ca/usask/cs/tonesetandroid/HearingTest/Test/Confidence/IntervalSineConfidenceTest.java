@@ -8,6 +8,7 @@ import java.util.Collections;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResultsCollection;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 /**
@@ -138,7 +139,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
 
     @Override
     protected boolean wasCorrect() {
-        int expected = ((Interval) this.currentTrial.tone()).isUpward() ? ANSWER_UP : ANSWER_DOWN;
+        int expected = this.currentTrial.tone().direction();
         return iModel.getAnswer() == expected;
     }
 
@@ -159,7 +160,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
      * @return The mean of CalibrationTestResults.getVolFloorEstimateForFreq for each frequency in freqs
      */
     protected double getFloorEstimateAvg(float freq1, boolean isUpward) {
-        HearingTestResultsCollection results = model.getHearingTestResults();
+        HearingTestResultsCollection results = model.getCurrentParticipant().getResults();
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] floorEstimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++)
@@ -171,7 +172,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
      * @return The mean of CalibrationTestResults.getVolCeilingestimateForFreq for each frequency in freqs
      */
     protected double getCeilingEstimateAvg(float freq1, boolean isUpward) {
-        HearingTestResultsCollection results = model.getHearingTestResults();
+        HearingTestResultsCollection results = model.getCurrentParticipant().getResults();
         float[] freqs = new float[]{freq1, isUpward ? freq1 * INTERVAL_FREQ_RATIO : freq1 / INTERVAL_FREQ_RATIO};
         double[] ceilingEstimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++)

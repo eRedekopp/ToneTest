@@ -31,6 +31,11 @@ public class FreqVolPair extends Tone implements Cloneable {
     }
 
     @Override
+    public int direction() {
+        return DIRECTION_FLAT;
+    }
+
+    @Override
     @NonNull
     public String toString() {
         return String.format("Frequency: %f, Volume: %f", freq, vol);

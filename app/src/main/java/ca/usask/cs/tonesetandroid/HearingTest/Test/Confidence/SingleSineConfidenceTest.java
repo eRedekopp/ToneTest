@@ -58,7 +58,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
         if (frequencies.length == 0) return;
 
-        HearingTestResultsCollection results = model.getHearingTestResults();
+        HearingTestResultsCollection results = model.getCurrentParticipant().getResults();
 
         // create a list containing one copy of freq for each volume at which freq should be tested
         this.testTones = new ArrayList<>();

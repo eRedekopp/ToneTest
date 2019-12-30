@@ -26,6 +26,7 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseController;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
@@ -117,9 +118,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         this.setModel(newModel);
         this.setFileController(newFController);
 
-        this.fileController.setModel(this.model);       // FileIOController
-        this.fileController.setContext(this);
-
         this.noiseController.setiModel(this.iModel);    // BackgroundNoiseController
         this.noiseController.setContext(this);
 
@@ -158,7 +156,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                model.reset();
                 getTestTypeAndBegin(true);
             }
         });
@@ -237,6 +234,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         model.setUpLineOut();
 
         // Initialize model with InitActivity, then onActivityResult will call modelChanged() and set up this screen
+        InitActivity.fileController = fileController;
         this.goToInit();
     }
 
@@ -354,7 +352,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     private void goToInit() {
         Intent initIntent = new Intent(this, InitActivity.class);
         int reqCode = 1;
-        this.model.reset();
         this.iModel.reset();
         startActivityForResult(initIntent, reqCode);
     }
@@ -366,32 +363,29 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     @SuppressWarnings("ConstantConditions")
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        int partID = data.getIntExtra("id", -1);
+        if (partID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + partID);
 
-        int subjectID = data.getIntExtra("subjectID", -1);
-        final String pathName = data.getStringExtra("pathName");
+        Participant p;
+        try {
+            p = fileController.loadParticipantData(partID);
+        } catch (FileNotFoundException e) {
+            showErrorDialog(String.format("File not found for participant %d", partID),
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    System.exit(1);
+                                }
+                            });
+            Log.e("onActivityResult", "Reached unreachable code");
+            p = new Participant(-1, null, null);
+            System.exit(1);
+        } catch (FileIOController.UnfinishedTestException e) {
+            // TODO handle unfinished test
+            return;
+        }
 
-        if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
-
-        this.model.reset();
-        this.model.setSubjectId(subjectID);
-        if (!pathName.equals(""))
-            try {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        FileIOController.initializeModelFromFile(model, new File(pathName));
-                    }
-                }).start();
-                waitUntilLoadingComplete();
-            } catch (RuntimeException e) {
-                showErrorDialog("Unable to read file", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        goToInit();
-                    }
-                });
-                e.printStackTrace();
-            }
+        this.model.setCurrentParticipant(p);
         this.modelChanged();
     }
 

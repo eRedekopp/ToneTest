@@ -28,11 +28,9 @@ public class Interval extends Tone implements Cloneable {
         this.vol = vol;
     }
 
-    /**
-     * Is the second tone higher in pitch than the first?
-     */
-    public boolean isUpward() {
-        return this.freq1 < this.freq2;
+    @Override
+    public int direction() {
+        return freq1 < freq2 ? DIRECTION_UP : (freq1 == freq2 ? DIRECTION_FLAT : DIRECTION_DOWN);
     }
 
     @Override

@@ -74,6 +74,11 @@ public class WavTone extends Tone {
     }
 
     @Override
+    public int direction() {
+        return DIRECTION_FLAT;
+    }
+
+    @Override
     public WavTone newVol(double vol) {
         return new WavTone(this.wavID, this.freq, vol);
     }

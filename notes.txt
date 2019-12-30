@@ -1,6 +1,14 @@
+Done recently:
+    - added Participant, replaced HearingTestResultsCollection with Participant in Model.java
+        - This broke a couple of things
+    - Removed saveLine method from HearingTest; do this through the FileIOController now
+    - Deleted basically all of FileIOController; revamp the whole thing because it's out of date
+    - Deleted and revamped most of InitActivity
+           - See plan.txt
+
 Todo:
 
-    - File input from multiple files
+    - Make ramp test runnable on its own
     - printResultsToConsole on login
     - Test out new system
     - Move RampTestResults into a single class

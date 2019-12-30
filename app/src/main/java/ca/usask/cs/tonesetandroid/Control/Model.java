@@ -23,6 +23,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.MainActivity;
+import ca.usask.cs.tonesetandroid.Participant;
 
 /**
  * Contains methods and values for audio, and stores/handles saved test results
@@ -38,13 +39,9 @@ public class Model {
     private ArrayList<ModelListener> subscribers;
 
     /**
-     * The subject ID of the current test subject
+     * The Participant object containing information about the person currently taking a test
      */
-    private int subjectId = -1;     // -1 indicates not set
-
-    /////////////// Stored hearing test results ///////////////
-
-    private HearingTestResultsCollection hearingTestResults;
+    private Participant currentParticipant;
 
 
     /////////////// Vars/values for audio ///////////////
@@ -79,21 +76,13 @@ public class Model {
 
     public Model() {
         subscribers = new ArrayList<>();
-        reset();
-    }
-
-    /**
-     * Resets this model to its just-initialized state. Does not affect the list of ModelListeners
-     */
-    public void reset() {
-        this.hearingTestResults = new HearingTestResultsCollection();
     }
 
     /**
      * @return True if this model has ConfidenceTest and RampTest results saved to it, else false
      */
     public boolean hasResults() {
-        return ! this.hearingTestResults.isEmpty();
+        return ! this.currentParticipant.getResults().isEmpty();
     }
 
     /**
@@ -294,16 +283,16 @@ public class Model {
         subscribers.add(newSub);
     }
 
-    public void setSubjectId(int id) {
-        this.subjectId = id;
-    }
-
-    public int getSubjectId() {
-        return this.subjectId;
-    }
-
     public void setAudioManager(AudioManager audioManager) {
         this.audioManager = audioManager;
+    }
+
+    public void setCurrentParticipant(Participant p) {
+        this.currentParticipant = p;
+    }
+
+    public Participant getCurrentParticipant() {
+        return this.currentParticipant;
     }
 
     /**
@@ -319,7 +308,8 @@ public class Model {
     }
 
     public void printResultsToConsole() {
-        Log.i("Model", this.getHearingTestResults().toString());
+        // TODO
+        Log.i("Model", "TODO: finish printResultsToConsole()");
     }
 
     /**
@@ -334,9 +324,5 @@ public class Model {
      */
     public void notifySubscribers() {
         for (ModelListener m : this.subscribers) m.modelChanged();
-    }
-
-    public HearingTestResultsCollection getHearingTestResults() {
-        return hearingTestResults;
     }
 }

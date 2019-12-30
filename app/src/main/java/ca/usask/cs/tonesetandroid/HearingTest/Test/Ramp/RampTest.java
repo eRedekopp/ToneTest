@@ -18,7 +18,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
  */
 public abstract class RampTest<T extends Tone> extends HearingTest<T> {
 
-    /*
+    /**
      * The volume at which to start the tone
      */
     protected double startingVol = 0.5; 
@@ -27,12 +27,12 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
             "In this phase of the test, tones will play quietly and slowly get louder. Please press the \"Heard " +
             "Tone\" button as soon as the tone becomes audible";
 
-    /*
+    /**
      * All the tones to be played in this ramp test - volumes will be disregarded
      */
     protected ArrayList<T> tones;
 
-    /*
+    /**
      * An iterator for tones to keep track of the current tone being tested
      */
     protected ListIterator<T> position;

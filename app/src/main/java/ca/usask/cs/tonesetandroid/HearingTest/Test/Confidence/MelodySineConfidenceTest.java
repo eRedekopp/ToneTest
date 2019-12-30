@@ -10,6 +10,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResultsCollec
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 /**
@@ -139,22 +140,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
 
     @Override
     protected boolean wasCorrect() {
-        int expected;
-        switch(((Melody) this.currentTrial.tone()).direction()) {
-            case DIRECTION_DOWN:
-                expected = ANSWER_DOWN;
-                break;
-            case DIRECTION_UP:
-                expected = ANSWER_UP;
-                break;
-            case DIRECTION_FLAT:
-                expected = ANSWER_FLAT;
-                break;
-            default:
-                throw new RuntimeException("Found unexpected value for currentTrial.tone.direction: " +
-                        ((Melody) this.currentTrial.tone()).direction());
-        }
-        return iModel.getAnswer() == expected;
+        return iModel.getAnswer() == this.currentTrial.tone().direction();
     }
 
     @Override
@@ -166,7 +152,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
     public String getLineEnd(SingleTrialResult trial) {
         return String.format("%.1f, %s, %s, %d clicks: %s",
                 trial.tone().freq(),
-                ((Melody) trial.tone()).directionAsString(),
+                trial.tone().directionAsString(),
                 trial.wasCorrect() ? "Correct" : "Incorrect",
                 trial.nClicks(),
                 trial.getClicksAsString());
@@ -176,7 +162,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
      * @return The average vol floor estimate of the given frequencies
      */
     protected double getFloorEstimateAvg(float[] freqs) {
-        HearingTestResultsCollection results = model.getHearingTestResults();
+        HearingTestResultsCollection results = model.getCurrentParticipant().getResults();
         double[] estimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++)
             estimates[i] = results.getVolFloorEstimate(freqs[i], this.getBackgroundNoiseType());
@@ -187,7 +173,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
      * @return The average vol ceiling estimate of the given frequencies
      */
     protected double getCeilingEstimateAvg(float[] freqs) {
-        HearingTestResultsCollection results = model.getHearingTestResults();
+        HearingTestResultsCollection results = model.getCurrentParticipant().getResults();
         double[] estimates = new double[freqs.length];
         for (int i = 0; i < freqs.length; i++)
             estimates[i] = results.getVolCeilingEstimate(freqs[i], this.getBackgroundNoiseType());

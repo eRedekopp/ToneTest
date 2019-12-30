@@ -36,15 +36,11 @@ public abstract class HearingTest<T extends Tone> {
     protected static final float[] DEFAULT_CONFIDENCE_FREQUENCIES =  {220, 440, 880, 1760, 3520};
     protected static final int DEFAULT_TONE_DURATION_MS = 1500;
 
-    public static final int DIRECTION_DOWN = -1;
-    public static final int DIRECTION_FLAT =  0;
-    public static final int DIRECTION_UP   =  1;
-
-    public static final int ANSWER_NULL = 0;
-    public static final int ANSWER_UP = 1;
-    public static final int ANSWER_DOWN = 2;
-    public static final int ANSWER_FLAT = 3;
-    public static final int ANSWER_HEARD = 4;
+    public static final int ANSWER_NULL = -1;
+    public static final int ANSWER_UP = Tone.DIRECTION_UP;
+    public static final int ANSWER_DOWN = Tone.DIRECTION_DOWN;
+    public static final int ANSWER_FLAT = Tone.DIRECTION_FLAT;
+    public static final int ANSWER_HEARD = -2;
 
     // mvc elements
     protected static Model model;
@@ -198,47 +194,11 @@ public abstract class HearingTest<T extends Tone> {
         }
     }
 
-    /**
-     * Save information on the current trial to the output file via the FileIOController
-     */
     protected void saveLine() {
-        if (this.currentTrial != null)
-            this.saveLine(String.format("%s %s", getLineBeginning(), this.getLineEnd(this.currentTrial)));
-    }
-
-    /**
-     * Save the given string on its own line via the FileIOController
-     */
-    protected void saveLine(String line) {
-        fileController.saveLine(line);
-    }
-
-    /**
-     * @return Given the state of model and iModel, return a String with subject ID, current date/time, test type
-     * name, and background noise type/volume to be written at the beginning of a line for an individual trial
-     */
-    protected String getLineBeginning() {
-        Long startTime = null;
-        SimpleDateFormat dateFormat = null;
-        String formattedDateTime = null;
-
-        try {
-            startTime = iModel.getCurrentTest().getLastTrialStartTime();
-            dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-            formattedDateTime = dateFormat.format(startTime);
-        } catch (NullPointerException e) {
-            Log.e("getLineBeginning", "Nullpointerexception caused - dateFormat = " +
-                    (dateFormat == null ? "null" : dateFormat.toPattern()) + " Date = " +
-                    (startTime == null ? "null" : startTime.toString()));
-            e.printStackTrace();
-            formattedDateTime = "TimeFetchError";
-        }
-
-        return String.format("%s Subject %d, Test %s, Noise %s,",
-                formattedDateTime,
-                model.getSubjectId(),
-                iModel.getCurrentTest().getTestTypeName(),
-                this.getBackgroundNoiseType().toString());
+        fileController.saveLine(this.currentTrial.getStartTime(), this.currentTrial.tone().freq(),
+                                this.currentTrial.tone().vol(), this.currentTrial.tone().directionAsString(),
+                                this.currentTrial.wasCorrect(), this.currentTrial.nClicks(),
+                                this.currentTrial.getClicksAsString());
     }
 
     /**
