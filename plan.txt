@@ -1,8 +1,25 @@
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Starting a new test:
+
+Calibration:
+    Get info from user in CalibSelectActivity
+        - Present user with options, return only integer identifiers indicating which options were selected
+        - Return with: noise type, noise volume, tone timbre, test suite type
+        - Integer identifiers are stored public static final in their corresponding class (see CalibSelectActivity code)
+    Pass identifiers to HearingTestController
+    Create all necessary HearingTest objects
+    Set iModel values as appropriate, then begin test
+        - throw error if not able to properly initialize (ie. prerequisite test results not available)
+
+Confidence:
+    Similar to calibration, except return with: noise type, noise volume, tone timbre, tone type (eg. interval),
+                                                trials per tone
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Login screen interaction:
+Login screen:
 
     New Participant
         - Use ID in text box
@@ -19,6 +36,8 @@ control returns to the main activity - if creating a new participant, empty file
 returning. Files are loaded by the main activity
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Files:
 
 Individual participant files are kept in one folder per participant, which contains a single calibration file containing
 information about all calibrations taken by this participant, and one file per confidence test

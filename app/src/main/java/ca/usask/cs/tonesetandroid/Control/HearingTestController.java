@@ -3,6 +3,8 @@ package ca.usask.cs.tonesetandroid.Control;
 import android.content.Context;
 import android.util.Log;
 
+import org.apache.commons.math3.analysis.function.Sin;
+
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.PianoCalibrationTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
@@ -32,10 +34,20 @@ public class HearingTestController {
     FileIOController fileController;
     Context context;
 
+    // test type identifiers. RR = ramp + reduce
+    public static final int TEST_SUITE_FULL = 0;
+    public static final int TEST_SUITE_RAMP = 1;
+    public static final int TEST_SUITE_RR = 2;
+    public static final int TEST_TYPE_CONF = 3;
+
     /**
      * Human-readable names of all CalibrationTest type options
-     */
-    public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine", "Single Tone Piano"};
+     *
+     * "Full" = a full 3-phase calibration
+     * "Ramp" = ramp test only
+     * "RR" = ramp and reduce only
+     * */
+    public static final String[] CALIB_TEST_OPTIONS = {"Sine Full", "Piano Full", "Sine Ramp", "Sine RR"};
 
     /**
      * Human-readable names of all ConfidenceTest type options
@@ -55,7 +67,8 @@ public class HearingTestController {
     }
 
     /**
-     * Begin the full 3-phase calibration. iModel.rampTest must be fully configured before calling this method. 
+     * Begin the calibration. iModel.rampTest must be fully configured before calling this method (see
+     * handleCalibClick).
      * This method is only used to begin a new calibration test directly after getting user to input test information. 
      * To resume a test, use checkForHearingTestResume
      */
@@ -77,12 +90,17 @@ public class HearingTestController {
         // add to model.hearingTestResults without reduce results
         this.model.getCurrentParticipant().getResults().addResults(
                 this.iModel.getRampTest().getResults().getRegularRampResults());
-        this.view.showInformationDialog(this.iModel.getReduceTest().getTestInfo());
-        this.iModel.getReduceTest().setRampResults(this.iModel.getRampTest().getResults());
-        this.iModel.getReduceTest().initialize();
-        this.iModel.setTestThreadActive(false);
-        this.iModel.notifySubscribers();
-        this.iModel.setCurrentTest(this.iModel.getReduceTest());
+        // go to ramp test if doing a full calibration
+        if (iModel.getRampTest() != null) {
+            this.view.showInformationDialog(this.iModel.getReduceTest().getTestInfo());
+            this.iModel.getReduceTest().setRampResults(this.iModel.getRampTest().getResults());
+            this.iModel.getReduceTest().initialize();
+            this.iModel.setTestThreadActive(false);
+            this.iModel.notifySubscribers();
+            this.iModel.setCurrentTest(this.iModel.getReduceTest());
+        } else { // clean up and exit if not doing a full calibration
+            testComplete();
+        }
     }
 
     /**
@@ -92,16 +110,19 @@ public class HearingTestController {
     public void reduceTestComplete() {
         // Add ramp results to model list again, but with floor info this time
         this.iModel.getRampTest().getResults().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
-        // TODO figure out how to handle this
         this.model.getCurrentParticipant().getResults().addResults(this.iModel.getRampTest().getResults());
 
-        // set up CalibrationTest to run next
-        this.iModel.getCalibrationTest().setRampResults(this.iModel.getRampTest().getResults());
-        this.iModel.getCalibrationTest().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
-        this.iModel.getCalibrationTest().initialize();
-        this.iModel.setCurrentTest(this.iModel.getCalibrationTest());
-        this.iModel.setTestThreadActive(false);
-        this.iModel.notifySubscribers();
+        // set up CalibrationTest to run next, if doing a full test
+        if (this.iModel.getCalibrationTest() != null) {
+            this.iModel.getCalibrationTest().setRampResults(this.iModel.getRampTest().getResults());
+            this.iModel.getCalibrationTest().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
+            this.iModel.getCalibrationTest().initialize();
+            this.iModel.setCurrentTest(this.iModel.getCalibrationTest());
+            this.iModel.setTestThreadActive(false);
+            this.iModel.notifySubscribers();
+        } else {
+            testComplete();
+        }
     }
 
     /**
@@ -109,9 +130,7 @@ public class HearingTestController {
      */
     public void calibrationTestComplete() {
         this.model.getCurrentParticipant().getResults().addResults(this.iModel.getCalibrationTest().getResults());
-        this.iModel.reset();
-        this.model.audioTrackCleanup();
-        this.iModel.notifySubscribers();
+        testComplete();
     }
 
     /**
@@ -140,6 +159,15 @@ public class HearingTestController {
         this.iModel.notifySubscribers();
     }
 
+    /**
+     * To be called once a test or suite of tests is completed and the model etc is to be reset
+     */
+    private void testComplete() {
+        this.iModel.reset();
+        this.model.audioTrackCleanup();
+        this.iModel.notifySubscribers();
+    }
+
     //////////////////////////////////// click handlers ////////////////////////////////////////////
 
     /**
@@ -160,10 +188,19 @@ public class HearingTestController {
                 iModel.setReduceTest(new SineReduceTest(noise));
                 iModel.setCalibrationTest(new SineCalibratonTest(noise));
                 break;
-            case 1:
+            case 1:     // single piano
                 iModel.setRampTest(new PianoRampTest(noise));
                 iModel.setReduceTest(new PianoReduceTest(noise));
                 iModel.setCalibrationTest(new PianoCalibrationTest(noise));
+                break;
+            case 2:     // sine ramp
+                iModel.setRampTest(new SineRampTest(noise));
+                // other 2 tests are null
+                break;
+            case 3:     // sine ramp/reduce
+                iModel.setRampTest(new SineRampTest(noise));
+                iModel.setReduceTest(new SineReduceTest(noise));
+                // calibration test is null
                 break;
             default:
                 throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);

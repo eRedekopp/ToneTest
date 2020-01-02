@@ -25,7 +25,6 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseController;
@@ -49,7 +48,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
     /*
     * Android Studio doesn't like that there's a Context in a static field, but since this is such a small
-    * application, the memory leaking issues shouldn't be much of a problem
+    * application, the memory leaking issues shouldn't be much of a problem (hopefully)
     * */
     public static Context context; // for passing to other classes from inner methods
 

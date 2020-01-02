@@ -32,7 +32,7 @@ public class InitActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.initial_setup_view);
 
-        // set up view elements
+        // locate view elements
         final Button newPartButton =      findViewById(R.id.idEntryButton);
         final Button skipButton =         findViewById(R.id.skipButton);
         final Button loadButton =         findViewById(R.id.loadButton);
@@ -129,7 +129,7 @@ public class InitActivity extends Activity {
      */
     private void returnToCaller(int id) {
 
-        // create intent and pass parameters
+        // create intent and pass args
         Intent goBackIntent = new Intent();
         goBackIntent.putExtra("id", id);
         this.setResult(RESULT_OK, goBackIntent);

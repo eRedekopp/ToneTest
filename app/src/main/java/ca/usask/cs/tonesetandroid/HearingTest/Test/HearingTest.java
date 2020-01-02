@@ -31,11 +31,12 @@ import ca.usask.cs.tonesetandroid.Control.Model;
  */
 public abstract class HearingTest<T extends Tone> {
 
-    // constants
+    // defaults
     protected static final float[] DEFAULT_CALIBRATION_FREQUENCIES = {200, 500, 1000, 2000, 4000};
     protected static final float[] DEFAULT_CONFIDENCE_FREQUENCIES =  {220, 440, 880, 1760, 3520};
     protected static final int DEFAULT_TONE_DURATION_MS = 1500;
 
+    // answer type identifiers
     public static final int ANSWER_NULL = -1;
     public static final int ANSWER_UP = Tone.DIRECTION_UP;
     public static final int ANSWER_DOWN = Tone.DIRECTION_DOWN;

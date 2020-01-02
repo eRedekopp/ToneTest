@@ -10,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.Participant;
 
 /**
@@ -40,8 +41,7 @@ public class FileIOController {
      * @return The name of the participant's confidence directory
      */
     public static String getConfDirName(int partID) {
-        // TODO
-        return "";
+        return String.format("subject%d", partID);
     }
 
     /**
@@ -52,8 +52,7 @@ public class FileIOController {
      * @return The name of a new confidence test file for the given participant
      */
     public static String getNewConfFileName(int partID) {
-        // TODO
-        return "";
+        return String.format("conf_%s_%d", FORMAT.format(System.currentTimeMillis()), partID);
     }
 
     /**
@@ -62,8 +61,7 @@ public class FileIOController {
      * @return The name of the participant's calibration file
      */
     public static String getCalibFileName(int partID) {
-        // TODO
-        return "";
+        return String.format("Calibration_%d", partID);
     }
 
     /**
@@ -92,11 +90,17 @@ public class FileIOController {
     /**
      * Save a line containing test information to the current file (to be called immediately before starting a new test)
      *
-     * @param testType A string indicating the type of test
-     * @param noiseType A string indicating the noise type
+     * @param test The hearing test to be begun immediately following this function call
      */
-    public void saveTestHeader(String testType, String noiseType) {
+    public void saveTestHeader(HearingTest test) {
         // TODO
+    }
+
+    /**
+     * Write a line to the current file indicating that a test has completed
+     */
+    public void saveEndTest() {
+        saveString(String.format("END-TEST%n"));
     }
 
     /**
@@ -232,18 +236,24 @@ public class FileIOController {
      * @return A new Participant with the data loaded from the appropriate file
      * @throws FileNotFoundException if the participant with the given ID does not have any files saved
      * @throws UnfinishedTestException if the file contains a half-finished test
-     * @throws BadFormatException if the file was improperly formatted
      */
     public Participant loadParticipantData(int partID) throws FileNotFoundException, UnfinishedTestException {
         // TODO
         return null;
     }
 
+    /**
+     * @param partID A participant ID
+     * @return True if there are files on disk for a participant with the given ID, else False
+     */
     public boolean participantExists(int partID) {
-        // TODO
-        return false;
+        File file = new File(PARENT, getConfDirName(partID));
+        return file.exists();
     }
 
+    /**
+     * An exception to be thrown when the file IO controller detects an unfinished test in a save file
+     */
     public class UnfinishedTestException extends RuntimeException {
         public UnfinishedTestException(String reason) {
             super(reason);

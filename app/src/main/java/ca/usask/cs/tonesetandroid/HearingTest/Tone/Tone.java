@@ -6,9 +6,20 @@ package ca.usask.cs.tonesetandroid.HearingTest.Tone;
  */
 public abstract class Tone {
 
+    // the direction of a tone. Single-pitch tones are all considered to be FLAT
     public static final int DIRECTION_UP = 0;
     public static final int DIRECTION_DOWN = 1;
     public static final int DIRECTION_FLAT = 2;
+
+    // the timbre of a tone
+    public static final int TIMBRE_PIANO = 0;
+    public static final int TIMBRE_SINE = 1;
+    public static final int TIMBRE_WAV = 2;
+
+    // the type of a tone
+    public static final int TYPE_SINGLE = 0;
+    public static final int TYPE_INTERVAL = 1;
+    public static final int TYPE_MELODY = 2;
 
     /**
      * @return The volume of this Tone, where 0 is not audible at all and Double.MAX_VALUE is the maximum

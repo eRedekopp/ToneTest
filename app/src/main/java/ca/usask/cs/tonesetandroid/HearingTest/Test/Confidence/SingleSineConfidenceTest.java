@@ -18,7 +18,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
  */
 public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
 
-    public SingleSineConfidenceTest(BackgroundNoiseType noiseType) {
+    public  SingleSineConfidenceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
     }
 

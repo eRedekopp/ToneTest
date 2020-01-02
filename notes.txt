@@ -8,6 +8,7 @@ Done recently:
 
 Todo:
 
+    - load files from disk
     - Make ramp test runnable on its own
     - printResultsToConsole on login
     - Test out new system

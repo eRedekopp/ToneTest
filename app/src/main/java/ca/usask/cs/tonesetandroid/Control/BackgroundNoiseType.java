@@ -7,8 +7,6 @@ import android.support.annotation.NonNull;
  */
 public class BackgroundNoiseType {
 
-    // Array indices correspond to ID int (eg. "No Noise" == NOISE_TYPE_STRINGS[NOISE_TYPE_NONE])
-
     /**
      * Noise type identifier strings to be displayed to user
      *
