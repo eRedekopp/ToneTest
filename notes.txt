@@ -5,11 +5,16 @@ Done recently:
     - Deleted basically all of FileIOController; revamp the whole thing because it's out of date
     - Deleted and revamped most of InitActivity
            - See plan.txt
+    - Revamped the way we start new tests - added new activities for configuring a test
 
 Todo:
 
+    - specify audibility vs differentiation in confidence test
+    - add ramp/conf test without reduce
+        - calculate tone volumes differently depending on available information
+
+    - improve wav confidence test
     - load files from disk
-    - Make ramp test runnable on its own
     - printResultsToConsole on login
     - Test out new system
     - Move RampTestResults into a single class

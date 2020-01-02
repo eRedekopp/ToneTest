@@ -12,9 +12,9 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 /**
  * A ConfidenceTest that tests the user's ability to hear single piano tones
  */
-public class PianoConfidenceTest extends WavConfidenceTest {
+public class SinglePianoConfidenceTest extends WavConfidenceTest {
 
-    public PianoConfidenceTest(BackgroundNoiseType noiseType) {
+    public SinglePianoConfidenceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
     }
 

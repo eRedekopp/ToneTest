@@ -1,23 +1,16 @@
 package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
-import android.util.Log;
 
-import org.apache.commons.math3.analysis.function.Sin;
-
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.PianoCalibrationTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.IntervalSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.MelodySineConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SingleSineCalibFreqConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SingleSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.PianoRampTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.PianoReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SinglePianoConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.SineReduceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.PianoConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 
 /**
@@ -66,23 +59,47 @@ public class HearingTestController {
     }
 
     /**
-     * // TODO edit this
+     * Set up a new calibration suite to be run. The part where it actually starts running happens in
+     * checkForHearingTestResume, probably called from MainActivity.modelChanged()
      *
-     * Begin the calibration. iModel.rampTest must be fully configured before calling this method (see
-     * handleCalibClick).
-     * This method is only used to begin a new calibration test directly after getting user to input test information. 
-     * To resume a test, use checkForHearingTestResume
+     * @param noiseTypeID The identifier for the type of noise to be used in the test
+     *                    (one of BackgroundNoiseType.TYPE_*)
+     * @param noiseVol The volume from 0 to 100 of the noise in this test
+     * @param toneTimbreID The identifier for the timbre of the tones to be played in this test
+     *                     (one of Tone.TIMBRE_*)
+     * @param testTypeID The identifier for the test suite to be run (one of this.TEST_SUITE_*)
      */
-    public void calibrationTest(int noiseTypeID, int noiseVol, int toneTimbreID, int testTypeID) {
-        // TODO
+    public void calibrationTest(int noiseTypeID, int noiseVol, int toneTimbreID, int testTypeID)
+            throws TestNotAvailableException {
 
-        // old
-//        this.model.configureAudio();
-//        this.iModel.setTestPaused(true);
-//        this.iModel.setCurrentTest(this.iModel.getRampTest());
-//        this.noiseController.playNoise(this.iModel.getCurrentNoise());
-//        this.fileController.setCurrentCalib(this.model.getCurrentParticipant());
-//        this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
+        // TODO finish this
+
+        BackgroundNoiseType noiseType = new BackgroundNoiseType(noiseTypeID, noiseVol);
+
+        this.model.configureAudio();
+        this.iModel.setTestPaused(true);
+
+        switch (testTypeID) {
+            case TEST_SUITE_FULL:
+                if (toneTimbreID == Tone.TIMBRE_SINE) {
+                    this.iModel.setRampTest(new SineRampTest(noiseType));
+                    this.iModel.setReduceTest(new SineReduceTest(noiseType));
+                    this.iModel.setConfidenceTest(new SingleSineConfidenceTest(noiseType));
+                    this.iModel.setCurrentTest(this.iModel.getRampTest());
+                } else {
+                    throw new TestNotAvailableException();
+                }
+                break;
+            case TEST_SUITE_RAMP:
+            case TEST_SUITE_RR:
+                throw new TestNotAvailableException();
+            default:
+                throw new RuntimeException("Unknown testTypeID: " + testTypeID);
+        }
+
+        this.noiseController.playNoise(this.iModel.getCurrentNoise());
+        this.fileController.setCurrentCalib(this.model.getCurrentParticipant());
+        this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
     }
 
     /**
@@ -138,22 +155,57 @@ public class HearingTestController {
     }
 
     /**
-     * // TODO edit this
+     * Set up a new confidence test to be run. The part where it actually starts running happens in
+     * checkForHearingTestResume, probably called from MainActivity.modelChanged()
      *
-     * Begin a confidence test. Calibration results must be saved and iModel.confidenceTest must be configured before
-     * calling this method. This method is only used to begin a new confidence test directly after getting user to
-     * input test information. To resume a test, use checkForHearingTestResume
+     * @param noiseTypeID The identifier for the type of noise (one of BackgroundNoiseType.NOISE_TYPE_*)
+     * @param noiseVol The volume from 0 to 100 of the background noise
+     * @param toneTimbreID The identifier for the timbre of the tones to be played in the confidence test (one of
+     *                     Tone.TIMBRE_*)
+     * @param toneTypeID The identifier for the type of tone (one of Tone.TYPE_*)
+     * @param trialsPerTone The number of trials per individual freq-vol combination in the confidence test
+     * @throws TestNotAvailableException If the given configuration is possible in principle but not yet implemented
      */
-    public void confidenceTest(int noiseTypeID, int noiseVol, int toneTimbreID, int toneTypeID, int trialsPerTone) {
-        // TODO
+    public void confidenceTest(int noiseTypeID, int noiseVol, int toneTimbreID, int toneTypeID, int trialsPerTone)
+            throws TestNotAvailableException {
+        BackgroundNoiseType noiseType = new BackgroundNoiseType(noiseTypeID, noiseVol);
+        ConfidenceTest confTest = null;
 
-        // old
-//        this.model.configureAudio();
-//        this.iModel.setTestPaused(true);
-//        this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
-//        this.fileController.setCurrentConf(this.model.getCurrentParticipant());
-//        this.view.showSampleDialog( this.iModel.getConfidenceTest().sampleTones(),
-//                                    this.iModel.getCurrentTest().getTestInfo());
+        switch (toneTimbreID) {
+            case Tone.TIMBRE_SINE:
+                if (toneTypeID == Tone.TYPE_SINGLE) {
+                    confTest = new SingleSineConfidenceTest(noiseType);
+                } else if (toneTypeID == Tone.TYPE_MELODY) {
+                    confTest = new MelodySineConfidenceTest(noiseType);
+                } else if (toneTypeID == Tone.TYPE_INTERVAL) {
+                    confTest = new IntervalSineConfidenceTest(noiseType);
+                } else {
+                    throw new RuntimeException("Unknown toneTypeID: " + toneTypeID);
+                }
+                break;
+            case Tone.TIMBRE_PIANO:
+                if (toneTypeID == Tone.TYPE_SINGLE) {
+                    confTest = new SinglePianoConfidenceTest(noiseType);
+                } else if (toneTypeID == Tone.TYPE_MELODY) {
+                    throw new TestNotAvailableException();
+                } else if (toneTypeID == Tone.TYPE_INTERVAL) {
+                    throw new TestNotAvailableException();
+                } else {
+                    throw new RuntimeException("Unknown toneTypeID: " + toneTypeID);
+                }
+                break;
+            case Tone.TIMBRE_WAV:
+                throw new TestNotAvailableException();
+            default:
+                throw new RuntimeException("Unknown toneTimbreID " + toneTimbreID);
+        }
+
+        this.model.configureAudio();
+        this.iModel.setTestPaused(true);
+        this.iModel.setConfidenceTest(confTest);
+        this.iModel.setCurrentTest(confTest);
+        this.fileController.setCurrentConf(model.getCurrentParticipant());
+        this.view.showSampleDialog(confTest.sampleTones(), confTest.getTestInfo());
     }
 
     /**
@@ -178,83 +230,6 @@ public class HearingTestController {
     }
 
     //////////////////////////////////// click handlers ////////////////////////////////////////////
-
-//    /**
-//     * Set up the iModel for a new 3-phase calibration of the appropriate type with the
-//     * appropriate background noise, then begin the test
-//     *
-//     * @param noise The background noise to be played during this test
-//     * @param testTypeID The type of test to begin: given as an index of CALIB_TEST_OPTIONS
-//     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
-//     */
-//    public void handleCalibClick(BackgroundNoiseType noise, int testTypeID) {
-//
-//        iModel.reset();
-//
-//        switch (testTypeID) {
-//            case 0:     // single sine
-//                iModel.setRampTest(new SineRampTest(noise));
-//                iModel.setReduceTest(new SineReduceTest(noise));
-//                iModel.setCalibrationTest(new SineCalibratonTest(noise));
-//                break;
-//            case 1:     // single piano
-//                iModel.setRampTest(new PianoRampTest(noise));
-//                iModel.setReduceTest(new PianoReduceTest(noise));
-//                iModel.setCalibrationTest(new PianoCalibrationTest(noise));
-//                break;
-//            case 2:     // sine ramp
-//                iModel.setRampTest(new SineRampTest(noise));
-//                // other 2 tests are null
-//                break;
-//            case 3:     // sine ramp/reduce
-//                iModel.setRampTest(new SineRampTest(noise));
-//                iModel.setReduceTest(new SineReduceTest(noise));
-//                // calibration test is null
-//                break;
-//            default:
-//                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
-//        }
-//
-//        this.calibrationTest();
-//    }
-//
-//    /**
-//     * Set up the iModel for a new confidence test of the appropriate type with the appropriate background noise,
-//     * then begin the test
-//     *
-//     * @param noise The background noise to be played during this test
-//     * @param testTypeID The type of test to begin: given as an index of CONF_TEST_OPTIONS
-//     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
-//     */
-//    public void handleConfClick(BackgroundNoiseType noise, int testTypeID) {
-//        if (! model.hasResults()) throw new IllegalStateException("No results stored in model");
-//
-//        ConfidenceTest newTest;
-//
-//        switch (testTypeID) {
-//            case 0:     // single sine
-//                newTest = new SingleSineConfidenceTest(noise);
-//                break;
-//            case 1:     // interval sine
-//                newTest = new IntervalSineConfidenceTest(noise);
-//                break;
-//            case 2:     // melody sine
-//                newTest = new MelodySineConfidenceTest(noise);
-//                break;
-//            case 3:     // single piano
-//                newTest = new PianoConfidenceTest(noise);
-//                break;
-//            case 4:     // single sine, test default calibration frequencies
-//                newTest = new SingleSineCalibFreqConfidenceTest(noise);
-//                break;
-//            default:
-//                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
-//        }
-//
-//        newTest.initialize();
-//        iModel.setConfidenceTest(newTest);
-//        this.confidenceTest();
-//    }
 
     /**
      * Register a UI event with the answer "up"
@@ -339,4 +314,10 @@ public class HearingTestController {
     public void setFileController(FileIOController fileController) {
         this.fileController = fileController;
     }
+
+    ////////////////////////////////////////////// misc ///////////////////////////////////////////////
+
+    public class TestNotAvailableException extends RuntimeException {
+    }
+
 }

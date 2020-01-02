@@ -92,6 +92,7 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
      * @param noiseType The background noise played during this confidence test
      */
     public ConfidenceTest(BackgroundNoiseType noiseType) {
+        // TODO make number of tones configurable
         super(noiseType);
         this.testInfo = DEFAULT_TEST_INFO;
         this.testTones = new ArrayList<>();

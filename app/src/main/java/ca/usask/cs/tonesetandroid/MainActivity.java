@@ -387,6 +387,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                 try {
                     p = fileController.loadParticipantData(partID);
                 } catch (FileNotFoundException e) {
+                    // shouldn't be reachable - just crash the whole thing if this happens
                     showErrorDialog(String.format("File not found for participant %d", partID),
                             new DialogInterface.OnClickListener() {
                                 @Override
@@ -425,7 +426,11 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     int toneTimbreID = data.getIntExtra("toneTimbreID", -1);
                     int toneTypeID = data.getIntExtra("toneTypeID", -1);
                     int trialsPerTone = data.getIntExtra("trialsPerTone", -1);
-                    controller.confidenceTest(noiseTypeID, noiseVol, toneTimbreID, toneTypeID, trialsPerTone);
+                    try {
+                        controller.confidenceTest(noiseTypeID, noiseVol, toneTimbreID, toneTypeID, trialsPerTone);
+                    } catch (HearingTestController.TestNotAvailableException e) {
+                        showErrorDialog("No test available for the requested configuration", null);
+                    }
                 }
                 break;
 
@@ -451,10 +456,18 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
      * Show a dialog with title "Error" and the given message
      * @param message The message to be displayed
      */
-    public void showErrorDialog(String message, DialogInterface.OnClickListener onOKClick) {
+    public void showErrorDialog(String message, @Nullable DialogInterface.OnClickListener onOKClick) {
         AlertDialog.Builder warningBuilder = new AlertDialog.Builder(this);
         warningBuilder.setTitle("Error");
         warningBuilder.setMessage(message);
+        if (onOKClick == null) {
+            onOKClick = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+                }
+            };
+        }
         warningBuilder.setPositiveButton("OK", onOKClick);
         warningBuilder.show();
     }
