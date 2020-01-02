@@ -31,6 +31,7 @@ public class CalibSelectActivity extends Activity {
         final RadioGroup toneGroup      = findViewById(R.id.TimbreRadioGroup);
         final RadioGroup testTypeGroup  = findViewById(R.id.TestTypeRadioGroup);
         final Button goButton           = findViewById(R.id.GoButton);
+        final Button cancelButton       = findViewById(R.id.CancelButton);
 
         // set up event listeners
         goButton.setOnClickListener(new View.OnClickListener() {
@@ -98,6 +99,14 @@ public class CalibSelectActivity extends Activity {
             }
         });
 
+        // return unsuccessfully if cancelled
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                returnToCaller();
+            }
+        });
+
         // force volume = 0 if "no noise" selected
         noiseGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -114,6 +123,9 @@ public class CalibSelectActivity extends Activity {
         });
     }
 
+    /**
+     * Return successfully with the entered values
+     */
     private void returnToCaller(int noiseTypeID, int noiseVol, int toneTimbreID,int testTypeID) {
 
         // create intent and pass args
@@ -125,6 +137,15 @@ public class CalibSelectActivity extends Activity {
         this.setResult(RESULT_OK, goBackIntent);
 
         // exit this activity
+        this.finish();
+    }
+
+    /**
+     * Return unsuccessfully
+     */
+    private void returnToCaller() {
+        Intent goBackIntent = new Intent();
+        this.setResult(RESULT_CANCELED);
         this.finish();
     }
 

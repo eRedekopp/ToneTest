@@ -30,6 +30,7 @@ public class ConfSelectActivity extends Activity {
         final RadioGroup toneTypeGroup  = findViewById(R.id.ToneTypeGroup);
         final EditText trialsEditText   = findViewById(R.id.TrialsPerToneEditText);
         final Button goButton           = findViewById(R.id.GoButton);
+        final Button cancelButton       = findViewById(R.id.CancelButton);
 
         // set up listeners
         goButton.setOnClickListener(new View.OnClickListener() {
@@ -111,6 +112,14 @@ public class ConfSelectActivity extends Activity {
             }
         });
 
+        // return unsuccessfully if cancelled
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                returnToCaller();
+            }
+        });
+
         // force tone type = melody if "WAV" selected as timbre
         timbreGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
             @Override
@@ -140,7 +149,9 @@ public class ConfSelectActivity extends Activity {
         });
     }
 
-
+    /**
+     * Return successfully with the entered values
+     */
     private void returnToCaller(int noiseTypeID, int noiseVol, int toneTimbreID, int toneTypeID, int trialsPerTone) {
 
         // create intent and pass args
@@ -153,6 +164,15 @@ public class ConfSelectActivity extends Activity {
         this.setResult(RESULT_OK, goBackIntent);
 
         // close this activity and go back
+        this.finish();
+    }
+
+    /**
+     * Return unsuccessfully
+     */
+    private void returnToCaller() {
+        Intent goBackIntent = new Intent();
+        this.setResult(RESULT_CANCELED);
         this.finish();
     }
 

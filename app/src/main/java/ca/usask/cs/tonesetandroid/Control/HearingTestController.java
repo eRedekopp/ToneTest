@@ -38,7 +38,6 @@ public class HearingTestController {
     public static final int TEST_SUITE_FULL = 0;
     public static final int TEST_SUITE_RAMP = 1;
     public static final int TEST_SUITE_RR = 2;
-    public static final int TEST_TYPE_CONF = 3;
 
     /**
      * Human-readable names of all CalibrationTest type options
@@ -67,18 +66,23 @@ public class HearingTestController {
     }
 
     /**
+     * // TODO edit this
+     *
      * Begin the calibration. iModel.rampTest must be fully configured before calling this method (see
      * handleCalibClick).
      * This method is only used to begin a new calibration test directly after getting user to input test information. 
      * To resume a test, use checkForHearingTestResume
      */
-    public void calibrationTest() {
-        this.model.configureAudio();
-        this.iModel.setTestPaused(true);
-        this.iModel.setCurrentTest(this.iModel.getRampTest());
-        this.noiseController.playNoise(this.iModel.getCurrentNoise());
-        this.fileController.setCurrentCalib(this.model.getCurrentParticipant());
-        this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
+    public void calibrationTest(int noiseTypeID, int noiseVol, int toneTimbreID, int testTypeID) {
+        // TODO
+
+        // old
+//        this.model.configureAudio();
+//        this.iModel.setTestPaused(true);
+//        this.iModel.setCurrentTest(this.iModel.getRampTest());
+//        this.noiseController.playNoise(this.iModel.getCurrentNoise());
+//        this.fileController.setCurrentCalib(this.model.getCurrentParticipant());
+//        this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
     }
 
     /**
@@ -134,17 +138,22 @@ public class HearingTestController {
     }
 
     /**
+     * // TODO edit this
+     *
      * Begin a confidence test. Calibration results must be saved and iModel.confidenceTest must be configured before
      * calling this method. This method is only used to begin a new confidence test directly after getting user to
      * input test information. To resume a test, use checkForHearingTestResume
      */
-    public void confidenceTest() {
-        this.model.configureAudio();
-        this.iModel.setTestPaused(true);
-        this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
-        this.fileController.setCurrentConf(this.model.getCurrentParticipant());
-        this.view.showSampleDialog( this.iModel.getConfidenceTest().sampleTones(),
-                                    this.iModel.getCurrentTest().getTestInfo());
+    public void confidenceTest(int noiseTypeID, int noiseVol, int toneTimbreID, int toneTypeID, int trialsPerTone) {
+        // TODO
+
+        // old
+//        this.model.configureAudio();
+//        this.iModel.setTestPaused(true);
+//        this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
+//        this.fileController.setCurrentConf(this.model.getCurrentParticipant());
+//        this.view.showSampleDialog( this.iModel.getConfidenceTest().sampleTones(),
+//                                    this.iModel.getCurrentTest().getTestInfo());
     }
 
     /**
@@ -170,82 +179,82 @@ public class HearingTestController {
 
     //////////////////////////////////// click handlers ////////////////////////////////////////////
 
-    /**
-     * Set up the iModel for a new 3-phase calibration of the appropriate type with the 
-     * appropriate background noise, then begin the test
-     *
-     * @param noise The background noise to be played during this test
-     * @param testTypeID The type of test to begin: given as an index of CALIB_TEST_OPTIONS 
-     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
-     */
-    public void handleCalibClick(BackgroundNoiseType noise, int testTypeID) {
-
-        iModel.reset();
-
-        switch (testTypeID) {
-            case 0:     // single sine
-                iModel.setRampTest(new SineRampTest(noise));
-                iModel.setReduceTest(new SineReduceTest(noise));
-                iModel.setCalibrationTest(new SineCalibratonTest(noise));
-                break;
-            case 1:     // single piano
-                iModel.setRampTest(new PianoRampTest(noise));
-                iModel.setReduceTest(new PianoReduceTest(noise));
-                iModel.setCalibrationTest(new PianoCalibrationTest(noise));
-                break;
-            case 2:     // sine ramp
-                iModel.setRampTest(new SineRampTest(noise));
-                // other 2 tests are null
-                break;
-            case 3:     // sine ramp/reduce
-                iModel.setRampTest(new SineRampTest(noise));
-                iModel.setReduceTest(new SineReduceTest(noise));
-                // calibration test is null
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
-        }
-
-        this.calibrationTest();
-    }
-
-    /**
-     * Set up the iModel for a new confidence test of the appropriate type with the appropriate background noise,
-     * then begin the test
-     *
-     * @param noise The background noise to be played during this test
-     * @param testTypeID The type of test to begin: given as an index of CONF_TEST_OPTIONS
-     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
-     */
-    public void handleConfClick(BackgroundNoiseType noise, int testTypeID) {
-        if (! model.hasResults()) throw new IllegalStateException("No results stored in model");
-
-        ConfidenceTest newTest;
-
-        switch (testTypeID) {
-            case 0:     // single sine
-                newTest = new SingleSineConfidenceTest(noise);
-                break;
-            case 1:     // interval sine
-                newTest = new IntervalSineConfidenceTest(noise);
-                break;
-            case 2:     // melody sine
-                newTest = new MelodySineConfidenceTest(noise);
-                break;
-            case 3:     // single piano
-                newTest = new PianoConfidenceTest(noise);
-                break;
-            case 4:     // single sine, test default calibration frequencies
-                newTest = new SingleSineCalibFreqConfidenceTest(noise);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
-        }
-
-        newTest.initialize();
-        iModel.setConfidenceTest(newTest);
-        this.confidenceTest();
-    }
+//    /**
+//     * Set up the iModel for a new 3-phase calibration of the appropriate type with the
+//     * appropriate background noise, then begin the test
+//     *
+//     * @param noise The background noise to be played during this test
+//     * @param testTypeID The type of test to begin: given as an index of CALIB_TEST_OPTIONS
+//     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
+//     */
+//    public void handleCalibClick(BackgroundNoiseType noise, int testTypeID) {
+//
+//        iModel.reset();
+//
+//        switch (testTypeID) {
+//            case 0:     // single sine
+//                iModel.setRampTest(new SineRampTest(noise));
+//                iModel.setReduceTest(new SineReduceTest(noise));
+//                iModel.setCalibrationTest(new SineCalibratonTest(noise));
+//                break;
+//            case 1:     // single piano
+//                iModel.setRampTest(new PianoRampTest(noise));
+//                iModel.setReduceTest(new PianoReduceTest(noise));
+//                iModel.setCalibrationTest(new PianoCalibrationTest(noise));
+//                break;
+//            case 2:     // sine ramp
+//                iModel.setRampTest(new SineRampTest(noise));
+//                // other 2 tests are null
+//                break;
+//            case 3:     // sine ramp/reduce
+//                iModel.setRampTest(new SineRampTest(noise));
+//                iModel.setReduceTest(new SineReduceTest(noise));
+//                // calibration test is null
+//                break;
+//            default:
+//                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
+//        }
+//
+//        this.calibrationTest();
+//    }
+//
+//    /**
+//     * Set up the iModel for a new confidence test of the appropriate type with the appropriate background noise,
+//     * then begin the test
+//     *
+//     * @param noise The background noise to be played during this test
+//     * @param testTypeID The type of test to begin: given as an index of CONF_TEST_OPTIONS
+//     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
+//     */
+//    public void handleConfClick(BackgroundNoiseType noise, int testTypeID) {
+//        if (! model.hasResults()) throw new IllegalStateException("No results stored in model");
+//
+//        ConfidenceTest newTest;
+//
+//        switch (testTypeID) {
+//            case 0:     // single sine
+//                newTest = new SingleSineConfidenceTest(noise);
+//                break;
+//            case 1:     // interval sine
+//                newTest = new IntervalSineConfidenceTest(noise);
+//                break;
+//            case 2:     // melody sine
+//                newTest = new MelodySineConfidenceTest(noise);
+//                break;
+//            case 3:     // single piano
+//                newTest = new PianoConfidenceTest(noise);
+//                break;
+//            case 4:     // single sine, test default calibration frequencies
+//                newTest = new SingleSineCalibFreqConfidenceTest(noise);
+//                break;
+//            default:
+//                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
+//        }
+//
+//        newTest.initialize();
+//        iModel.setConfidenceTest(newTest);
+//        this.confidenceTest();
+//    }
 
     /**
      * Register a UI event with the answer "up"

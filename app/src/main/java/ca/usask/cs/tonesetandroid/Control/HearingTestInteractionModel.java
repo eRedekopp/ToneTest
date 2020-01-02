@@ -2,7 +2,6 @@ package ca.usask.cs.tonesetandroid.Control;
 
 import java.util.ArrayList;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.CalibrationTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;

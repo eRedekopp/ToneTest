@@ -14,6 +14,7 @@ Calibration:
         - throw error if not able to properly initialize (ie. prerequisite test results not available)
 
 Confidence:
+    Get info from user in ConfSelectActivity
     Similar to calibration, except return with: noise type, noise volume, tone timbre, tone type (eg. interval),
                                                 trials per tone
 
