@@ -109,16 +109,6 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
     }
 
     @Override
-    protected final String getLineEnd(SingleTrialResult result) {
-        return String.format("freq: %.2f, vol: %.2f, %s, %d clicks: %s",
-                this.currentTrial.tone().freq(),
-                this.currentTrial.tone().vol(),
-                this.currentTrial.wasCorrect() ? "Heard" : "NotHeard",
-                this.currentTrial.nClicks(),
-                this.currentTrial.getClicksAsString());
-    }
-
-    @Override
     public int[] getPossibleResponses() {
         return new int[]{ANSWER_HEARD};
     }

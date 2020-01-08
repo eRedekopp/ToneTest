@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid.Control;
 
 import android.os.Environment;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.BufferedWriter;
@@ -93,7 +94,10 @@ public class FileIOController {
      * @param test The hearing test to be begun immediately following this function call
      */
     public void saveTestHeader(HearingTest test) {
-        // TODO
+        saveString(String.format("TEST START %s | %s | %s%n",
+                FORMAT.format(System.currentTimeMillis()),
+                test.getTestTypeName(),
+                test.getBackgroundNoiseType().toString()));
     }
 
     /**
@@ -112,6 +116,7 @@ public class FileIOController {
         else
             try {
                 Log.i("FileIOController", string);
+                // todo make this a class field so we don't recreate it every few seconds?
                 BufferedWriter out = new BufferedWriter(new FileWriter(currentFile, true));
                 out.write(string);
                 out.close();
@@ -198,8 +203,9 @@ public class FileIOController {
      * @param file A file that exists
      * @throws FileNotFoundException If the file does not exist
      */
-    public void setCurrentFile(File file) throws FileNotFoundException {
-        setCurrentFile(file, false);
+    public void setCurrentFile(@Nullable File file) throws FileNotFoundException {
+        if (file != null) setCurrentFile(file, false);
+        else this.currentFile = null;
     }
 
     /**
@@ -239,6 +245,11 @@ public class FileIOController {
      */
     public Participant loadParticipantData(int partID) throws FileNotFoundException, UnfinishedTestException {
         // TODO
+
+
+
+
+
         return null;
     }
 

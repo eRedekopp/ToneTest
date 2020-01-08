@@ -9,12 +9,16 @@ Done recently:
 
 Todo:
 
+    NEXT:
+    - LOAD FILES FROM DISK
+    - TEST/DEBUG WHAT YOU HAVE SO FAR
+
+
     - specify audibility vs differentiation in confidence test
     - add ramp/conf test without reduce
         - calculate tone volumes differently depending on available information
 
     - improve wav confidence test
-    - load files from disk
     - printResultsToConsole on login
     - Test out new system
     - Move RampTestResults into a single class

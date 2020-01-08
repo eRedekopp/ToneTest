@@ -105,14 +105,6 @@ public abstract class HearingTest<T extends Tone> {
      */
     public abstract String getTestTypeName();
 
-    /**
-     * Return the information to be written after the header in the save file for the given trial
-     *
-     * @param result The individual trial result to be saved
-     * @return A string with information relating specifically to result to be written after the line's header
-     */
-    protected abstract String getLineEnd(SingleTrialResult result);
-
     public HearingTest(BackgroundNoiseType backgroundNoiseType) {
         this.completedTrials = new ArrayList<>();
         this.backgroundNoiseType = backgroundNoiseType;
@@ -248,7 +240,7 @@ public abstract class HearingTest<T extends Tone> {
     }
 
     /**
-     * @return The time in seconds since 1970 at which the current trial was started
+     * @return The time in seconds since epoch at which the current trial was started
      */
     public long getLastTrialStartTime() {
         return this.currentTrial.getStartTime();
@@ -266,10 +258,6 @@ public abstract class HearingTest<T extends Tone> {
 
     public BackgroundNoiseType getBackgroundNoiseType() {
         return backgroundNoiseType;
-    }
-
-    public void setBackgroundNoiseType(BackgroundNoiseType backgroundNoiseType) {
-        this.backgroundNoiseType = backgroundNoiseType;
     }
 
     public HearingTestResults getResults() {

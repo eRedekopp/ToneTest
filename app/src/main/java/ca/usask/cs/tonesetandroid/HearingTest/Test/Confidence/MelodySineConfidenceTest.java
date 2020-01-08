@@ -148,16 +148,6 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
         return new int[]{ANSWER_UP, ANSWER_DOWN, ANSWER_FLAT};
     }
 
-    @Override
-    public String getLineEnd(SingleTrialResult trial) {
-        return String.format("%.1f, %s, %s, %d clicks: %s",
-                trial.tone().freq(),
-                trial.tone().directionAsString(),
-                trial.wasCorrect() ? "Correct" : "Incorrect",
-                trial.nClicks(),
-                trial.getClicksAsString());
-    }
-
     /**
      * @return The average vol floor estimate of the given frequencies
      */

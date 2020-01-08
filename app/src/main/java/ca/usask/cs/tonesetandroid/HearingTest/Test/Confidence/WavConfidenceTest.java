@@ -48,13 +48,6 @@ public abstract class WavConfidenceTest extends ConfidenceTest<WavTone> {
     }
 
     @Override
-    public String getLineEnd(SingleTrialResult trial) {
-        return String.format("freq: %.2f, vol: %.2f, %s, %d clicks: %s",
-                trial.tone().freq(), trial.tone().vol(), trial.wasCorrect() ? "Correct" : "Incorrect", trial.nClicks(),
-                Arrays.toString(trial.clickTimes()));
-    }
-
-    @Override
     protected void playTone(WavTone tone) {
         this.playWav(tone);
     }

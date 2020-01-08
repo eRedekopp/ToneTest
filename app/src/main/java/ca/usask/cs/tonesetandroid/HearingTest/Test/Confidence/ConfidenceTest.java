@@ -169,15 +169,6 @@ public abstract class ConfidenceTest<T extends Tone> extends SingleToneTest<T> {
         }).start();
     }
 
-    @Override
-    public String getLineEnd(SingleTrialResult trial) {
-        return String.format("%s, %s, %d clicks: %s",
-                trial.tone().toString(),
-                trial.wasCorrect() ? "Correct" : "Incorrect",
-                trial.nClicks(),
-                trial.getClicksAsString());
-    }
-
     /**
      * @return An array containing each tone that has been tested at least once 
      */

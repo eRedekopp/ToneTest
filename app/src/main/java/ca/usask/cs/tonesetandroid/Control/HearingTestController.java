@@ -1,6 +1,9 @@
 package ca.usask.cs.tonesetandroid.Control;
 
 import android.content.Context;
+import android.util.Log;
+
+import java.io.FileNotFoundException;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.IntervalSineConfidenceTest;
@@ -72,56 +75,85 @@ public class HearingTestController {
     public void calibrationTest(int noiseTypeID, int noiseVol, int toneTimbreID, int testTypeID)
             throws TestNotAvailableException {
 
-        // TODO finish this
-
         BackgroundNoiseType noiseType = new BackgroundNoiseType(noiseTypeID, noiseVol);
 
         this.model.configureAudio();
         this.iModel.setTestPaused(true);
+        // set current file to current participant's calibration file
+        this.fileController.setCurrentCalib(this.model.getCurrentParticipant());
 
+        // Each test suite must:
+        //  - create and place into the iModel all tests that will be run in this suite
+        //  - call setup*Test() for the first test of the suite
+        // The rest of the setup is generic and is done in the next code block
         switch (testTypeID) {
             case TEST_SUITE_FULL:
                 if (toneTimbreID == Tone.TIMBRE_SINE) {
                     this.iModel.setRampTest(new SineRampTest(noiseType));
                     this.iModel.setReduceTest(new SineReduceTest(noiseType));
                     this.iModel.setConfidenceTest(new SingleSineConfidenceTest(noiseType));
-                    this.iModel.setCurrentTest(this.iModel.getRampTest());
+                    this.setupRampTest();
                 } else {
                     throw new TestNotAvailableException();
                 }
                 break;
             case TEST_SUITE_RAMP:
+                // TODO
             case TEST_SUITE_RR:
+                // TODO
                 throw new TestNotAvailableException();
             default:
                 throw new RuntimeException("Unknown testTypeID: " + testTypeID);
         }
 
+        // start bg noise
         this.noiseController.playNoise(this.iModel.getCurrentNoise());
-        this.fileController.setCurrentCalib(this.model.getCurrentParticipant());
+        // show the information dialog to the user, which will start the test once the user closes it
         this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
     }
 
     /**
-     * Perform any necessary steps to finalize the RampTest and prepare the ReduceTest
+     * Perform any necessary steps to get ready for a ramp test.
+     */
+    private void setupRampTest() {
+        // save the header line with test information for the first test
+        this.fileController.saveTestHeader(this.iModel.getRampTest());
+        this.iModel.setCurrentTest(this.iModel.getRampTest());
+    }
+
+    /**
+     * Perform any necessary steps to finalize the RampTest and prepare the ReduceTest or CalibrationTest
      * Only call immediately after completing a RampTest
      */
     public void rampTestComplete() {
-        this.iModel.setTestPaused(true);
+        // indicate that the test is complete in the participant's calibration file
+        this.fileController.saveEndTest();
         // add to model.hearingTestResults without reduce results
         this.model.getCurrentParticipant().getResults().addResults(
                 this.iModel.getRampTest().getResults().getRegularRampResults());
-        // go to ramp test if doing a full calibration
-        if (iModel.getRampTest() != null) {
+        // go to reduce test or calibration test, if necessary
+        if (iModel.getReduceTest() != null) {
+            this.setupReduceTest();
             this.view.showInformationDialog(this.iModel.getReduceTest().getTestInfo());
-            this.iModel.getReduceTest().setRampResults(this.iModel.getRampTest().getResults());
-            this.iModel.getReduceTest().initialize();
-            this.iModel.setTestThreadActive(false);
-            this.iModel.notifySubscribers();
-            this.iModel.setCurrentTest(this.iModel.getReduceTest());
+        } else if (iModel.getCalibrationTest() != null) {
+            // TODO
+            testComplete(); // placeholder
         } else { // clean up and exit if not doing a full calibration
             testComplete();
         }
+    }
+
+    /**
+     * Perform any necessary steps to get ready for a reduce test
+     */
+    private void setupReduceTest() {
+        // todo does this need to depend on a ramp test happening just before it?
+        this.iModel.getReduceTest().setRampResults(this.iModel.getRampTest().getResults());
+        this.iModel.getReduceTest().initialize();
+        this.iModel.setTestThreadActive(false);
+        this.iModel.notifySubscribers();
+        this.iModel.setCurrentTest(this.iModel.getReduceTest());
+        this.fileController.saveTestHeader(this.iModel.getReduceTest());
     }
 
     /**
@@ -129,21 +161,32 @@ public class HearingTestController {
      * Only call immediately after completing a ReduceTest
      */
     public void reduceTestComplete() {
+        // indicate that the test is complete
+        this.fileController.saveEndTest();
         // Add ramp results to model list again, but with floor info this time
         this.iModel.getRampTest().getResults().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
         this.model.getCurrentParticipant().getResults().addResults(this.iModel.getRampTest().getResults());
 
-        // set up CalibrationTest to run next, if doing a full test
+        // set up CalibrationTest to run next, if necessary
         if (this.iModel.getCalibrationTest() != null) {
-            this.iModel.getCalibrationTest().setRampResults(this.iModel.getRampTest().getResults());
-            this.iModel.getCalibrationTest().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
-            this.iModel.getCalibrationTest().initialize();
-            this.iModel.setCurrentTest(this.iModel.getCalibrationTest());
-            this.iModel.setTestThreadActive(false);
-            this.iModel.notifySubscribers();
+            this.setupCalibrationTest();
+            this.view.showInformationDialog(this.iModel.getCalibrationTest().getTestInfo());
         } else {
             testComplete();
         }
+    }
+
+    /**
+     * Perform any necessary steps to get ready for a calibration test
+     */
+    private void setupCalibrationTest() {
+        this.iModel.getCalibrationTest().setRampResults(this.iModel.getRampTest().getResults());
+        this.iModel.getCalibrationTest().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
+        this.iModel.getCalibrationTest().initialize();
+        this.iModel.setCurrentTest(this.iModel.getCalibrationTest());
+        this.fileController.saveTestHeader(this.iModel.getCurrentTest());
+        this.iModel.setTestThreadActive(false);
+        this.iModel.notifySubscribers();
     }
 
     /**
@@ -151,6 +194,7 @@ public class HearingTestController {
      */
     public void calibrationTestComplete() {
         this.model.getCurrentParticipant().getResults().addResults(this.iModel.getCalibrationTest().getResults());
+        this.fileController.saveEndTest();
         testComplete();
     }
 
@@ -224,6 +268,12 @@ public class HearingTestController {
      * To be called once a test or suite of tests is completed and the model etc is to be reset
      */
     private void testComplete() {
+        try {
+            this.fileController.setCurrentFile(null);
+        } catch (FileNotFoundException e) {
+            Log.e("HearingTestController", "Something very very very very strange has happened in testComplete()");
+            e.printStackTrace();
+        }
         this.iModel.reset();
         this.model.audioTrackCleanup();
         this.iModel.notifySubscribers();

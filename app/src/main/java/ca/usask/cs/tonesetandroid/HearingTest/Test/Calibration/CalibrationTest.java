@@ -1,14 +1,11 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.ListIterator;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleToneTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -131,21 +128,6 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
     @Override
     public boolean isComplete() {
         return ! this.position.hasNext();
-    }
-
-    /**
-     * Note: All CalibrationTests MUST have line endings with the format "[freq-label] <freq> [vol-label] <vol> ..."
-     * else they will not be able to be loaded
-     */
-    @Override
-    protected String getLineEnd(SingleTrialResult result) {
-
-        return String.format("freq(Hz) %.1f, vol %.4f, %s, %d clicks: %s",
-                this.currentTrial.tone().freq(),
-                this.currentTrial.tone().vol(),
-                this.currentTrial.wasCorrect() ? "Heard" : "NotHeard",
-                this.currentTrial.nClicks(),
-                this.currentTrial.getClicksAsString());
     }
 
     @Override

@@ -136,14 +136,6 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    protected final String getLineEnd(SingleTrialResult result) {
-        SingleRampTrialResult rampResult = (SingleRampTrialResult) result;
-        return String.format("Freq: %.1f, vol1: %.4f, vol2: %.4f",
-                rampResult.tone().freq(), rampResult.tone().vol(), rampResult.tone2().vol());
-    }
-
-    @Override
     public void handleAnswerClick(int answer, boolean fromTouchInput) {
         // RampTests have no need for this method because they do not track click times
     }
