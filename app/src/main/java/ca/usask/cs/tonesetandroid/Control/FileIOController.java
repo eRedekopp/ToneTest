@@ -9,8 +9,16 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.InputMismatchException;
+import java.util.Scanner;
+import java.util.regex.Pattern;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResultsCollection;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.PredictorResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.Participant;
 
@@ -31,9 +39,24 @@ public class FileIOController {
     private static final SimpleDateFormat FORMAT = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
 
     /**
+     * The string that is written in a test result file to indicate the beginning of a test
+     */
+    private static final String START_TEST_STRING = "START-TEST";
+
+    /**
+     * The string that is written in a test result file to indicate the end of a test
+     */
+    private static final String END_TEST_STRING = "END-TEST";
+
+    /**
      * The current file to which saveString() will write
      */
     private File currentFile;
+
+    /**
+     * The writer we use to output to the current file. To be changed every time the currentFile changes
+     */
+    private BufferedWriter writer;
 
     /**
      * Return the name (not path) of the directory containing a participant's confidence test files
@@ -94,7 +117,10 @@ public class FileIOController {
      * @param test The hearing test to be begun immediately following this function call
      */
     public void saveTestHeader(HearingTest test) {
-        saveString(String.format("TEST START %s | %s | %s%n",
+        // eg. START-TEST 2020-05-18_12:30:59 sine-interval-conf white 10
+        //      indicator        date             test name     noise type
+        saveString(String.format("%s %s %s %s%n",
+                START_TEST_STRING,
                 FORMAT.format(System.currentTimeMillis()),
                 test.getTestTypeName(),
                 test.getBackgroundNoiseType().toString()));
@@ -104,7 +130,7 @@ public class FileIOController {
      * Write a line to the current file indicating that a test has completed
      */
     public void saveEndTest() {
-        saveString(String.format("END-TEST%n"));
+        saveString(String.format("%s%n", END_TEST_STRING));
     }
 
     /**
@@ -116,10 +142,7 @@ public class FileIOController {
         else
             try {
                 Log.i("FileIOController", string);
-                // todo make this a class field so we don't recreate it every few seconds?
-                BufferedWriter out = new BufferedWriter(new FileWriter(currentFile, true));
-                out.write(string);
-                out.close();
+                writer.write(string);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (NullPointerException e) {
@@ -180,6 +203,7 @@ public class FileIOController {
      * @throws FileNotFoundException If the file was not found or created
      */
     private void setCurrentFile(File file, boolean create) throws FileNotFoundException {
+        // make sure the file exists, create if requested
         if (! file.exists()) {
             if (create) {
                 try {
@@ -194,7 +218,18 @@ public class FileIOController {
                 throw new FileNotFoundException();
             }
         }
+        // set the file if all went well up to now
         this.currentFile = file;
+        // set up the writer
+        try {
+            if (writer != null) {
+                writer.close();
+            }
+            this.writer = new BufferedWriter(new FileWriter(this.currentFile, true));
+        } catch (IOException e) {
+            e.printStackTrace();
+            this.writer = null;
+        }
     }
 
     /**
@@ -242,13 +277,68 @@ public class FileIOController {
      * @return A new Participant with the data loaded from the appropriate file
      * @throws FileNotFoundException if the participant with the given ID does not have any files saved
      * @throws UnfinishedTestException if the file contains a half-finished test
+     * @throws InputMismatchException if the file wasn't properly formatted
      */
-    public Participant loadParticipantData(int partID) throws FileNotFoundException, UnfinishedTestException {
+    public Participant loadParticipantData(int partID)
+            throws FileNotFoundException, UnfinishedTestException, InputMismatchException {
         // TODO
 
+        // get the file with the user's calibration results
+        File calibFile = new File(getConfDirName(partID), getCalibFileName(partID));
 
+        // make sure it exists
+        if (! calibFile.exists()) {
+            throw new FileNotFoundException("Calibration file for participant " + partID + " does not exist");
+        }
 
+        // read the file, looking for test results
+        HearingTestResultsCollection resultsCollection = new HearingTestResultsCollection();
+        Scanner scanner = new Scanner(calibFile);
+        while (scanner.hasNext()) {
+            // when execution gets here, we should always be at the start of a test's results
+            BackgroundNoiseType noiseType;
+            String testName;
+            long startTime;
 
+            // get test info, or throw exception if the test header isn't found
+            if (scanner.next().equals(START_TEST_STRING)) {
+                // get the start time of the test
+                try {
+                    startTime = FORMAT.parse(scanner.next()).getTime();
+                } catch (ParseException e) {
+                    throw new InputMismatchException();
+                }
+                // get the name of the test
+                testName = scanner.next();
+                // get the noise type of the test
+                String noiseName = scanner.next();
+                int noiseVol = scanner.nextInt();
+                noiseType = new BackgroundNoiseType(noiseName, noiseVol);
+            } else {
+                throw new InputMismatchException();
+            }
+
+            // get the right type of test results
+            PredictorResults testResults;
+            if (Pattern.matches("-?calibration-?", testName)) {
+                // calibration test
+                testResults = new CalibrationTestResults(noiseType, testName);
+
+                // todo
+
+            } else if (Pattern.matches("-?ramp-?", testName)) {
+                // ramp test
+                testResults = new RampTestResults(noiseType, testName);
+
+                // todo
+
+            } else if (Pattern.matches("-?reduce-?", testName)) {
+                // reduce test
+
+                // todo
+            }
+
+        }
 
         return null;
     }

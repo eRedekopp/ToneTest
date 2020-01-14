@@ -101,7 +101,7 @@ public abstract class HearingTest<T extends Tone> {
      * Return a string identifying the type of test, to be used in save files and logs.
      * All ramp tests must contain the word "ramp", reduce tests must contain the
      * word "reduce", confidence tests must contain the word "confidence", and calibration
-     * tests must contain the word "calibration"
+     * tests must contain the word "calibration". Words must be attached by hyphens. No whitespace.
      */
     public abstract String getTestTypeName();
 
