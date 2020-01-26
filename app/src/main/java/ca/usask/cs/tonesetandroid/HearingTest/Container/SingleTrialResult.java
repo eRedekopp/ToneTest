@@ -26,7 +26,7 @@ public class SingleTrialResult {
     /**
      * The tone that was played in this trial
      */
-    private final Tone tone;
+    protected final Tone tone;
 
     /**
      * Did the user hear the tone / discern the direction correctly?

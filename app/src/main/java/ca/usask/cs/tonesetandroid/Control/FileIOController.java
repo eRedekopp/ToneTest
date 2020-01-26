@@ -1,6 +1,7 @@
 package ca.usask.cs.tonesetandroid.Control;
 
 import android.os.Environment;
+import android.renderscript.ScriptGroup;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
@@ -19,7 +20,10 @@ import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResultsCollection;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.PredictorResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResultsWithFloorInfo;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.Participant;
 
 /**
@@ -281,18 +285,20 @@ public class FileIOController {
      */
     public Participant loadParticipantData(int partID)
             throws FileNotFoundException, UnfinishedTestException, InputMismatchException {
-        // TODO
 
         // get the file with the user's calibration results
-        File calibFile = new File(getConfDirName(partID), getCalibFileName(partID));
+        File confDir = new File(PARENT, getConfDirName(partID));
+        File calibFile = new File(confDir, getCalibFileName(partID));
 
-        // make sure it exists
+        // make sure the file exists
         if (! calibFile.exists()) {
-            throw new FileNotFoundException("Calibration file for participant " + partID + " does not exist");
+            throw new FileNotFoundException("Calibration file for participant " + partID + " does not exist. Expected" +
+                    " path: " + calibFile.getAbsolutePath());
         }
 
         // read the file, looking for test results
         HearingTestResultsCollection resultsCollection = new HearingTestResultsCollection();
+        RampTestResultsWithFloorInfo lastRamp = null;  // if the most recent test was a ramp, store it here
         Scanner scanner = new Scanner(calibFile);
         while (scanner.hasNext()) {
             // when execution gets here, we should always be at the start of a test's results
@@ -315,32 +321,142 @@ public class FileIOController {
                 int noiseVol = scanner.nextInt();
                 noiseType = new BackgroundNoiseType(noiseName, noiseVol);
             } else {
-                throw new InputMismatchException();
+                throw new InputMismatchException("Expected test header but was not found");
             }
 
-            // get the right type of test results
-            PredictorResults testResults;
+            // behaviour depends on which type of test it was
             if (Pattern.matches("-?calibration-?", testName)) {
-                // calibration test
-                testResults = new CalibrationTestResults(noiseType, testName);
 
-                // todo
+                //////////////////// calibration test /////////////////////
+
+                // If we did a ramp last time, we don't care so we set lastRamp to null
+                lastRamp = null;
+
+                // create a new Results object
+                CalibrationTestResults testResults = new CalibrationTestResults(noiseType, testName);
+                testResults.setStartTime(startTime);
+
+                // Flag for whether the test actually reached the end, to avoid a weird labeled break statement from
+                // the nested while loops
+                boolean testCompleted = false;
+
+                // read line-by-line until test is complete or we run out of lines
+                while (scanner.hasNext()) {
+                    String next;
+                    next = scanner.next();
+                    if (next.equals(END_TEST_STRING)) {
+                        // test is over: finalize this one and go back to the top
+                        resultsCollection.addResults(testResults);
+                        testCompleted = true;
+                        break;  // break from this while loop, then jump to top of the outer loop in the next block
+                    }
+
+                    // test is not over: read the line and add it to our results
+                    float freq = scanner.nextFloat();
+                    double vol = scanner.nextDouble();
+                    scanner.next();  // jump over the direction string; not used
+                    boolean correct = scanner.nextBoolean();
+                    scanner.nextLine();  // ignore clicks - move cursor past end of line
+
+                    testResults.addResult(new FreqVolPair(freq, vol), correct);
+                }
+
+                // exception if test wasn't completed, otherwise jump back to to top of the loop
+                if (! testCompleted) {
+                    throw new UnfinishedTestException("Did not find end-test label after Calibration Test");
+                }
 
             } else if (Pattern.matches("-?ramp-?", testName)) {
-                // ramp test
-                testResults = new RampTestResults(noiseType, testName);
 
-                // todo
+                //////////////////////// ramp test /////////////////////////
+
+                // create a new results object
+                RampTestResultsWithFloorInfo testResults = new RampTestResultsWithFloorInfo(noiseType, testName);
+                testResults.setStartTime(startTime);
+
+                boolean testCompleted = false;
+                float lastFreq = -1;
+                double lastVol = -1;
+
+                // read line-by-line until the test is complete or we run out of lines
+                while (scanner.hasNext()) {
+                    String next;
+                    next = scanner.next();
+                    if (next.equals(END_TEST_STRING)) {
+                        // make sure we didn't end half way through
+                        if (lastFreq != -1) {
+                            throw new InputMismatchException("Ended with only one ramp-up at frequency " + lastFreq);
+                        }
+                        // test is over: finalize this one and go back to the top
+                        resultsCollection.addResults(testResults.getRegularRampResults());
+                        testCompleted = true;
+                        lastRamp = testResults;
+                        break;  // break from this while loop, then jump to the top of the outer loop in the next block
+                    }
+
+                    // test is not over: read the next line and add it to our results
+                    float freq = scanner.nextFloat();
+                    double vol = scanner.nextDouble();
+                    scanner.nextLine();  // ignore direction, 'correct', and clicks
+
+                    if (lastFreq == -1) {
+                        // if this is the first tone at this frequency, add the result after the second
+                        lastFreq = freq;
+                        lastVol = vol;
+                    } else if (lastFreq == freq) {
+                        // second tone at this frequency: add the result now
+                        testResults.addResult(freq, lastVol, vol);
+                        lastFreq = -1;
+                        lastVol = -1;
+                    } else {
+                        throw new InputMismatchException("Only found 1 ramp-up at frequency " + lastFreq);
+                    }
+                }
+
+                if (! testCompleted) {
+                    throw new UnfinishedTestException("Did not find end-test label after Ramp Test");
+                }
 
             } else if (Pattern.matches("-?reduce-?", testName)) {
-                // reduce test
 
-                // todo
+                /////////////////////// reduce test ////////////////////////
+
+                if (lastRamp == null) {
+                    // reduce test must be immediately after a ramp test
+                    throw new InputMismatchException("Found a reduce test not immediately following a ramp test");
+                }
+
+                ReduceTest.ResultsBuilder builder = new ReduceTest.ResultsBuilder();
+                boolean testCompleted = false;
+
+                // read line-by-line until the test is complete or we run out of lines
+                while (scanner.hasNext()) {
+                    String next;
+                    next = scanner.next();
+                    if (next.equals(END_TEST_STRING)) {
+                        // test is over: finalize this one and go back to the top
+                        lastRamp.setReduceResults(builder.build().getResults());
+                        resultsCollection.addResults(lastRamp);
+                        testCompleted = true;
+                        lastRamp = null;
+                        break;
+                    }
+
+                    // test is not over: read the next line and add it to our results
+                    float freq = scanner.nextFloat();
+                    double vol = scanner.nextDouble();
+                    scanner.nextLine();  // ignore direction, 'correct', and clicks
+
+                    builder.addResult(freq, vol);
+                }
+
+                if (! testCompleted) {
+                    throw new UnfinishedTestException("Did not find end-test label after reduce test");
+                }
             }
-
         }
 
-        return null;
+        return new Participant(partID, calibFile, confDir, resultsCollection);
     }
 
     /**

@@ -147,7 +147,6 @@ public class HearingTestController {
      * Perform any necessary steps to get ready for a reduce test
      */
     private void setupReduceTest() {
-        // todo does this need to depend on a ramp test happening just before it?
         this.iModel.getReduceTest().setRampResults(this.iModel.getRampTest().getResults());
         this.iModel.getReduceTest().initialize();
         this.iModel.setTestThreadActive(false);

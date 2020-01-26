@@ -1,3 +1,15 @@
+Personal note from Eric:
+
+This project was the first time I've ever been paid to program, at the time of this writing it is the biggest project
+I've ever worked on, and was mostly completed just after my 2nd year of university with very, very minimal supervision.
+In hindsight, there's a lot of things I would have done differently (most notably, just thinking things through better
+before starting to write code), and some of the code in here is outright awful. I've done a little bit of work to clean
+things up, and I've documented everything to the best of my ability. Do not hesitate to contact me at
+err291@mail.usask.ca if you have any questions about this code, or if you'd just like to berate me for being bad at
+programming when I wrote this.
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Overview/definitions:
 
@@ -86,6 +98,7 @@ Calibration:
     Note: multi-test suites are always executed in the following order: Ramp -> reduce -> calibration
         - because later tests depend on information from previous ones.
         - information may be taken from a previous test suite with the same noise type and volume, if needed
+            - unless it's a reduce test. Reduce tests must immediately follow a ramp test
 
 Confidence:
     Basically the same as calibration except there is only 1 test to be run, and there are more options for timbres and
@@ -119,10 +132,13 @@ information about all calibrations taken by this participant, and one file per c
 Calibration result file (one per participant):
     Named Calibration_N where N is the participant number
 
-    START-TEST <TEST-TYPE> <NOISE> <DATE>
+    START-TEST <DATE> <TEST-TYPE> <NOISE>
     <TIME> <FREQ> <VOL> <DIRECTION> <CORRECT?> <NUM-CLICKS> <CLICK-STRING>
     ...
     END-TEST
+
+    A ramp test contains 2 lines per frequency: one for each ramp-up
+
 
 Confidence result file (one per test):
     Named Confidence_DATE_N where DATE is the current date/time and N is the participant number
