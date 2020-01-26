@@ -399,7 +399,14 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     p = new Participant(-1, null, null);
                     System.exit(1);
                 } catch (FileIOController.UnfinishedTestException e) {
-                    // TODO handle unfinished test
+                    // undefined right now - just crash the whole thing if this happens
+                    // TODO handle unfinished tests
+                    showErrorDialog("Unfinished test found in calibration file", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            System.exit(1);
+                        }
+                    });
                     return;
                 }
 

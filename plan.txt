@@ -2,11 +2,18 @@ Personal note from Eric:
 
 This project was the first time I've ever been paid to program, at the time of this writing it is the biggest project
 I've ever worked on, and was mostly completed just after my 2nd year of university with very, very minimal supervision.
+This project has changed forms many times, includes some little bits of features that I thought about implementing but
+later decided not to, there are some elements in the structure that don't really make sense with the way things are
+currently laid out but made sense back when they were first written, there are some elements of the structure that
+didn't even really make sense when I first wrote them.
+
 In hindsight, there's a lot of things I would have done differently (most notably, just thinking things through better
 before starting to write code), and some of the code in here is outright awful. I've done a little bit of work to clean
-things up, and I've documented everything to the best of my ability. Do not hesitate to contact me at
-err291@mail.usask.ca if you have any questions about this code, or if you'd just like to berate me for being bad at
-programming when I wrote this.
+things up, and I've documented everything to the best of my ability. The rest of this document contains information
+about the structure and design of this software.
+
+Do not hesitate to contact me at err291@mail.usask.ca if you have any questions about this code, or if you'd just like
+to berate me for being bad at programming when I wrote this.
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -103,6 +110,43 @@ Calibration:
 Confidence:
     Basically the same as calibration except there is only 1 test to be run, and there are more options for timbres and
     types, and we get options from user in ConfSelectActivity
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Storing test results at runtime:
+
+The following explanation is for how hearing test results are stored in memory at runtime. Persistent storage is
+explained under "files", and briefly under "Participants"
+
+Hearing test results are stored in a special container class, found in the HearingTest.Container module. A
+meta-container for storing the results of many hearing tests is provided by the HearingTestResultsCollection class. Each
+Participant has an associated HearingTestResultsCollection in which all of their tests taken to date (either performed
+recently, or read from a file at load time) are stored.
+
+The results of an individual hearing test are stored in an object inheriting from the HearingTestResults abstract class.
+One notable child of the HearingTestResults class is the PredictorResults abstract class, which contains the results of
+any hearing test whose results can be used to make predictions about tones not necessarily performed in the test itself
+(ie. CalibrationTest and RampTest)
+
+RampTestResults
+
+    The RampTestResults class is not often used, except to indicate that a test was only a ramp test and no reduce test
+    was performed. While performing a RampTest, the results are stored into a RampTestResultsWithFloorInfo class, which
+    inherits from RampTestResults but also has fields in which to store the results of a reduce test. After performing a
+    RampTest, we store the results into a HearingTestResultsCollection as RampTestResults using
+    RampTesResultsWithFloorInfo.getRegularRampResults().
+
+    After performing a ReduceTest (which necessarily must be performed immediately following a RampTest), we find the
+    results of the previously-performed RampTest, then store the ReduceTestResults (in the form of an array of
+    FreqVolPairs, rather than its own Results object) into the RampTestResultsWithFloorInfo from the last test using
+    the setReduceResults() method, then add the RampTestResultsWithFloorInfo directly to the
+    HearingTestResultsCollection without modifying it. Internally, the RampTest class uses a RampTestResults class. This
+    is mostly a legacy thing and doesn't serve any purpose outside of the internals of the class itself. To load the
+    results of a ReduceTest from a file, use the ReduceTest.ResultsBuilder class, add the results with addResult(),
+    then call builder.build().getResults() to get the results in a form suitable for adding to a
+    RampTestResultsWithFloorInfo.
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

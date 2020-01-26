@@ -136,8 +136,8 @@ public class HearingTestController {
             this.setupReduceTest();
             this.view.showInformationDialog(this.iModel.getReduceTest().getTestInfo());
         } else if (iModel.getCalibrationTest() != null) {
-            // TODO
-            testComplete(); // placeholder
+            this.setupCalibrationTest();
+            this.view.showInformationDialog(this.iModel.getCalibrationTest().getTestInfo());
         } else { // clean up and exit if not doing a full calibration
             testComplete();
         }
