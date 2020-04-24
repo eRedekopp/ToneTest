@@ -21,6 +21,7 @@ public class PianoCalibrationTest extends WavCalibrationTest {
 
     public PianoCalibrationTest(BackgroundNoiseType noiseType) {
         super(noiseType);
+        this.testInfo = DEFAULT_TEST_INFO;
     }
 
     @Override

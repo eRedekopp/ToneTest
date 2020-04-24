@@ -5,14 +5,11 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.HearingTestController;
-import ca.usask.cs.tonesetandroid.Click;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResults;
 import ca.usask.cs.tonesetandroid.Control.FileIOController;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;

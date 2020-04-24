@@ -49,10 +49,11 @@ public class InitActivity extends Activity {
                     showErrorDialog("Invalid subject id number");
                     return;
                 }
-                if (fileController.participantExists(entry)) {
-                    showErrorDialog(String.format("Participant with ID %d already exists", entry));
-                } else if (entry == 0) {
+                if (entry == 0) {
                     showErrorDialog("Participant ID 0 is reserved for testing. Please choose another ID");
+                }
+                else if (fileController.participantExists(entry)) {
+                    showErrorDialog(String.format("Participant with ID %d already exists", entry));
                 } else {
                     handleNewPartClick(entry);
                 }
@@ -76,7 +77,7 @@ public class InitActivity extends Activity {
                 }
 
                 if (! fileController.participantExists(entry)) {
-                    showErrorDialog("Participant with ID %d does not exist");
+                    showErrorDialog(String.format("Participant with ID %d does not exist", entry));
                 } else {
                     handleLoadPartClick(entry);
                 }

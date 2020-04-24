@@ -1,4 +1,4 @@
-package ca.usask.cs.tonesetandroid;
+package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
 /**
  * A class to store information about a specific touchscreen button press, volume button press, or "shake" event

@@ -1,5 +1,6 @@
 package ca.usask.cs.tonesetandroid.Control;
 
+import android.media.MediaScannerConnection;
 import android.os.Environment;
 import android.renderscript.ScriptGroup;
 import android.support.annotation.Nullable;
@@ -26,8 +27,10 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.Participant;
 
+import static ca.usask.cs.tonesetandroid.MainActivity.context;
+
 /**
- * A class for saving and reading results 
+ * A class for saving/reading data to/from files
  */
 public class FileIOController {
 
@@ -97,22 +100,17 @@ public class FileIOController {
      */
     public void saveLine(final long startTime, final float freq, final double vol, final String direction,
                          final boolean correct, final int numClicks, final String clickString) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                String formattedDateTime;
+        String formattedDateTime;
 
-                try {
-                    formattedDateTime = FORMAT.format(startTime);
-                } catch (NullPointerException e) {
-                    Log.e("FileIOController", "Nullpointerexception caused");
-                    e.printStackTrace();
-                    formattedDateTime = "TimeFetchError";
-                }
-                saveString(String.format("%s,%.2f,%.2f,%s,%b,%d,%s%n",
-                                         formattedDateTime, freq, vol, direction, correct, numClicks, clickString));
-            }
-        }).start();
+        try {
+            formattedDateTime = FORMAT.format(startTime);
+        } catch (NullPointerException e) {
+            Log.e("FileIOController", "Nullpointerexception caused");
+            e.printStackTrace();
+            formattedDateTime = "TimeFetchError";
+        }
+        saveString(String.format("%s,%.2f,%.2f,%s,%b,%d,%s%n",
+                                 formattedDateTime, freq, vol, direction, correct, numClicks, clickString));
     }
 
     /**
@@ -140,7 +138,7 @@ public class FileIOController {
     /**
      * Save the given string to the current file, and also write it to Log.i
      */
-    public synchronized void saveString(final String string) {
+    public void saveString(final String string) {
         if (currentFile == null) throw new IllegalStateException("File not properly configured");
         else if (! currentFile.exists()) throw new IllegalStateException("Target file does not exist");
         else
@@ -196,24 +194,39 @@ public class FileIOController {
             Log.e("FileIOController", "IOException occurred while creating participant calibration file");
             e.printStackTrace();
         }
+        // make the device aware of the new file. Not sure why this is necessary but the file will always be empty
+        // otherwise
+        MediaScannerConnection.scanFile(
+                context,
+                new String[]{partDir.getAbsolutePath(), calibFile.getAbsolutePath()},
+                new String[]{"text/csv", "text/csv"},
+                null);
+
     }
 
     /**
      * Set the current file to the given file. The file is guaranteed to exist if this method does not
      * throw a FileNotFoundException
      *
-     * @param file The file to be set as the new current
+     * @param file The file to be set as the new current, or null if not applicable
      * @param create Should we create the file if it doesn't exist?
      * @throws FileNotFoundException If the file was not found or created
      */
-    private void setCurrentFile(File file, boolean create) throws FileNotFoundException {
+    private void setCurrentFile(@Nullable File file, boolean create) throws FileNotFoundException {
         // make sure the file exists, create if requested
-        if (! file.exists()) {
+        if (file != null && ! file.exists()) {
             if (create) {
                 try {
                     if (!file.createNewFile()) {
                         throw new IOException("Unable to create new file");
                     }
+                    // make the device aware of the new file. Not sure why this is necessary but the file will always be empty
+                    // otherwise
+                    MediaScannerConnection.scanFile(
+                            context,
+                            new String[]{file.getAbsolutePath()},
+                            new String[]{"text/csv"},
+                            null);
                 } catch (IOException e) {
                     Log.e("FileIOController", "IOException occurred creating new file in setCurrentFile");
                     e.printStackTrace();
@@ -226,10 +239,12 @@ public class FileIOController {
         this.currentFile = file;
         // set up the writer
         try {
-            if (writer != null) {
-                writer.close();
+            if (this.writer != null) {
+                this.writer.close();
             }
-            this.writer = new BufferedWriter(new FileWriter(this.currentFile, true));
+            if (this.currentFile != null) {
+                this.writer = new BufferedWriter(new FileWriter(this.currentFile, true));
+            }
         } catch (IOException e) {
             e.printStackTrace();
             this.writer = null;
@@ -243,8 +258,7 @@ public class FileIOController {
      * @throws FileNotFoundException If the file does not exist
      */
     public void setCurrentFile(@Nullable File file) throws FileNotFoundException {
-        if (file != null) setCurrentFile(file, false);
-        else this.currentFile = null;
+        setCurrentFile(file, false);
     }
 
     /**
@@ -303,16 +317,18 @@ public class FileIOController {
         while (scanner.hasNext()) {
             // when execution gets here, we should always be at the start of a test's results
             BackgroundNoiseType noiseType;
-            String testName;
+            String testName, header;
             long startTime;
 
+            scanner.useDelimiter("\\s");  // headers are space-separated
+
             // get test info, or throw exception if the test header isn't found
-            if (scanner.next().equals(START_TEST_STRING)) {
+            if ((header = scanner.next()).equals(START_TEST_STRING)) {
                 // get the start time of the test
                 try {
                     startTime = FORMAT.parse(scanner.next()).getTime();
                 } catch (ParseException e) {
-                    throw new InputMismatchException();
+                    throw new InputMismatchException("Error parsing date");
                 }
                 // get the name of the test
                 testName = scanner.next();
@@ -321,11 +337,13 @@ public class FileIOController {
                 int noiseVol = scanner.nextInt();
                 noiseType = new BackgroundNoiseType(noiseName, noiseVol);
             } else {
-                throw new InputMismatchException("Expected test header but was not found");
+                throw new InputMismatchException("Expected test header but was not found: found " + header);
             }
 
+            scanner.useDelimiter(",");  // test results are comma-separated
+
             // behaviour depends on which type of test it was
-            if (Pattern.matches("-?calibration-?", testName)) {
+            if (Pattern.matches("^[\\s\\S]*?calibration[\\s\\S]*?$", testName)) {
 
                 //////////////////// calibration test /////////////////////
 
@@ -366,7 +384,7 @@ public class FileIOController {
                     throw new UnfinishedTestException("Did not find end-test label after Calibration Test");
                 }
 
-            } else if (Pattern.matches("-?ramp-?", testName)) {
+            } else if (Pattern.matches("^[\\s\\S]*?ramp[\\s\\S]*?$", testName)) {
 
                 //////////////////////// ramp test /////////////////////////
 
@@ -380,9 +398,7 @@ public class FileIOController {
 
                 // read line-by-line until the test is complete or we run out of lines
                 while (scanner.hasNext()) {
-                    String next;
-                    next = scanner.next();
-                    if (next.equals(END_TEST_STRING)) {
+                    if (scanner.hasNext("^[\\s\\S]*?" + END_TEST_STRING + "[\\s\\S]*?$")) {
                         // make sure we didn't end half way through
                         if (lastFreq != -1) {
                             throw new InputMismatchException("Ended with only one ramp-up at frequency " + lastFreq);
@@ -391,8 +407,11 @@ public class FileIOController {
                         resultsCollection.addResults(testResults.getRegularRampResults());
                         testCompleted = true;
                         lastRamp = testResults;
+                        scanner.nextLine();
                         break;  // break from this while loop, then jump to the top of the outer loop in the next block
                     }
+
+                    scanner.next();  // ignore the time
 
                     // test is not over: read the next line and add it to our results
                     float freq = scanner.nextFloat();
@@ -417,7 +436,7 @@ public class FileIOController {
                     throw new UnfinishedTestException("Did not find end-test label after Ramp Test");
                 }
 
-            } else if (Pattern.matches("-?reduce-?", testName)) {
+            } else if (Pattern.matches("^[\\s\\S]*?reduce[\\s\\S]*?$", testName)) {
 
                 /////////////////////// reduce test ////////////////////////
 

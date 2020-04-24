@@ -6,9 +6,6 @@ import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.RampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleToneTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -64,7 +61,6 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
     @Override
     protected void run() {
         if (this.currentVolumes.isEmpty()) throw new IllegalStateException("Test not initialized");
-        this.setStartTime();  // set the start time of this test (or do nothing if this has already been done)
 
         new Thread(new Runnable() {
             @Override
@@ -77,7 +73,6 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
                         for (T trial : currentVolumes) {
                             if (iModel.testPaused() || ! iModel.testing()) return;
 
-                            saveLine();
                             newCurrentTrial(trial);
                             iModel.resetAnswer();
                             currentTrial.setStartTime();
@@ -90,6 +85,8 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
                                 mapIncrement(timesNotHeardPerFreq, trial.freq());
                             currentTrial.setCorrect(iModel.answered());
                             sleepThread(1000, 3000);
+                            saveLine();     // save line after waiting, so we save all the clicks that happened while
+                                            // waiting
                         }
                         reduceCurrentVolumes();
                     }

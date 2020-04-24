@@ -17,6 +17,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
     public SineCalibratonTest(BackgroundNoiseType noiseType) {
         super(noiseType);
+        this.testInfo = DEFAULT_TEST_INFO;
     }
 
     @Override

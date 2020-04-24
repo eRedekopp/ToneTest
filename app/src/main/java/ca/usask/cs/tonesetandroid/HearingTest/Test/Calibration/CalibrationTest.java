@@ -17,6 +17,10 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
  */
 public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> {
 
+    protected static final String DEFAULT_TEST_INFO =
+            "In this phase of the test, tones of various pitches and volumes will play at random times. " +
+            "Please press the \"Heard Tone\" button each time that you hear a tone";
+
     /**
      * The default number of volumes at which to test each frequency in a calibration test
      */
@@ -94,13 +98,13 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
                 try {
                     iModel.setTestThreadActive(true);
 
+                    sleepThread(1800, 3000); // wait before playing the first tone
+
                     while (! isComplete()) {
                         if (iModel.testPaused() || ! iModel.testing()) return;  // exit if paused or returned to login
 
-                        sleepThread(1800, 3000); // wait before playing next tone
                         iModel.resetAnswer();
                         T current = position.next();
-                        saveLine();  // save previous trial immediately before next to register all clicks
                         newCurrentTrial(current);
                         currentTrial.setStartTime();
                         playTone(current);
@@ -110,6 +114,8 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
                         }
                         currentTrial.setCorrect(iModel.answered());
                         ((CalibrationTestResults) results).addResult(current, currentTrial.wasCorrect());
+                        sleepThread(1800, 3000); // wait before playing next tone
+                        saveLine(); // save the line after waiting so we register all the clicks during silence
                     }
 
                     // test complete: finalize results

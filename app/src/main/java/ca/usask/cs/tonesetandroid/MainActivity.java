@@ -412,6 +412,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
 
                 this.model.setCurrentParticipant(p);
                 this.modelChanged();
+                Log.i("MainActivity", p.getResults().toString());
                 break;
 
             // returned from calibration setup
@@ -421,7 +422,11 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     int noiseVol = data.getIntExtra("noiseVol", -1);
                     int toneTimbreID = data.getIntExtra("toneTimbreID", -1);
                     int testTypeID = data.getIntExtra("testTypeID", -1);
-                    controller.calibrationTest(noiseTypeID, noiseVol, toneTimbreID, testTypeID);
+                    try {
+                        controller.calibrationTest(noiseTypeID, noiseVol, toneTimbreID, testTypeID);
+                    } catch (HearingTestController.TestNotAvailableException e) {
+                        showErrorDialog("No test available for the requested configuration", null);
+                    }
                 }
                 break;
 

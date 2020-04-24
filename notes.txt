@@ -6,22 +6,19 @@ Done recently:
     - Deleted and revamped most of InitActivity
            - See plan.txt
     - Revamped the way we start new tests - added new activities for configuring a test
+    - Revamped file I/O
 
 Todo:
 
     NEXT:
-    - LOAD FILES FROM DISK
     - TEST/DEBUG WHAT YOU HAVE SO FAR
-
 
     - specify audibility vs differentiation in confidence test
     - add ramp/conf test without reduce
         - calculate tone volumes differently depending on available information
 
     - improve wav confidence test
-    - printResultsToConsole on login
     - Test out new system
-    - Move RampTestResults into a single class
 
     - add piano note wavs for new frequencies (see piano calib/conf test frequencies)
     - .wav earcon probabilities based on component tones (known beforehand) and FFT data

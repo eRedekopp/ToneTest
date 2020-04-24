@@ -4,7 +4,9 @@ import android.content.Context;
 import android.util.Log;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.IntervalSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.MelodySineConfidenceTest;
@@ -62,8 +64,10 @@ public class HearingTestController {
     }
 
     /**
-     * Set up a new calibration suite to be run. The part where it actually starts running happens in
-     * checkForHearingTestResume, probably called from MainActivity.modelChanged()
+     * Set up a new calibration suite to be run. This method configures the other MVC elements in preparation for a
+     * new calibration suite, then calls view.showInformationDialog, which in turn calls MainActivity.modelChanged(),
+     * which calls this.checkForHearingTestResume to actually begin the test after the user indicates that they've
+     * read the instructions
      *
      * @param noiseTypeID The identifier for the type of noise to be used in the test
      *                    (one of BackgroundNoiseType.TYPE_*)
@@ -91,7 +95,7 @@ public class HearingTestController {
                 if (toneTimbreID == Tone.TIMBRE_SINE) {
                     this.iModel.setRampTest(new SineRampTest(noiseType));
                     this.iModel.setReduceTest(new SineReduceTest(noiseType));
-                    this.iModel.setConfidenceTest(new SingleSineConfidenceTest(noiseType));
+                    this.iModel.setCalibrationTest(new SineCalibratonTest(noiseType));
                     this.setupRampTest();
                 } else {
                     throw new TestNotAvailableException();
@@ -259,6 +263,12 @@ public class HearingTestController {
         this.fileController.saveString(
                 this.model.getCurrentParticipant().getResults().compareToConfidenceTest(
                         this.iModel.getConfidenceTest().getConfResults()));
+        try {
+            this.fileController.setCurrentFile(null);
+        } catch (IOException e) {
+            Log.e("HearingTestController", "Something very very very very strange has happened in confTestComplete()");
+            e.printStackTrace();
+        }
         this.iModel.reset();
         this.iModel.notifySubscribers();
     }
