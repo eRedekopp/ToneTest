@@ -343,6 +343,7 @@ public class FileIOController {
             scanner.useDelimiter(",");  // test results are comma-separated
 
             // behaviour depends on which type of test it was
+            // different if statement for each type of test
             if (Pattern.matches("^[\\s\\S]*?calibration[\\s\\S]*?$", testName)) {
 
                 //////////////////// calibration test /////////////////////
@@ -366,7 +367,7 @@ public class FileIOController {
                         // test is over: finalize this one and go back to the top
                         resultsCollection.addResults(testResults);
                         testCompleted = true;
-                        break;  // break from this while loop, then jump to top of the outer loop in the next block
+                        break;  // break from this while loop and jump to top of the outer loop
                     }
 
                     // test is not over: read the line and add it to our results
@@ -398,10 +399,11 @@ public class FileIOController {
 
                 // read line-by-line until the test is complete or we run out of lines
                 while (scanner.hasNext()) {
+                    // TODO pretty sure the problem is that it's not picking up the end-test
                     if (scanner.hasNext("^[\\s\\S]*?" + END_TEST_STRING + "[\\s\\S]*?$")) {
                         // make sure we didn't end half way through
                         if (lastFreq != -1) {
-                            throw new InputMismatchException("Ended with only one ramp-up at frequency " + lastFreq);
+                            throw new InputMismatchException("Ended early on frequency " + lastFreq);
                         }
                         // test is over: finalize this one and go back to the top
                         resultsCollection.addResults(testResults.getRegularRampResults());

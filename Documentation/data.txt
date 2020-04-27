@@ -1,0 +1,13 @@
+PARTICIPANTS
+
+A "participant" is an individual person who has taken or will take hearing tests with this application. A participant is
+assigned a directory on whichever device this application is being run on when they are first logged in. In that
+directory is a single "calibration file" in which the participant's Calibration Test results are stored. A line is
+saved in that file for every tone that is played in the test, containing information about the tone and the user's
+response to it. A line is saved before and after the test to indicate the beginning and end of the test. Ramp, Reduce,
+and Calibration tests are saved as separate tests. At login time, data is loaded from this calibration file into a
+Participant object which will be used until the user switches participants or exits the application. Each confidence
+test is saved in an individual file in the user's directory, and contains human-readable statistical data at the end of
+the file.
+
+For more information, see "files" below
