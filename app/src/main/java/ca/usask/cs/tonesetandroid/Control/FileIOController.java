@@ -340,7 +340,8 @@ public class FileIOController {
                 throw new InputMismatchException("Expected test header but was not found: found " + header);
             }
 
-            scanner.useDelimiter(",");  // test results are comma-separated
+            scanner.useDelimiter("[,\n]");  // test results are comma-separated, and also stop looking at the end of a
+                                          // line
 
             // behaviour depends on which type of test it was
             // different if statement for each type of test
@@ -399,8 +400,7 @@ public class FileIOController {
 
                 // read line-by-line until the test is complete or we run out of lines
                 while (scanner.hasNext()) {
-                    // TODO pretty sure the problem is that it's not picking up the end-test
-                    if (scanner.hasNext("^[\\s\\S]*?" + END_TEST_STRING + "[\\s\\S]*?$")) {
+                    if (scanner.hasNext("[\\s\\S]*?" + END_TEST_STRING + "[\\s\\S]*?")) {
                         // make sure we didn't end half way through
                         if (lastFreq != -1) {
                             throw new InputMismatchException("Ended early on frequency " + lastFreq);
