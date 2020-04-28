@@ -188,6 +188,7 @@ public class RampTestResults extends PredictorResults {
     @SuppressWarnings("ConstantConditions")
     public String toString() {
         StringBuilder builder = new StringBuilder();
+        builder.append(this.getTestIdentifier() + '\n');
         for (float freq : this.getTestedFreqs())
             builder.append(String.format("Freq: %.1f, vol1 = %.3f, vol2 = %.3f%n",
                     freq, this.allResults.get(freq).vol1(), this.allResults.get(freq).vol2()));
@@ -208,7 +209,7 @@ public class RampTestResults extends PredictorResults {
 
     @Override
     public String getTestIdentifier() {
-        return this.getTestTypeName() + " sans ramp data at " + this.getFormattedStartTime();
+        return this.getTestTypeName() + " without floor data at " + this.getFormattedStartTime();
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////

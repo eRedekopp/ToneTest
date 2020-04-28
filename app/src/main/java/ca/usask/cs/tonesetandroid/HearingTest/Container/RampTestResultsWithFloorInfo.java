@@ -78,6 +78,18 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
 
     @Override
     public String getTestIdentifier() {
-        return this.getTestTypeName() + " sans ramp data at " + this.getFormattedStartTime();
+        return this.getTestTypeName() + " with floor data at " + this.getFormattedStartTime();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(super.toString());
+        builder.append("Floor results:\n");
+        for (FreqVolPair result : this.reduceResults) {
+            builder.append(result.toString());
+            builder.append('\n');
+        }
+        return builder.toString();
     }
 }
