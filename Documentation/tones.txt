@@ -1,0 +1,1 @@
+Information about the different types of tones that can be played by this application.

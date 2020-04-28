@@ -1,13 +1,70 @@
-PARTICIPANTS
+Information about how hearing test results are stored at runtime
+It is highly recommended that you read hearing-tests.txt before reading this document.
 
-A "participant" is an individual person who has taken or will take hearing tests with this application. A participant is
-assigned a directory on whichever device this application is being run on when they are first logged in. In that
-directory is a single "calibration file" in which the participant's Calibration Test results are stored. A line is
-saved in that file for every tone that is played in the test, containing information about the tone and the user's
-response to it. A line is saved before and after the test to indicate the beginning and end of the test. Ramp, Reduce,
-and Calibration tests are saved as separate tests. At login time, data is loaded from this calibration file into a
-Participant object which will be used until the user switches participants or exits the application. Each confidence
-test is saved in an individual file in the user's directory, and contains human-readable statistical data at the end of
-the file.
+##################################################### Participants #####################################################
 
-For more information, see "files" below
+A "participant" is an individual person who has taken or will take hearing tests with this application. At login time,
+a Participant object is created, and if there are any, Calibration results are loaded into it. This way, a participant
+can do a calibration one day, then come back another day for confidence tests.
+
+A Participant contains all the calibration tests that this individual has taken, but does not store confidence test
+results (those are intended to be read by humans from the files on disk).
+
+
+######################################################## Clicks ########################################################
+
+The Click class originally represented just a touchscreen button press (or "click"), but this class now represents any
+user input intended to indicate whether they heard a tone. This can be a touchscreen button press, a volume button
+press, or a "shake" event. See interaction.txt for more information about how users can respond to tones played by this
+application.
+
+The Click class stores the time in milliseconds since the epoch at which the user interaction was registered, the answer
+indicated by the user, and whether the event came through a touchscreen button press or through a shake/volume event.
+
+Each tone played by a hearing test has a set of 0 or more Click objects that were registered during or immediately
+following the tone being played, which are stored in that tone's SingleTrialResult (below)
+
+
+################################################## SingleTrialResult ###################################################
+
+
+################################################# Storing Test Results #################################################
+
+The following explanation is for how hearing test results are stored in memory at runtime. Persistent storage is
+explained in file-io.txt.
+
+Hearing test results are stored in a special container class, found in the HearingTest.Container module. A
+meta-container for storing the results of many hearing tests is provided by the HearingTestResultsCollection class. Each
+Participant has an associated HearingTestResultsCollection in which all of their tests taken to date (either performed
+recently or read from a file) are stored.
+
+The results of an individual hearing test are stored in an object inheriting from the HearingTestResults abstract class.
+One notable child of the HearingTestResults class is the PredictorResults abstract class, which contains the results of
+any hearing test whose results can be used to make predictions about tones not necessarily performed in the test itself
+(ie. CalibrationTest and RampTest).
+
+All non-abstract child classes of HearingTestResults implement a function called addResult(). This is not declared as
+an abstract function because different subclasses have slightly different parameters for it. During a test, the result
+of whether or not a participant heard an individual tone is added using this addResult() function.
+
+
+RampTestResults and floor info
+
+    The RampTestResults class is not often used, except to indicate that a test was only a ramp test and no reduce test
+    was performed. While performing a RampTest, the results are stored into a RampTestResultsWithFloorInfo class, which
+    inherits from RampTestResults but also has fields in which to store the results of a reduce test. After performing a
+    RampTest, we store the results into a HearingTestResultsCollection as RampTestResults using
+    RampTesResultsWithFloorInfo.getRegularRampResults().
+
+    After performing a ReduceTest (which necessarily must be performed immediately following a RampTest), we find the
+    results of the previously-performed RampTest, then store the ReduceTestResults (in the form of an array of
+    FreqVolPairs, rather than its own Results object) into the RampTestResultsWithFloorInfo from the last test using
+    the setReduceResults() method, then add the RampTestResultsWithFloorInfo directly to the
+    HearingTestResultsCollection without modifying it. Internally, the RampTest class uses a RampTestResults class. This
+    is mostly a legacy thing and doesn't serve any purpose outside of the internals of the class itself. To load the
+    results of a ReduceTest from a file, use the ReduceTest.ResultsBuilder class, add the results with addResult(),
+    then call builder.build().getResults() to get the results in a form suitable for adding to a
+    RampTestResultsWithFloorInfo.
+
+
+################################################## Using Test Results ##################################################

@@ -1,3 +1,5 @@
+Overview of this project and its documentation
+
 ##################
 ## Introduction ##
 ##################
@@ -43,9 +45,51 @@ This directory contains documentation on the project and the code therein.
         Descriptions of the different types of hearing tests that this application may perform, as well as explanations
         of how they work, how they are started by the system, and how to add new ones.
 
+    interaction.txt
+        Descriptions of all the different Views in this application and how the user is meant to interact with them
+
     mvc.txt
         Information about the "Model-View-Controller" structure of this project, and how the major components of this
         application interact with each other.
+
+    tones.txt
+        Descriptions of the different tones playable by this application and how they are implemented
+
+
+#######################
+## Project Structure ##
+#######################
+
+This project builds using Gradle. I know very little about Gradle, so don't touch the default AndroidStudio settings
+unless you know what you're doing.
+
+Most of the files in this project are organized into modules, which are explained here:
+
+    Files not in a module:
+        Activities and Views for the Android framework. Not a lot of real work happens in these files except for
+        MainActivity and InitActivity which handle the GUI on the login and main pages.
+
+        Participant is a storage class to hold all of a single participant's test results
+
+        UtilFunctions contains various static generic functions that are used in several different files
+
+    Control:
+        Models and controllers for different aspects of the program (views are handled by the non-modularized View and
+        Activity classes described above). These classes are described in detail in mvc.txt
+
+    HearingTest:
+        Everything to do with the actual hearing tests to be performed by this application.
+
+        Container:
+            Classes for storing the results of one or more tests
+
+        Test:
+            Classes representing the different types of tests that can be performed by this application.
+            See hearing-tests.txt for more information
+
+        Tone:
+            Classes representing the different tones that can be played by this application. See tones.txt for more
+            information.
 
 
 #############################
@@ -54,15 +98,18 @@ This directory contains documentation on the project and the code therein.
 
 This project was the first time I've ever been paid to program, it was pretty much entirely designed and implemented
 by myself, at the time of this writing it is the biggest project I've ever worked on, and was mostly completed just
-after my 2nd year of university with minimal supervision. This project has changed forms many times, includes some
-little bits of features that I thought about implementing but later decided not to, there are some elements in the
-structure that don't really make sense with the way things are currently laid out but made sense back when they were
-first written, there are some elements of the structure that didn't even really make sense when I first wrote them.
+after my 2nd year of university with minimal supervision. It was a sort of trial-by-fire for me and it's taught me
+more than any class ever has, but it means that I was learning almost everything as I went (I didn't even know what a
+thread was when I started this project and I had almost no experience implementing GUIs) and so things are a little
+messy in places. This project has changed forms many times, includes some little bits of features that I thought about
+implementing but later decided not to, there are some  elements in the structure that don't really make sense with the
+way things are currently laid out but made sense back when they were first written, there are some elements of the
+structure that didn't even really make sense when I first wrote them.
 
 In hindsight, there's a lot of things I would have done differently (most notably, just thinking things through better
 before starting to write code), and some of the code in here is definitely not my best work. I've done a little bit of
-work to clean things up, and I've documented everything to the best of my ability. The rest of this document contains
-information about the structure and design of this software.
+work to clean things up, and I've documented everything to the best of my ability. The documents in this folder should
+give you a good start on extending the current functionality.
 
 Do not hesitate to contact me at err291@mail.usask.ca if you have any questions about this code, or if you'd just like
-to berate me for being bad at programming when I wrote this.
+to get mad at me for leaving you a mess (sorry).
