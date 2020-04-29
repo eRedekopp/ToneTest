@@ -41,6 +41,9 @@ This directory contains documentation on the project and the code therein.
     file-io.txt:
         Information pertaining to the saving and loading of Participant data from files on disk
 
+    future.txt
+        Tips on how to get started on some tasks that you'll possibly want to do in the future
+
     hearing-tests.txt
         Descriptions of the different types of hearing tests that this application may perform, as well as explanations
         of how they work, how they are started by the system, and how to add new ones.

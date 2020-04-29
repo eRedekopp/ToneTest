@@ -54,7 +54,7 @@ public class HearingTestResultsCollection {
      * given background noise
      *
      * @param freq The frequency whose volume ceiling is to be estimated
-     * @param noiseType The background noise in which the frequency is payed
+     * @param noiseType The background noise in which the frequency is played
      * @return An estimate for the lowest volume with P(heard) = 1
      */
     public double getVolCeilingEstimate(float freq, BackgroundNoiseType noiseType) {

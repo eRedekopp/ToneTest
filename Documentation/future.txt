@@ -1,0 +1,7 @@
+Rough guides for things future developers may want to do
+
+// TODO how to make it load Confidence Test results
+
+// TODO how to change the way it computes P(heard)
+
+// TODO how to fuck with compareToConfidenceTest()

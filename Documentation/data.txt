@@ -1,5 +1,7 @@
 Information about how hearing test results are stored at runtime
 It is highly recommended that you read hearing-tests.txt before reading this document.
+For information on how test results are saved to disk, see file-io.txt.
+
 
 ##################################################### Participants #####################################################
 
@@ -27,13 +29,14 @@ following the tone being played, which are stored in that tone's SingleTrialResu
 
 ################################################## SingleTrialResult ###################################################
 
+A SingleTrialResult stores information about one individual tone played one time. This includes the time at which the
+tone was played, the Click objects registered during the tone, whether the user was correct, and any other information
+that we need to keep track of.
+
 
 ################################################# Storing Test Results #################################################
 
-The following explanation is for how hearing test results are stored in memory at runtime. Persistent storage is
-explained in file-io.txt.
-
-Hearing test results are stored in a special container class, found in the HearingTest.Container module. A
+Final hearing test results are stored in a special container class, found in the HearingTest.Container module. A
 meta-container for storing the results of many hearing tests is provided by the HearingTestResultsCollection class. Each
 Participant has an associated HearingTestResultsCollection in which all of their tests taken to date (either performed
 recently or read from a file) are stored.
@@ -68,3 +71,37 @@ RampTestResults and floor info
 
 
 ################################################## Using Test Results ##################################################
+
+Confidence test results are stored in files and are never added to a Participant object. The application does some
+analysis of the confidence test versus the predicted values from the calibration tests, but only does this immediately
+after a confidence test. If you decide that you want to do extra processing on ConfidenceTestResults and save them with
+the Participant, a rough guide on that is provided in future.txt. More information on confidence test files can be
+found in file-io.txt.
+
+PredictorResults are the only ones saved with a HearingTestResultsCollection object, and they are used for two purposes
+in this system:
+
+    Selecting tones for a Confidence Test
+        Tones for a confidence test are selected by first finding the PredictorResults with the most similar background
+        noise to the background noise of the confidence test, then using the getVolFloorEstimate() and
+        getVolCeilingEstimate() functions in those PredictorResults to find volumes. This all happens by simply using
+        the getVol[Floor/Ceiling]Estimate() functions built into the HearingTestResultsCollection class. Confidence test
+        tones are configured in that test's configureTestTones() method.
+
+    Predicting the probability of hearing a tone that was not tested
+        Getting P(heard) for a tone can be done through the getProbability method. If the predictor results can make
+        more than one prediction, this falls back on some default. The more important method is getPredictionString,
+        which makes one or more predictions about the probability of hearing a tone, then formats it as a string with
+        the different predictions labelled if necessary.
+
+As stated above, some PredictorResults can make more than one prediction. This mainly concerns the RampTest. Since the
+RampTest has so much less information than the CalibrationTest, we might need to do a bit more trial-and-error. This
+way, we can predict using any arbitrary number of techniques, then print them all out through the getPredictionString()
+method to figure out which one works best.
+
+We typically don't directly use a PredictorResults once we've added all of the results to it. PredictorResults are
+usually accessed through their HearingTestResultsCollection, mostly through the compareToConfidenceTest() or
+getVol[Floor/Ceiling]Estimate() methods.
+
+Some rough guidelines on how to edit the way that this application computes P(heard) or how it compares PredictorResults
+to ConfidenceTestResults can be found in future.txt

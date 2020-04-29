@@ -85,7 +85,7 @@ public class SingleSineConfidenceTest extends ConfidenceTest<FreqVolPair> {
                     confFreqs.get(3),
                     results.getVolCeilingEstimate(confFreqs.get(3), this.getBackgroundNoiseType()) * 1.5));
 
-        int hardCodedCases = 4; // how many test cases are hard-coded like the ones above?
+        final int hardCodedCases = 4; // how many test cases are hard-coded like the ones above?
 
         // For every other frequency in the list, add a test case where it is somewhere between 40% and 100% of the
         // way between estimates for "completely inaudible" and "completely audible" volumes
