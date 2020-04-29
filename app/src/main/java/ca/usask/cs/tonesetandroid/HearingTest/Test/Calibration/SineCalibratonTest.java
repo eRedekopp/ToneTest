@@ -38,6 +38,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
         ArrayList<FreqVolPair> allTones = new ArrayList<>();
         for (float freq : DEFAULT_CALIBRATION_FREQUENCIES) {
+            // we boost the top volume estimates so that
             double topVolEst = Tone.getVolForFreq(rampResults.getResultsArray(), freq) * 1.2; // boost volumes
             double bottomVolEst = Tone.getVolForFreq(reduceResults, freq) * 1.2;
             for (double vol = bottomVolEst;
