@@ -9,3 +9,9 @@ Rough guides for things future developers may want to do
 // TODO adding a new test
 
 // TODO changing how long the user has to submit a click
+
+// TODO hooking up new tests to the system, esp. when it comes to Setup*Test
+
+// TODO adding a field for number of tones to CalibrationSelectActivity
+
+// TODO allowing volume rocker events to be registered as "heard" clicks

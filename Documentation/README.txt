@@ -30,7 +30,10 @@ hearing-tests.txt for more information on hearing tests.
 ## Table of Contents ##
 #######################
 
-This directory contains documentation on the project and the code therein.
+This directory contains documentation on the project and the code therein. There are like 11,000 lines of code in here
+and I don't have an infinite budget for writing docs, so this information is far from complete. My email is at the
+bottom of this document; I will happily reply to questions about this code, provided that I can still remember how it
+works.
 
     README.txt (this file):
         Overview information and this table of contents
@@ -50,6 +53,9 @@ This directory contains documentation on the project and the code therein.
 
     interaction.txt
         Descriptions of all the different Views in this application and how the user is meant to interact with them
+
+    noise.txt
+        Explanation of how background noise is generated
 
     mvc.txt
         Information about the "Model-View-Controller" structure of this project, and how the major components of this

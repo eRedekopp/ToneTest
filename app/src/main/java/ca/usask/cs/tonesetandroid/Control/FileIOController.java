@@ -341,7 +341,7 @@ public class FileIOController {
             }
 
             scanner.useDelimiter("[,\n]");  // test results are comma-separated, and also stop looking at the end of a
-                                          // line
+                                            // line
 
             // behaviour depends on which type of test it was
             // different if statement for each type of test

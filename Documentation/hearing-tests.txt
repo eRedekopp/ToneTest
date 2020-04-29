@@ -116,7 +116,8 @@ Calibration Tests:
     generates the list of Tones to be played in this test. If there are any special things to be done in configuring
     test tones (eg. setting up .wav file associations or something), that happens in configureTestTones(). In these
     tests, only user interaction events registered while the tone was playing are valid, although all clicks are
-    recorded in the file (see future.txt for how to change this)
+    recorded in the file (see future.txt for how to change this). After playing a tone, we wait for between 1 and 3
+    seconds before playing the next one.
 
 
 ################################################### Confidence Tests ###################################################
@@ -143,39 +144,3 @@ user on.
         - Differentiation : Can the user differentiate between the pitches moving upward and downward?
 
 All Single tests are Audibility tests by default. All confidence tests follow this naming scheme for easy classification
-
-
-################################################ Running a Hearing Test ################################################
-
-Each subclass of the abstract HearingTest class must have a run() method, which plays tones via the Model and tracks the
-results in a stored HearingTestResults object (or not, in the case of a ReduceTest. see data.txt). The run() method is
-called from HearingTestController.checkForHearingTestResume() - never called directly from setup*Test() or any other
-method. All tests are started by setting them in the HearingTestInteractionModel and calling checkForHearingTestResume
-(or causing it to be called indirectly via modelChanged()). The following is a more detailed description of the control
-flow while starting a new test:
-
-Calibration:
-    Register "calibration" click in MainActivity
-    Go to CalibSelectActivity, return with integer IDs for all selected options
-        - or just end here if user cancelled in CalibSelectActivity screen
-    Return to MainActivity, and pass the selected IDs to HearingTestController.calibrationTest()
-    Select the appropriate test types and put into the HearingTestInteractionModel
-        - 1 to 3, depending on user's selection. Set as fields in the iModel so we know which tests to run later on
-        - set the first test as iModel.currentTest
-        - null any tests that are not going to be run
-    Set the test to paused, show the test information in a dialog to the user, then notifySubscribers() when done.
-        - This causes MainActivity to call HearingTestController.checkForHearingTestResume(), which starts whichever
-          test was put on deck by HearingTestController.calibrationTest() to begin
-    Once the first test is complete, control is passed to to HearingTestController.*TestComplete, which saves the
-        results of the test and starts the next test, if there is one
-    If a user pauses during a test, execution hangs until the user un-pauses, at which time notifySubscribers() is
-        called and the test is resumed as described above
-
-    Note: multi-test suites are always executed in the following order: Ramp -> reduce -> calibration
-        - because later tests depend on information from previous ones.
-        - information may be taken from a previous test suite with the same noise type and volume, if needed
-            - unless it's a reduce test. Reduce tests must immediately follow a ramp test
-
-Confidence:
-    Basically the same as calibration except there is only 1 test to be run, and there are more options for timbres and
-    types, and we get options from user in ConfSelectActivity

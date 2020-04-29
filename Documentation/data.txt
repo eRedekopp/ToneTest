@@ -31,7 +31,7 @@ following the tone being played, which are stored in that tone's SingleTrialResu
 
 A SingleTrialResult stores information about one individual tone played one time. This includes the time at which the
 tone was played, the Click objects registered during the tone, whether the user was correct, and any other information
-that we need to keep track of.
+that we need to keep track of. These are stored inside a HearingTestResults object of some sort.
 
 
 ################################################# Storing Test Results #################################################
