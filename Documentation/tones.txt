@@ -1,1 +1,36 @@
 Information about the different types of tones that can be played by this application.
+
+
+####################################################### Overview #######################################################
+
+All tones are stored in the Tone module. Each tone has a volume, and each has a single frequency even if the tone is
+made up of more than one pitch. In melodies, this is the first pitch of the tone. Each also has a direction, for example
+a Tone that is just an A Major scale going upward would have freq = 440.0, direction = DIRECTION_UP.
+
+Logic for playing tones is provided in the HearingTest abstract class (which plays tones via the model's methods), not
+in any Tone class.
+
+
+######################################################## Tones #########################################################
+
+FreqVolPair:
+    - Just a frequency and a volume. Not really sure why one is a float and one is a double; that's how Alex had it when
+      I inherited this project and I never changed it.
+    - We use these for representing pure sine waves
+
+FreqVolDurTrio:
+    - A FreqVolPair that also has a value for its duration in milliseconds. We use this to represent a single note in a
+      melody
+
+Interval:
+    - Like a FreqVolPair, but with two frequencies. This is for representing an interval of sine waves
+
+Melody:
+    - A bunch of FreqVolDurTrios representing a melody. All note durations have to be calculated in advance based on the
+      rhythm (basically, how long is one 16th note, and how many 16th notes does each pitch last for?).
+
+WavTone:
+    - A Tone object representing a .wav resource. You must know the frequency of the first pitch of the .wav
+      resource. Right now, these are created with some hard-coded default values in the constructor. If you extend this
+      in the future, I highly recommend putting the resource ID mappings into the configureTestTones method of the
+      tests - I never should have put that logic into the WavTone constructor in the first place.
