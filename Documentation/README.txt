@@ -35,7 +35,9 @@ explain until later.
 
 I was not able to fully complete this application within my NSERC grant time and some things remain unfinished. I added
 some new functionality later on in the semester and tested it a little bit, but to be quite honest, my testing has not
-been as thorough as it probably could have been and you may run into a couple of bugs.
+been as thorough as it probably could have been and you may run into a couple of bugs. I am writing this document on the
+last day before my new NSERC term starts, so I literally am not allowed to keep testing this app even if I wanted to
+(and I don't).
 
 I've left a couple of TODOs in the source code; these are just things that I noticed while writing these docs but didn't
 have time to really go through and look at, but you may want to look at them.

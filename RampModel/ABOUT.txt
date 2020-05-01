@@ -1,4 +1,10 @@
-Results.txt contains, in the first line, all the x values of the data,
+These are some personal notes on some research I did into the data from ramp tests and how we might be able to use it to
+get rid of the CalibrationTest. I did this like 9 months ago and I don't remember everything, I just remember that it
+looked a little more like a log function than a linear one so I came up with that function at the bottom of this
+document, which we now use in the RampTestResults object.
+
+
+Results.csv contains, in the first line, all the x values of the data,
 and in all subsequent lines, y data, or nothing if no y data for that x 
 value. Contains results for all trials of pilot1 and pilot2 where both a 0% 
 and 100% audible volume were found. results.txt is to be used by 
