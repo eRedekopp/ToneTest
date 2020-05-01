@@ -20,7 +20,7 @@ public class EarconAudibilityConfidenceTest extends WavConfidenceTest {
 
     @Override
     protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies) {
-        // todo
+        // Not implemented
     }
 
     @Override

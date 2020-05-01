@@ -43,6 +43,7 @@ MainActivity:
       only have access to certain Android features within this Activity)
 
 [Conf/Calib]SelectActivity:
+    - This is where we ask the user how they want the test to look before it starts.
     - Just get the numbers and send them back to MainActivity. Very straightforward.
 
 
@@ -54,8 +55,9 @@ MainActivity:
 Jump into MainActivity.onCreate(). This does all initial setup, binds all event listeners, and creates all MVC elements.
 Then, it calls goToInit(), which jumps to InitActivity.onCreate() to create the elements for the login screen, then it
 waits for the user to enter data, checks to make sure it is valid, then returns the selected participant ID to the
-MainActivity. At this point, we are back to the MainActivity and can begin a test by pressing any of the buttons.
-Control flow for starting a test is given below.
+MainActivity. It comes back through MainActivity.onActivityResult() which then sets up our Participant object then gets
+everything started by calling its own modelChanged() method. At this point, we are back to the MainActivity and can
+begin a test by pressing any of the buttons.
 
 
 ############################ Running A Hearing Test ############################
@@ -96,4 +98,21 @@ Confidence:
 
 ############################ Registering a UI Event ############################
 
-TODO
+Other Activities:
+
+    Click listeners for all activities except the MainActivity are implemented ad-hoc and should be self-explanatory.
+
+
+MainActivity:
+
+    Click listeners for starting a test simply go to the appropriate Activity to get information about the test from the
+    user, then come back through MainActivity.onActivityResult() and starts the test as described above.
+
+    Click listeners for the pause and reset buttons are implemented ad-hoc in MainActivity.onCreate() and are
+    self-explanatory. Look at their code around line 193 of MainActivity.java if you must.
+
+    Click listeners for the up, down, flat, and heard buttons on the main screen are implemented in the
+    HearingTestController under the handle*Click() functions. These are accessed either by jumping straight to them from
+    the ClickListeners in MainActivity, or through the handler code for accelerometer events and volume button events.
+    This will then work its way to the current test's handleAnswerClick() function, which finds the current
+    SingleTrialResult for the current tone, and adds a new Click object to it.

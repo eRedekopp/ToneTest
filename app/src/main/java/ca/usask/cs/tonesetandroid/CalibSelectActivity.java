@@ -17,8 +17,6 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public class CalibSelectActivity extends Activity {
 
-     // todo test
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         // init self

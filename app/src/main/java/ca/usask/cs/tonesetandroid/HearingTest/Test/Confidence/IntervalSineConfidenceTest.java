@@ -21,7 +21,7 @@ public class IntervalSineConfidenceTest extends ConfidenceTest<Interval> {
      */
     private static final float INTERVAL_FREQ_RATIO = 1.25f;  // freq ratio 5:4 = major third
 
-    private static final int INTERVAL_DURATION_MS = DEFAULT_TONE_DURATION_MS; // todo cut out the middle man
+    private static final int INTERVAL_DURATION_MS = DEFAULT_TONE_DURATION_MS;
 
     public static final String INTERVAL_TEST_INFO =
             "In this test, pairs of tones of various frequencies and volumes will be played one after the other at " +

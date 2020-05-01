@@ -26,6 +26,59 @@ system which predicts the audibility of any arbitrary tone with reasonable accur
 hearing-tests.txt for more information on hearing tests.
 
 
+##################################
+## Current State of the Project ##
+##################################
+
+Maybe come back and read this after you're done reading the rest of the docs; this will reference stuff that I don't
+explain until later.
+
+I was not able to fully complete this application within my NSERC grant time and some things remain unfinished. I added
+some new functionality later on in the semester and tested it a little bit, but to be quite honest, my testing has not
+been as thorough as it probably could have been and you may run into a couple of bugs.
+
+I've left a couple of TODOs in the source code; these are just things that I noticed while writing these docs but didn't
+have time to really go through and look at, but you may want to look at them.
+
+
+Capabilities:
+
+    The project can do a full 3-phase calibration with sine waves, and can do confidence tests with sine waves in single
+    pitches, intervals, or melodies, and with piano tones in single pitches only. Wav tests with real ringtones are not
+    implemented at this time, but they were at one point and I'm quite sure it's just that they need to be tossed in to
+    the new and improved architecture. Other tests are shown as available on the UI but will throw a
+    TestNotAvailableException if you try to start one.
+
+    The application can compare the results of a confidence test to the results of a participant's calibration data and
+    give some information on the accuracy of the model's estimates.
+
+Known Bugs / incomplete sections / things to think about:
+
+    - You will probably want to add more tests, depending on what exactly you want the final version to look like.
+
+    - The audio sometimes sounds weird and crackly. I do not understand why this is, and it seems to be
+      device-dependent. My best guess is that this is because the application opens and closes the audio line after each
+      tone; it might be a smarter idea to just write null data to the line when a tone isn't playing instead. It could
+      also be because of the interaction between the BackgroundNoiseController and the Model's audio functions.
+
+    - I'm still not entirely convinced that the internal mixer doesn't significantly affect the ratio of volumes. For
+      example, it seems like tones get a little louder during the 1/2 second of silence in the crowd noise recording. Is
+      it pushing down loud volumes on one track to better hear the quieter sounds of a different track? Is this
+      something we need to be thinking about? Or does it not matter as long as it's consistent?
+
+    - Good Lord this test is boring. Probably the main reason it hasn't been extremely thoroughly tested is that after
+      testing yourself for the 3rd or 4th time you just want to stab yourself in the eardrums with a sharpened pencil.
+      If you really want to make this a cool study you should game-ify it or something.
+
+    - HearingTestController.ConfidenceTest has a field for the number of trials but I think it still just uses a default
+      value and ignores what the user asked it to do.
+
+    - There are a whole lot of classes for hearing tests that are just stubs, or are implemented but unused. This is
+      because I focused way too much on features and not enough on usability in the beginning, and couldn't fit all the
+      features into my improved, more usable version in time.
+
+
+
 #######################
 ## Table of Contents ##
 #######################
@@ -34,6 +87,9 @@ This directory contains documentation on the project and the code therein. There
 and I don't have an infinite budget for writing docs, so this information is far from complete. My email is at the
 bottom of this document; I will happily reply to questions about this code, provided that I can still remember how it
 works.
+
+I strongly recommend that you read hearing-tests.txt and mvc.txt first because they provide the highest-level
+descriptions of what this application does and how it all works together
 
     README.txt (this file):
         Overview information and this table of contents
@@ -112,13 +168,12 @@ more than any class ever has, but it means that I was learning almost everything
 thread was when I started this project and I had almost no experience implementing GUIs) and so things are a little
 messy in places. This project has changed forms many times, includes some little bits of features that I thought about
 implementing but later decided not to, there are some  elements in the structure that don't really make sense with the
-way things are currently laid out but made sense back when they were first written, there are some elements of the
+way things are currently laid out but made sense back when they were first written, and there are some elements of the
 structure that didn't even really make sense when I first wrote them.
 
 In hindsight, there's a lot of things I would have done differently (most notably, just thinking things through better
 before starting to write code), and some of the code in here is definitely not my best work. I've done a little bit of
 work to clean things up, and I've documented everything to the best of my ability. The documents in this folder should
-give you a good start on extending the current functionality.
-
-Do not hesitate to contact me at err291@mail.usask.ca if you have any questions about this code, or if you'd just like
-to get mad at me for leaving you a mess (sorry).
+give you a good start on extending the current functionality, but certainly don't describe every single aspect of this
+code and how it works. Do not hesitate to contact me at err291@mail.usask.ca if you have any questions about this code,
+or if you'd just like to get mad at me for leaving you a mess (sorry).

@@ -109,7 +109,11 @@ public class CalibrationTestResults extends PredictorResults {
 
     /**
      * Given a subset of the tested frequencies, return the probability of hearing a tone of the given frequency and
-     * volume, as though the frequencies in subset
+     * volume, as though the frequencies in subset.
+     *
+     * This function was originally used to check a bunch of different subsets of the calibration data to see how
+     * we'd do if we used more or fewer frequencies. I think the number of frequencies is pretty good where it's at
+     * but you could certainly call this with various subsets in getPredictionString() to double check for yourself.
      *
      * @param freq The frequency of the tone whose probability is to be determined
      * @param vol The volume of the tone whose probability is to be determined

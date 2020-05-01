@@ -101,10 +101,9 @@ public class HearingTestController {
                     throw new TestNotAvailableException();
                 }
                 break;
+            // Not yet implemented
             case TEST_SUITE_RAMP:
-                // TODO
             case TEST_SUITE_RR:
-                // TODO
                 throw new TestNotAvailableException();
             default:
                 throw new RuntimeException("Unknown testTypeID: " + testTypeID);
@@ -217,6 +216,8 @@ public class HearingTestController {
             throws TestNotAvailableException {
         BackgroundNoiseType noiseType = new BackgroundNoiseType(noiseTypeID, noiseVol);
         ConfidenceTest confTest = null;
+
+        // TODO why doesn't trialsPerTone get used? Do we still use the default value?
 
         switch (toneTimbreID) {
             case Tone.TIMBRE_SINE:

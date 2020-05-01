@@ -27,7 +27,9 @@ Interval:
 
 Melody:
     - A bunch of FreqVolDurTrios representing a melody. All note durations have to be calculated in advance based on the
-      rhythm (basically, how long is one 16th note, and how many 16th notes does each pitch last for?).
+      rhythm (basically, how long is one 16th note, and how many 16th notes do we want each pitch to last for?). If
+      you're not a musician, find somebody who is and get them to help. Converting a melody from standard music notation
+      to this pitch-and-length notation should only take a few seconds
 
 WavTone:
     - A Tone object representing a .wav resource. You must know the frequency of the first pitch of the .wav

@@ -1,17 +1,68 @@
 Rough guides for things future developers may want to do
 
-// TODO how to make it load Confidence Test results
 
-// TODO how to change the way it computes P(heard)
+Make the application load Confidence Test results as well as PredictorResults:
 
-// TODO how to fuck with compareToConfidenceTest()
+    FileIOController.loadParticipantData() is where files get read into a Participant object, or more accurately into
+    the Participant's HearingTestResultsCollection (HTRC). A HTRC can only store PredictorResults at this time; I would
+    implement this by adding a field to the HTRC to store ConfidenceTestResults, adding any required methods to the HTRC
+    class, then adding a new `if Pattern.matches(...)` case to loadParticipantData(). You'll need to do some digging
+    through that monstrosity of a function to figure out what to do, but that's where you should load the calibration
+    results from the files found in FileIOController.getConfDirName(). You shouldn't need to change anything about the
+    way CalibrationTestResults are saved in files, just be careful not to try loading the human-readable stuff.
 
-// TODO adding a new test
 
-// TODO changing how long the user has to submit a click
+Change the way in which we compute probabilities for unheard tones:
 
-// TODO hooking up new tests to the system, esp. when it comes to Setup*Test
+    If you want to predict differently based on the type of tone, I would set the getProbability(Tone) method to check
+    the type then call the appropriate override (which you'll possibly need to implement as well).
 
-// TODO adding a field for number of tones to CalibrationSelectActivity
+    Any other edits will have to happen to a function in the getProbability() family, or you'll need to create a whole
+    new function and expose it through getPredictionString().
 
-// TODO allowing volume rocker events to be registered as "heard" clicks
+    PredictorResults.getPredictionString() is what gets written to the file to show each test's prediction, and we can
+    print more than one guess here. I would recommend implementing a new private method that computes the probability in
+    whatever new way you want, then just add a line to the prediction string so you can see how the new guess compares
+    to the other ones. You may also want to look at editing HearingTestResultsCollection.compareToConfidenceTest(); this
+    is the function that chooses what to print to the confidence file when we compare it to our calibration estimates.
+
+
+Adding a new test:
+
+    This program was designed with adding new tests in mind. If you just want to add a new ramp, conf, calibration, or
+    reduce test, all you need to do is create a subclass of that test type and implement like 1 or 2 abstract functions
+    relating to how to play the particular tones for this test. Note that any test can only play one type of tone and
+    that must be declared in the class header (eg. class MyTest extends ConfidenceTest<WavTone>).
+
+    The tricky part is working it into the system so the user can access it. This means you need to make sure that there
+    is a configuration that you can use in *SelectActivity to get the new test (add it if you need to). It should pass
+    the values back through MainActivity.onActivityResult() without any modifications, then you'll need to load the new
+    test class into the HearingTestInteractionModel in the switch statement in HearingTestController.calibrationTest()
+    or HearingTestController.confidenceTest(), and perform any necessary setup in there too. Depending on the nature of
+    your new test, it's possible you'll need to make some changes to one of the setup*Test functions. See the ones that
+    are already there for reference and make sure you have a good baseline git commit in case you screw up, cause trust
+    me you can cause yourself a royal pain by messing around with the HearingTestController without thinking very hard
+    about what you're doing.
+
+    If you want to add a totally new type of test, you'll need to make some pretty significant changes to the
+    architecture of this application, but if you want to add a new test to the calibration suite, you should be able to
+    just create your own subclass of HearingTest and poke around in CalibSelectActivity and HearingTestController to
+    make it runnable by the user.
+
+
+Changing how long the user has to press the button for it to be considered "valid":
+
+    To be clear, we always keep track of every UI event during a test and log it in the file on disk, even if it was
+    registered too early or late. Right now, we only allow clicks while the tone is playing. To do this, we play the
+    tone, register the clicks, then sleep the thread for a random amount of time (while still keeping track of clicks)
+    until we play the next tone. If you would like to give the user a grace period after the tone, simply put a portion
+    of the sleep time before you call currentTrial.setCorrect() and the rest of the time you'd like to sleep after it.
+    This all happens in the run() method of the hearing test. You can also make the tones longer or shorter (for
+    sine-wave single and interval tests) by changing HearingTest.DEFAULT_TONE_DURATION_MS.
+
+
+Allowing volume rocker events to be registered as "heard" instead of only "up" and "down":
+
+    This should be fairly simple; just call a different handle*Click() function from MainActivity.onKeyDown(). You might
+    want to call a different handler function depending on the current type of test being run; you can find that in the
+    HearingTestInteractionModel.

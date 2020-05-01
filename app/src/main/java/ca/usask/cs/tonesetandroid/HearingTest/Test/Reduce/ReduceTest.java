@@ -139,19 +139,6 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
     }
 
     /**
-     * Replace the value associated with the given key in the map with the given new value, or just associate the key
-     * with the value if not already present.
-     *
-     * @param map A HashMap
-     * @param key A valid key for that hashmap (not necessarily present in map)
-     * @param newValue The new value with which to associate the key
-     */
-    public void mapReplace(HashMap<Float, Integer> map, Float key, Integer newValue) { // todo doesn't map.put() already do this?
-        map.remove(key);
-        map.put(key, newValue);
-    }
-
-    /**
      * Increase the value of the int associated with the given key in the given map by 1, or associate the key with
      * the integer 1 if not present
      */

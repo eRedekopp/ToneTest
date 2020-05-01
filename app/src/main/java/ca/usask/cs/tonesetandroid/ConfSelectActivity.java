@@ -16,8 +16,6 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
 public class ConfSelectActivity extends Activity {
 
-    // todo test
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

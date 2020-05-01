@@ -10,7 +10,8 @@ a Participant object is created, and if there are any, Calibration results are l
 can do a calibration one day, then come back another day for confidence tests.
 
 A Participant contains all the calibration tests that this individual has taken, but does not store confidence test
-results (those are intended to be read by humans from the files on disk).
+results (those are intended to be read by humans from the files on disk). More precisely, a Participant contains a
+single HearingTestResultsCollection, described below under "storing test results"
 
 
 ######################################################## Clicks ########################################################
@@ -102,6 +103,42 @@ method to figure out which one works best.
 We typically don't directly use a PredictorResults once we've added all of the results to it. PredictorResults are
 usually accessed through their HearingTestResultsCollection, mostly through the compareToConfidenceTest() or
 getVol[Floor/Ceiling]Estimate() methods.
+
+
+############################################### Computing Probabilities ################################################
+
+CalibrationTestResults
+
+    The logic for this is found in the various overrides of CalibrationTestResults.getProbability(). Simply, it finds
+    the frequencies tested immediately below and above the requested frequency, finds what percentage of the way between
+    two it is, then predicts that the probability will be that same proportion of the way between the two probabilities.
+
+    For example, if we call getProbability(freq = 500Hz, vol = 1.0) and during our calibration we tested 250Hz and
+    750Hz, then we would find the probability of hearing 250Hz and 750Hz at the given volume (described below), say
+    250Hz = 0.3 and 750Hz = 0.5. Since 500Hz is 50% of the way between 250Hz and 750Hz, then the probability of hearing
+    it is 50% of the way between 0.3 and 0.5; that is, 0.4.
+
+    Finding the probability of hearing a tone that we DID test at an arbitrary volume is similar: find the volumes that
+    we tested just above and below the queried volume, find the percentage of the way between, then return a number that
+    same percentage of the way between the two experimentally-derived probabilities from the calibration data.
+
+
+RampTestResults
+
+    We find estimates for volumes at which we will hear the tone 100% of the time and 0% of the time via the
+    getVol[Floor/Ceiling]Estimate() functions, then compute the probability based on the queried volume's distance
+    between those two estimates. RampTestResults contains the functions getProbabilityLinear and
+    getProbabilityLogarithmic which use different functions to find the probability based on its distance between the
+    two volumes. Simply calling getProbability() returns the linear function, but both are shown in
+    getPredictionString().
+
+    This is also in RampTestResultsWithFloorInfo, which overrides the getVolFloorEstimate() method to reflect its extra
+    data.
+
+
+Both of these contain half-implemented or implemented but unused methods for computing probabilities for various
+different types of tones. Currently we just use the frequency and volume, but you could very easily change the way
+they're implemented to predict differently based on the type of tone.
 
 Some rough guidelines on how to edit the way that this application computes P(heard) or how it compares PredictorResults
 to ConfidenceTestResults can be found in future.txt

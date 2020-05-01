@@ -16,8 +16,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 public class PianoCalibrationTest extends WavCalibrationTest {
 
                                           //        F4       C5       B5        G6        A7
-    protected static final float[] FREQUENCIES = {349.23f, 523.25f, 987.77f, 1567.98f, 3520.0f};    // todo make closer
-                                                                                                    // to defaults
+    protected static final float[] FREQUENCIES = {349.23f, 523.25f, 987.77f, 1567.98f, 3520.0f};
 
     public PianoCalibrationTest(BackgroundNoiseType noiseType) {
         super(noiseType);

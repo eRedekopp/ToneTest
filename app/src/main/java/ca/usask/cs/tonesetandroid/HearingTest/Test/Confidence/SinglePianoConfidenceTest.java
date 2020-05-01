@@ -30,7 +30,7 @@ public class SinglePianoConfidenceTest extends WavConfidenceTest {
     @Override
     @SuppressWarnings("unchecked")
     protected void configureTestTones(int trialsPerTone, int volsPerFreq, float[] frequencies) 
-            throws IllegalArgumentException { // todo build tones here rather than using default constructors
+            throws IllegalArgumentException {
 
         if (frequencies.length == 0) return;
 

@@ -308,8 +308,9 @@ public class Model {
     }
 
     public void printResultsToConsole() {
-        // TODO
-        Log.i("Model", "TODO: finish printResultsToConsole()");
+        if (getCurrentParticipant() != null) {
+            Log.i("Model", getCurrentParticipant().getResults().toString());
+        }
     }
 
     /**

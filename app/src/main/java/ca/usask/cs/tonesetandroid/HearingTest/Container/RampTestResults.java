@@ -32,7 +32,7 @@ public class RampTestResults extends PredictorResults {
 
     @Override
     public double getProbability(Tone tone) throws IllegalStateException {
-        return 0.0; // todo
+        return getProbabilityLinear(tone);
     }
 
     protected double getProbability(Interval tone) throws IllegalStateException {
