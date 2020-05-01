@@ -25,7 +25,7 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 
-import java.io.File;
+import java.io.FileNotFoundException;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseController;
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
@@ -45,10 +45,13 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 public class MainActivity extends AppCompatActivity implements ModelListener, HearingTestView, SensorEventListener {
 
     public static final int REQUEST_PERMISSIONS = 1;
+    public static final int REQUEST_INIT = 2;
+    public static final int REQUEST_CONF_SETUP = 3;
+    public static final int REQUEST_CALIB_SETUP = 4;
 
     /*
     * Android Studio doesn't like that there's a Context in a static field, but since this is such a small
-    * application, the memory leaking issues shouldn't be much of a problem
+    * application, the memory leaking issues shouldn't be much of a problem (hopefully)
     * */
     public static Context context; // for passing to other classes from inner methods
 
@@ -58,12 +61,6 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     HearingTestController controller;
     FileIOController fileController;
     BackgroundNoiseController noiseController;
-
-    // instance variables for keeping track of the state of pre-test dialog boxes
-    private int dialogSelectedItem;
-    private int dialogTestTypeID;
-    private int dialogNoiseID;
-    private int dialogVolume;
 
     // ui elements
     Button  calibButton,
@@ -158,14 +155,13 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         // set up event listeners for main screen
         calibButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
-                model.reset();
-                getTestTypeAndBegin(true);
+                goToCalibrationSetup();
             }
         });
         confidenceButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getTestTypeAndBegin(false);
+                goToConfidenceSetup();
             }
         });
 
@@ -237,6 +233,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         model.setUpLineOut();
 
         // Initialize model with InitActivity, then onActivityResult will call modelChanged() and set up this screen
+        InitActivity.fileController = fileController;
         this.goToInit();
     }
 
@@ -349,14 +346,28 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     }
 
     /**
-     * Clear the mvc elements and go to the "login" screen
+     * Go to the login screen and load a new Participant
      */
     private void goToInit() {
         Intent initIntent = new Intent(this, InitActivity.class);
-        int reqCode = 1;
-        this.model.reset();
         this.iModel.reset();
-        startActivityForResult(initIntent, reqCode);
+        startActivityForResult(initIntent, REQUEST_INIT);
+    }
+
+    /**
+     * Go to the calibration setup activity. Test gets started in onActivityResult
+     */
+    private void goToCalibrationSetup() {
+        Intent calibSetupIntent = new Intent(this, CalibSelectActivity.class);
+        startActivityForResult(calibSetupIntent, REQUEST_CALIB_SETUP);
+    }
+
+    /**
+     * Go to the confidence setup activity. Test gets started in onActivityResult
+     */
+    private void goToConfidenceSetup() {
+        Intent confSetupIntent = new Intent(this, ConfSelectActivity.class);
+        startActivityForResult(confSetupIntent, REQUEST_CONF_SETUP);
     }
 
     /**
@@ -367,32 +378,80 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        int subjectID = data.getIntExtra("subjectID", -1);
-        final String pathName = data.getStringExtra("pathName");
+        // behaviour depends on where we're returning from
+        switch (requestCode) {
 
-        if (subjectID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + subjectID);
+            // returned from init
+            case REQUEST_INIT:
+                int partID = data.getIntExtra("id", -1);
+                if (partID < 0) throw new IllegalArgumentException("Found invalid subject ID number: " + partID);
 
-        this.model.reset();
-        this.model.setSubjectId(subjectID);
-        if (!pathName.equals(""))
-            try {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        FileIOController.initializeModelFromFile(model, new File(pathName));
+                Participant p;
+                try {
+                    p = fileController.loadParticipantData(partID);
+                } catch (FileNotFoundException e) {
+                    // shouldn't be reachable - just crash the whole thing if this happens
+                    showErrorDialog(String.format("File not found for participant %d", partID),
+                            new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    System.exit(1);
+                                }
+                            });
+                    Log.e("onActivityResult", "Reached unreachable code");
+                    p = new Participant(-1, null, null);
+                    System.exit(1);
+                } catch (FileIOController.UnfinishedTestException e) {
+                    // undefined right now - just crash the whole thing if this happens
+                    // TODO handle unfinished tests
+                    showErrorDialog("Unfinished test found in calibration file", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            System.exit(1);
+                        }
+                    });
+                    return;
+                }
+
+                this.model.setCurrentParticipant(p);
+                this.modelChanged();
+                Log.i("MainActivity", p.getResults().toString());
+                break;
+
+            // returned from calibration setup
+            case REQUEST_CALIB_SETUP:
+                if (resultCode != RESULT_CANCELED) {
+                    int noiseTypeID = data.getIntExtra("noiseTypeID", -1);
+                    int noiseVol = data.getIntExtra("noiseVol", -1);
+                    int toneTimbreID = data.getIntExtra("toneTimbreID", -1);
+                    int testTypeID = data.getIntExtra("testTypeID", -1);
+                    try {
+                        controller.calibrationTest(noiseTypeID, noiseVol, toneTimbreID, testTypeID);
+                    } catch (HearingTestController.TestNotAvailableException e) {
+                        showErrorDialog("No test available for the requested configuration", null);
                     }
-                }).start();
-                waitUntilLoadingComplete();
-            } catch (RuntimeException e) {
-                showErrorDialog("Unable to read file", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        goToInit();
+                }
+                break;
+
+            // returned from confidence setup
+            case REQUEST_CONF_SETUP:
+                if (resultCode != RESULT_CANCELED) {
+                    int noiseTypeID = data.getIntExtra("noiseTypeID", -1);
+                    int noiseVol = data.getIntExtra("noiseVol", -1);
+                    int toneTimbreID = data.getIntExtra("toneTimbreID", -1);
+                    int toneTypeID = data.getIntExtra("toneTypeID", -1);
+                    int trialsPerTone = data.getIntExtra("trialsPerTone", -1);
+                    try {
+                        controller.confidenceTest(noiseTypeID, noiseVol, toneTimbreID, toneTypeID, trialsPerTone);
+                    } catch (HearingTestController.TestNotAvailableException e) {
+                        showErrorDialog("No test available for the requested configuration", null);
                     }
-                });
-                e.printStackTrace();
-            }
-        this.modelChanged();
+                }
+                break;
+
+            default:
+                throw new RuntimeException("Unknown requestCode: " + requestCode);
+        }
     }
 
     /**
@@ -409,135 +468,21 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
     }
 
     /**
-     * Show a dialog prompting the user to select a test type, then call the next step to setStartTime the test
-     *
-     * @param isCalib Is the new test to be started a calibration test? If not, it is a confidence test
-     */
-    private void getTestTypeAndBegin(final boolean isCalib) {
-        AlertDialog.Builder optBuilder = new AlertDialog.Builder(this);
-        setDialogSelectedItem(0);
-        optBuilder.setTitle("Please select the type of test you wish to begin");
-        optBuilder.setSingleChoiceItems(
-                isCalib ? HearingTestController.CALIB_TEST_OPTIONS : HearingTestController.CONF_TEST_OPTIONS,
-                0,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        setDialogSelectedItem(which);
-                    }
-                });
-        optBuilder.setNegativeButton("Cancel", null);
-        optBuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                setDialogTestTypeID();
-                dialog.cancel();
-                getBackgroundNoiseAndBeginTest(isCalib);
-            }
-        });
-        optBuilder.show();
-    }
-
-    /**
-     * Show a dialog prompting the user to select a background noise type, then call the next step to setStartTime the test
-     *
-     * @param isCalib Is the new test to be started a calibration test? If not, it is a confidence test
-     */
-    private void getBackgroundNoiseAndBeginTest(final boolean isCalib) {
-        // show dialog to get noise type
-        AlertDialog.Builder builder = new AlertDialog.Builder(context);
-        builder.setSingleChoiceItems(BackgroundNoiseType.NOISE_TYPE_STRINGS, 0, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                setDialogSelectedItem(i);
-            }
-        });
-        setDialogSelectedItem(0);
-        builder.setCancelable(false);
-        builder.setNegativeButton("Cancel", null);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                setDialogNoiseID();
-                dialogInterface.cancel();
-                getNoiseVolAndBeginTest(isCalib);
-            }
-        });
-        builder.setTitle("Select the background noise type for this test");
-        builder.show();
-    }
-
-    /**
-     * Show a dialog prompting the user for a background noise volume if necessary, then call the appropriate method
-     * in HearingTestController to begin the test
-     *
-     * @param isCalib Is the new test to be started a calibration test? If not, it is a confidence test
-     */
-    private void getNoiseVolAndBeginTest(final boolean isCalib) {
-        if (this.dialogNoiseID == BackgroundNoiseType.NOISE_TYPE_NONE) {    // set volume to 0 and continue if no noise
-            this.setDialogSelectedItem(0);
-            this.setDialogVolume();
-            BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
-            if (isCalib) controller.handleCalibClick(noiseType, dialogTestTypeID);
-            else controller.handleConfClick(noiseType, dialogTestTypeID);
-        } else {                                                            // else get volume from user
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            final EditText editText = new EditText(context);
-            editText.setInputType(EditorInfo.TYPE_CLASS_NUMBER);
-            editText.setText("0");
-            builder.setView(editText);
-            builder.setTitle("Please enter the volume of the noise for this test");
-            builder.setCancelable(false);
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialogInterface, int i) {
-                    int oldDialogSelectedItem = dialogSelectedItem;
-                    try {
-                        setDialogSelectedItem(Integer.parseInt(editText.getText().toString()));
-                    } catch (NumberFormatException e) {
-                        dialogInterface.cancel();
-                        showErrorDialog("Unable to parse input", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.cancel();
-                                getNoiseVolAndBeginTest(isCalib);
-                            }
-                        });
-                        return;
-                    }
-                    if (dialogSelectedItem > 100 || dialogSelectedItem < 0) { // ensure number in proper range
-                        setDialogSelectedItem(oldDialogSelectedItem);
-                        dialogInterface.cancel();
-                        showErrorDialog("Volume out of range: please enter a value from 0 to 100",
-                                new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialogInterface, int i) {
-                                        dialogInterface.cancel();
-                                        getNoiseVolAndBeginTest(isCalib);
-                                    }
-                                });
-                    } else {
-                        setDialogVolume();
-                        dialogInterface.cancel();
-                        BackgroundNoiseType noiseType = new BackgroundNoiseType(dialogNoiseID, dialogVolume);
-                        if (isCalib) controller.handleCalibClick(noiseType, dialogTestTypeID);
-                        else controller.handleConfClick(noiseType, dialogTestTypeID);
-                    }
-                }
-            });
-            builder.setNegativeButton("Cancel", null);
-            builder.show();
-        }
-    }
-
-    /**
      * Show a dialog with title "Error" and the given message
      * @param message The message to be displayed
      */
-    public void showErrorDialog(String message, DialogInterface.OnClickListener onOKClick) {
+    public void showErrorDialog(String message, @Nullable DialogInterface.OnClickListener onOKClick) {
         AlertDialog.Builder warningBuilder = new AlertDialog.Builder(this);
         warningBuilder.setTitle("Error");
         warningBuilder.setMessage(message);
+        if (onOKClick == null) {
+            onOKClick = new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+                }
+            };
+        }
         warningBuilder.setPositiveButton("OK", onOKClick);
         warningBuilder.show();
     }
@@ -593,7 +538,7 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         iModel.setTestPaused(false);
-                        while (iModel.sampleThreadActive()) continue;  // idle until sample finishes playing
+                        while (iModel.sampleThreadActive());  // spin until sample finishes playing
                         noiseController.playNoise(iModel.getCurrentNoise());
                     }
                 });
@@ -621,32 +566,15 @@ public class MainActivity extends AppCompatActivity implements ModelListener, He
         Thread listener = new Thread(new Runnable() {
             @Override
             public void run() {
-                while (! model.hasResults()) continue;
+                while (! model.hasResults());
                 alertDialog.cancel();
-                model.printResultsToConsole();
                 model.notifySubscribers();
+                model.printResultsToConsole();
             }
         });
 
         alertDialog.show();
         listener.start();
-    }
-
-    // Keep track of dialogs in GetBackgroundNoiseAndBeginTest - had to do it this way because of scoping issues
-    private void setDialogSelectedItem(int dialogSelectedItem) {
-        this.dialogSelectedItem = dialogSelectedItem;
-    }
-
-    private void setDialogNoiseID() {
-        this.dialogNoiseID = this.dialogSelectedItem;
-    }
-
-    private void setDialogVolume() {
-        this.dialogVolume = this.dialogSelectedItem;
-    }
-
-    public void setDialogTestTypeID() {
-        this.dialogTestTypeID = this.dialogSelectedItem;
     }
 
     // mutators for mvc elements

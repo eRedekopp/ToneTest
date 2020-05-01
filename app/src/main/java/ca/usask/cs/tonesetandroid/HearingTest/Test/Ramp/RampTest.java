@@ -18,7 +18,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
  */
 public abstract class RampTest<T extends Tone> extends HearingTest<T> {
 
-    /*
+    /**
      * The volume at which to start the tone
      */
     protected double startingVol = 0.5; 
@@ -27,12 +27,12 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
             "In this phase of the test, tones will play quietly and slowly get louder. Please press the \"Heard " +
             "Tone\" button as soon as the tone becomes audible";
 
-    /*
+    /**
      * All the tones to be played in this ramp test - volumes will be disregarded
      */
     protected ArrayList<T> tones;
 
-    /*
+    /**
      * An iterator for tones to keep track of the current tone being tested
      */
     protected ListIterator<T> position;
@@ -61,11 +61,13 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
 
     public RampTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.results = new RampTestResultsWithFloorInfo();
+        this.results = new RampTestResultsWithFloorInfo(noiseType, this.getTestTypeName());
     }
 
     @Override
     protected void run() {
+
+        this.setStartTime();  // set the start time of this test (or do nothing if this has already been done)
 
         // sanity check
         if (this.tones == null || this.position == null)
@@ -79,7 +81,7 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
                 try {
                     model.configureAudio();
                     iModel.setTestThreadActive(true);
-                    double heardVol;
+                    double heardVol, vol1;
 
                     while (! isComplete()) {
 
@@ -93,9 +95,14 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
                             position.previous(); // move cursor back to starting location and return without doing
                             return;              // anything if user paused
                         }
-                        double vol1 = heardVol;
 
                         sleepThread(1000, 1000);  // sleep 1 second
+
+                        // save the results of the first ramp-up
+                        currentTrial = new SingleTrialResult(currentTone.newVol(heardVol));
+                        currentTrial.setStartTime();  // set the start time here cause it's not really important here
+                        saveLine();
+                        vol1 = heardVol;
 
                         // test currentTone again, slower, starting from 1/10 the first heardVol
                         iModel.resetAnswer();
@@ -105,10 +112,9 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
                             return;              // anything if user paused
                         }
 
-                        // save result
-                        currentTrial = new SingleRampTrialResult(currentTone.newVol(vol1),
-                                                                 currentTone.newVol(heardVol));
-                        currentTrial.setStartTime();  // start time not really importanthere , just set it now
+                        // save the results of the second ramp-up
+                        currentTrial = new SingleTrialResult(currentTone.newVol(heardVol));
+                        currentTrial.setStartTime();
                         saveLine();
                         ((RampTestResultsWithFloorInfo) results).addResult(currentTone.freq(), vol1, heardVol);
                     }
@@ -134,25 +140,20 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    protected final String getLineEnd(SingleTrialResult result) {
-        SingleRampTrialResult rampResult = (SingleRampTrialResult) result;
-        return String.format("Freq: %.1f, vol1: %.4f, vol2: %.4f",
-                rampResult.tone().freq(), rampResult.tone().vol(), rampResult.tone2().vol());
-    }
-
-    @Override
     public void handleAnswerClick(int answer, boolean fromTouchInput) {
         // RampTests have no need for this method because they do not track click times
     }
 
-    public RampTestResultsWithFloorInfo getResults() {  // todo fix this dumb system
+    public RampTestResultsWithFloorInfo getResults() {
         return (RampTestResultsWithFloorInfo) this.results;
     }
 
     /**
      * A modified SingleTrialResult for ramp tests. this.tone() is a FreqVolPair with freq=the frequency of this trial
-     * and vol=the volume at which user pressed "heard" for the first tone in this trial
+     * and vol=the volume at which user pressed "heard" for the second tone in this trial
+     *
+     * Since the 2nd ramp is slower, we count its result as more 'reliable', and so tone() returns the frequency of
+     * the second ramp-up. The result of the first ramp-up can be accessed via this.firstTone()
      */
     private class SingleRampTrialResult extends SingleTrialResult {
 
@@ -167,12 +168,16 @@ public abstract class RampTest<T extends Tone> extends HearingTest<T> {
             this.tone2 = new FreqVolPair(tone2.freq(), tone2.vol());
         }
 
-        /**
-         * @return A FreqVolPair with freq=the frequency of this trial and vol=the volume at which user pressed "heard" for
-         *         the second tone in this trial
-         */
-        public Tone tone2() {
+        public Tone tone() {
             return this.tone2;
+        }
+
+        /**
+         * @return A Tone with freq = the frequency of this trial and vol = the volume at which the user pressed
+         * "heard" for the first time
+         */
+        public Tone firstTone() {
+            return this.tone;
         }
     }
 }

@@ -1,0 +1,118 @@
+Information about the GUI and MVC structure of this application, and some control flow.
+
+All MVC elements will be listed along with their general roles and responsibilities. Control flow through some more
+important parts of the application will be explained, but to get a better feel for the control flow I recommend just
+tracing through by hand starting at MainActivity.goToInit().
+
+I know very little about GUI programming so I will probably use a lot of terms wrong in here.
+
+
+####################################################### Elements #######################################################
+
+BackgroundNoiseController:
+    - Plays background noise. Operates relatively independently from the rest of the MVC. See noise.txt for more info.
+
+FileIOController:
+    - Stores files for the current Participant, contains methods for saving data to files, creating new files, and
+      loading Calibration results to a Participant object when logging in an existing user.
+
+HearingTestController:
+    - Contains click handlers for the MainActivity and all driver code for getting tests set up and ready to run, then
+      calls its method checkForHearingTestResume() which starts/resumes a hearing test if necessary. This code does not
+      actually run the hearing test, that happens in the run() method of the hearing test itself. This class also
+      contains driver code for switching from one test to the next in a Calibration Test Suite.
+
+HearingTestInteractionModel:
+    - Contains data about the currently-running hearing test and methods for registering UI events from users during a
+      test.
+
+Model:
+    - Contains data about the current state of the system besides any currently-running tests. Also contains functions
+      writing Tones to the line out (but not background noise) and for working with audio data (eg. some stuff with
+      Fourier transforms from when I was thinking about using the actual wave of the background noise to make
+      predictions)
+
+InitActivity:
+    - Contains driver code for the initial screen. Mostly just gets values from the fields, checks them, and sends them
+      back to MainActivity
+
+MainActivity:
+    - The starting point of the whole application. Calls InitActivity and sets everything up first, then stores data
+      into the Model. This acts as the main View sort of, where we have our modelChanged() function, and where a lot of
+      the low-level stuff like handling the accelerometer and overriding volume button functionality happens (since we
+      only have access to certain Android features within this Activity)
+
+[Conf/Calib]SelectActivity:
+    - This is where we ask the user how they want the test to look before it starts.
+    - Just get the numbers and send them back to MainActivity. Very straightforward.
+
+
+##################################################### Control Flow #####################################################
+
+
+########################### Starting The Application ###########################
+
+Jump into MainActivity.onCreate(). This does all initial setup, binds all event listeners, and creates all MVC elements.
+Then, it calls goToInit(), which jumps to InitActivity.onCreate() to create the elements for the login screen, then it
+waits for the user to enter data, checks to make sure it is valid, then returns the selected participant ID to the
+MainActivity. It comes back through MainActivity.onActivityResult() which then sets up our Participant object then gets
+everything started by calling its own modelChanged() method. At this point, we are back to the MainActivity and can
+begin a test by pressing any of the buttons.
+
+
+############################ Running A Hearing Test ############################
+
+Each subclass of the abstract HearingTest class must have a run() method, which plays tones via the Model and tracks the
+results in a stored HearingTestResults object (or not, in the case of a ReduceTest. see data.txt). The run() method is
+called from HearingTestController.checkForHearingTestResume() - never called directly from setup*Test() or any other
+method. All tests are started by setting them in the HearingTestInteractionModel and calling checkForHearingTestResume
+(or causing it to be called indirectly via modelChanged() or some other method). The following is a more detailed
+description of the control flow while starting a new test:
+
+Calibration:
+    Register "calibration" click in MainActivity
+    Go to CalibSelectActivity, return with integer IDs for all selected options
+        - or just end here if user cancelled in CalibSelectActivity screen
+    Return to MainActivity, and pass the selected IDs to HearingTestController.calibrationTest()
+    Select the appropriate test types and put into the HearingTestInteractionModel
+        - 1 to 3, depending on user's selection. Set as fields in the iModel so we know which tests to run later on
+        - set the first test as iModel.currentTest
+        - null any tests that are not going to be run
+    Set the test to paused, show the test information in a dialog to the user, then notifySubscribers() when done.
+        - This causes MainActivity to call HearingTestController.checkForHearingTestResume(), which starts whichever
+          test was put on deck by HearingTestController.calibrationTest() to begin
+    Once the first test is complete, control is passed to to HearingTestController.*TestComplete, which saves the
+        results of the test and starts the next test, if there is one
+    If a user pauses during a test, execution hangs until the user un-pauses, at which time notifySubscribers() is
+        called and the test is resumed as described above
+
+    Note: multi-test suites are always executed in the following order: Ramp -> reduce -> calibration
+        - because later tests depend on information from previous ones.
+        - information may be taken from a previous test suite with the same noise type and volume, if needed
+            - unless it's a reduce test. Reduce tests must immediately follow a ramp test
+
+Confidence:
+    Basically the same as calibration except there is only 1 test to be run, and there are more options for timbres and
+    types, and we get options from user in ConfSelectActivity
+
+
+############################ Registering a UI Event ############################
+
+Other Activities:
+
+    Click listeners for all activities except the MainActivity are implemented ad-hoc and should be self-explanatory.
+
+
+MainActivity:
+
+    Click listeners for starting a test simply go to the appropriate Activity to get information about the test from the
+    user, then come back through MainActivity.onActivityResult() and starts the test as described above.
+
+    Click listeners for the pause and reset buttons are implemented ad-hoc in MainActivity.onCreate() and are
+    self-explanatory. Look at their code around line 193 of MainActivity.java if you must.
+
+    Click listeners for the up, down, flat, and heard buttons on the main screen are implemented in the
+    HearingTestController under the handle*Click() functions. These are accessed either by jumping straight to them from
+    the ClickListeners in MainActivity, or through the handler code for accelerometer events and volume button events.
+    This will then work its way to the current test's handleAnswerClick() function, which finds the current
+    SingleTrialResult for the current tone, and adds a new Click object to it.

@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResultsCollection;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
 /**
@@ -27,12 +28,16 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
      */
     private ArrayList<Melody> sampleTones;
 
-    public MelodySineConfidenceTest(CalibrationTestResults calibResults, BackgroundNoiseType noiseType) {
-        super(calibResults, noiseType);
-        this.testTypeName = "melody-sine-conf";
+    public MelodySineConfidenceTest(BackgroundNoiseType noiseType) {
+        super(noiseType);
         this.testInfo = TEST_INFO;
         this.GRACE_PERIOD_MS = 1200;    // user gets 1.2 seconds after tone ends to enter a response
         this.MIN_WAIT_TIME_MS = 1500;
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "melody-sine-conf";
     }
 
     @Override
@@ -104,16 +109,6 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
     }
 
     @Override
-    protected double getModelCalibProbability(Melody melody, int n) {
-        return model.getCalibProbability(melody, n);
-    }
-
-    @Override
-    protected double getModelRampProbability(Melody melody, boolean withFloorResults) {
-        return model.getRampProbability(melody, withFloorResults);
-    }
-
-    @Override
     public Runnable sampleTones() {
         if (this.sampleTones.isEmpty()) throw new IllegalStateException("No tones to sample");
         else return new Runnable() {
@@ -145,22 +140,7 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
 
     @Override
     protected boolean wasCorrect() {
-        int expected;
-        switch(((Melody) this.currentTrial.tone()).direction()) {
-            case DIRECTION_DOWN:
-                expected = ANSWER_DOWN;
-                break;
-            case DIRECTION_UP:
-                expected = ANSWER_UP;
-                break;
-            case DIRECTION_FLAT:
-                expected = ANSWER_FLAT;
-                break;
-            default:
-                throw new RuntimeException("Found unexpected value for currentTrial.tone.direction: " +
-                        ((Melody) this.currentTrial.tone()).direction());
-        }
-        return iModel.getAnswer() == expected;
+        return iModel.getAnswer() == this.currentTrial.tone().direction();
     }
 
     @Override
@@ -168,22 +148,14 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
         return new int[]{ANSWER_UP, ANSWER_DOWN, ANSWER_FLAT};
     }
 
-    @Override
-    public String getLineEnd(SingleTrialResult trial) {
-        return String.format("%.1f, %s, %s, %d clicks: %s",
-                trial.tone().freq(),
-                ((Melody) trial.tone()).directionAsString(),
-                trial.wasCorrect() ? "Correct" : "Incorrect",
-                trial.nClicks(),
-                trial.getClicksAsString());
-    }
-
     /**
      * @return The average vol floor estimate of the given frequencies
      */
     protected double getFloorEstimateAvg(float[] freqs) {
+        HearingTestResultsCollection results = model.getCurrentParticipant().getResults();
         double[] estimates = new double[freqs.length];
-        for (int i = 0; i < freqs.length; i++) estimates[i] = calibResults.getVolFloorEstimateForFreq(freqs[i]);
+        for (int i = 0; i < freqs.length; i++)
+            estimates[i] = results.getVolFloorEstimate(freqs[i], this.getBackgroundNoiseType());
         return UtilFunctions.mean(estimates);
     }
 
@@ -191,8 +163,10 @@ public class MelodySineConfidenceTest extends ConfidenceTest<Melody> {
      * @return The average vol ceiling estimate of the given frequencies
      */
     protected double getCeilingEstimateAvg(float[] freqs) {
+        HearingTestResultsCollection results = model.getCurrentParticipant().getResults();
         double[] estimates = new double[freqs.length];
-        for (int i = 0; i < freqs.length; i++) estimates[i] = calibResults.getVolCeilingEstimateForFreq(freqs[i]);
+        for (int i = 0; i < freqs.length; i++)
+            estimates[i] = results.getVolCeilingEstimate(freqs[i], this.getBackgroundNoiseType());
         return UtilFunctions.mean(estimates);
     }
 }

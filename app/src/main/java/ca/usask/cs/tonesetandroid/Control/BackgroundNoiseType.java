@@ -7,8 +7,6 @@ import android.support.annotation.NonNull;
  */
 public class BackgroundNoiseType {
 
-    // Array indices correspond to ID int (eg. "No Noise" == NOISE_TYPE_STRINGS[NOISE_TYPE_NONE])
-
     /**
      * Noise type identifier strings to be displayed to user
      *
@@ -41,7 +39,7 @@ public class BackgroundNoiseType {
     /**
      * The identifier for the type of this noise
      */
-    public final int noiseType;
+    public final int noiseTypeID;
 
     /**
      * The volume of this background noise from 0 to 100
@@ -49,13 +47,13 @@ public class BackgroundNoiseType {
     public final int volume;
 
     /**
-     * @param noiseType
+     * @param noiseType The integer identifier representing the type of noise (ie. NOISE_TYPE_*)
      * @param volume The volume from 0 to 100 of the background noise
      */
     public BackgroundNoiseType(int noiseType, int volume) throws IllegalArgumentException {
         if (volume < 0 || volume > 100) throw new IllegalArgumentException("Volume out of range");
 
-        this.noiseType = noiseType;
+        this.noiseTypeID = noiseType;
         this.volume = volume;
     }
 
@@ -66,7 +64,7 @@ public class BackgroundNoiseType {
     public BackgroundNoiseType(String noiseType, int volume) throws IllegalArgumentException {
         if (volume < 0 || volume > 100) throw new IllegalArgumentException("Volume out of range");
 
-        // parse string, set noiseType accordingly
+        // parse string, set noiseTypeID accordingly
         int typeID = -1;
         for (int i = 0; i < NOISE_TYPE_STRINGS_F.length; i++) {
             if (NOISE_TYPE_STRINGS_F[i].equals(noiseType)) {
@@ -75,7 +73,7 @@ public class BackgroundNoiseType {
             }
         }
         if (typeID == -1) throw new IllegalArgumentException("Unable to parse noise type string");
-        else this.noiseType = typeID;
+        else this.noiseTypeID = typeID;
 
         // set volume
         this.volume = volume;
@@ -86,7 +84,7 @@ public class BackgroundNoiseType {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         try {
-            builder.append(NOISE_TYPE_STRINGS_F[noiseType]);
+            builder.append(NOISE_TYPE_STRINGS_F[noiseTypeID]);
         } catch (ArrayIndexOutOfBoundsException e) {
             builder.append("unknown");
         }

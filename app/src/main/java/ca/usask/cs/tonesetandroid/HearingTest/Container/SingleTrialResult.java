@@ -4,7 +4,6 @@ import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
 
-import ca.usask.cs.tonesetandroid.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 
@@ -26,7 +25,7 @@ public class SingleTrialResult {
     /**
      * The tone that was played in this trial
      */
-    private final Tone tone;
+    protected final Tone tone;
 
     /**
      * Did the user hear the tone / discern the direction correctly?

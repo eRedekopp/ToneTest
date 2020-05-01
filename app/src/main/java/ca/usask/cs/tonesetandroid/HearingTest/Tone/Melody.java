@@ -28,22 +28,16 @@ public class Melody extends Tone implements Cloneable {
      */
     protected double vol;
 
-    /**
-     * Is the last note of this melody lower, equal, or higher than the first? Must be one of HearingTest.DIRECTION_*
-     */
-    protected int direction;
+    @Override
+    public int direction() {
+        float firstFreq = notes.get(0).freq();
+        float lastFreq  = notes.get(notes.size() - 1).freq();
+        return firstFreq < lastFreq ? DIRECTION_UP : (firstFreq == lastFreq ? DIRECTION_FLAT : DIRECTION_DOWN);
+    }
 
     public Melody(List<FreqVolDurTrio> notes, double vol) {
         this.notes = notes;
         this.vol = vol;
-        float firstFreq = notes.get(0).freq();
-        float lastFreq  = notes.get(notes.size() - 1).freq();
-        if (firstFreq > lastFreq)
-            this.direction = HearingTest.DIRECTION_DOWN;
-        else if (firstFreq < lastFreq)
-            this.direction = HearingTest.DIRECTION_UP;
-        else
-            this.direction = HearingTest.DIRECTION_FLAT;
     }
 
     /**
@@ -60,17 +54,12 @@ public class Melody extends Tone implements Cloneable {
         switch (identifier) {
             case "maj-triad-up":
                 // Major triad first inversion upward, 2 quarter notes + half note
-                noteList.add(new FreqVolDurTrio(freqs[0], vol, MELODY_DURATION_MS/4));
-                noteList.add(new FreqVolDurTrio(freqs[1], vol, MELODY_DURATION_MS/4));
-                noteList.add(new FreqVolDurTrio(freqs[2], vol, MELODY_DURATION_MS/2));
-                this.direction = HearingTest.DIRECTION_UP;
-                break;
+                // same as maj-triad-down
             case "maj-triad-down":
                 // Major triad first inversion downward, 2 quarter notes + half note
                 noteList.add(new FreqVolDurTrio(freqs[0], vol, MELODY_DURATION_MS/4));
                 noteList.add(new FreqVolDurTrio(freqs[1], vol, MELODY_DURATION_MS/4));
                 noteList.add(new FreqVolDurTrio(freqs[2], vol, MELODY_DURATION_MS/2));
-                this.direction = HearingTest.DIRECTION_DOWN;
                 break;
             case "single-freq-rhythm":
                 // Single-tone syncopated rhythm: | = 8th note, . = 8th rest -> |.||.|.|
@@ -84,7 +73,6 @@ public class Melody extends Tone implements Cloneable {
                 noteList.add(eighthNote);
                 noteList.add(eighthRest);
                 noteList.add(eighthNote);
-                this.direction = HearingTest.DIRECTION_FLAT;
                 break;
             default:
                 throw new RuntimeException("Unknown string identifier: " + identifier);
@@ -130,7 +118,7 @@ public class Melody extends Tone implements Cloneable {
      * @return All FreqVolDurTrios in this melody
      */
     public FreqVolDurTrio[] getTones() {
-        return this.notes.toArray(new FreqVolDurTrio[this.notes.size()]);
+        return this.notes.toArray(new FreqVolDurTrio[0]);
     }
 
     /**
@@ -139,32 +127,14 @@ public class Melody extends Tone implements Cloneable {
     public FreqVolDurTrio[] getAudibleTones() {
         ArrayList<FreqVolDurTrio> nonRestNotes = new ArrayList<>();
         for (FreqVolDurTrio note : this.notes) if (note.vol() != 0) nonRestNotes.add(note);
-        return nonRestNotes.toArray(new FreqVolDurTrio[nonRestNotes.size()]);
-    }
-
-    /**
-     * NOTE: a melody is categorized as "up" "down" or "flat" based only on the first and last notes of the melody
-     *
-     * @return An integer representing the direction of this melody
-     */
-    public int direction() {
-        return this.direction;
-    }
-
-    public String directionAsString() {
-        switch (this.direction) {
-            case HearingTest.DIRECTION_DOWN: return "down";
-            case HearingTest.DIRECTION_FLAT: return "flat";
-            case HearingTest.DIRECTION_UP:   return "up";
-            default: throw new RuntimeException("Unknown direction identifier: " + this.direction);
-        }
+        return nonRestNotes.toArray(new FreqVolDurTrio[0]);
     }
 
     @Override
     public Melody newVol(double newVol) {
         if (newVol == this.vol()) return this.clone();
         List<FreqVolDurTrio> newNotes = new ArrayList<>();
-        for (FreqVolDurTrio note : this.notes) newNotes.add((FreqVolDurTrio) note.newVol(newVol));
+        for (FreqVolDurTrio note : this.notes) newNotes.add(note.newVol(newVol));
         return new Melody(newNotes, vol);
     }
 

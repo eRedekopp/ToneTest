@@ -16,11 +16,15 @@ public class SineReduceTest extends ReduceTest<FreqVolPair> {
     /**
      * The duration in milliseconds of the tones in this test 
      */
-    private static final int SINE_DURATION_MS = DEFAULT_TONE_DURATION_MS; // todo cut out the middle man
+    private static final int SINE_DURATION_MS = DEFAULT_TONE_DURATION_MS;
 
     public SineReduceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "sine-reduce";
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "sine-reduce";
     }
 
     /**

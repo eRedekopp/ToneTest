@@ -2,9 +2,7 @@ package ca.usask.cs.tonesetandroid;
 
 import android.util.Log;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;

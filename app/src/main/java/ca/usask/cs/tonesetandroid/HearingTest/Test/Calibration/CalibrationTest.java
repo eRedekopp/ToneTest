@@ -1,14 +1,10 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.ListIterator;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleToneTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -18,6 +14,10 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
  * @param <T> The type of tones being played in this test
  */
 public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> {
+
+    protected static final String DEFAULT_TEST_INFO =
+            "In this phase of the test, tones of various pitches and volumes will play at random times. " +
+            "Please press the \"Heard Tone\" button each time that you hear a tone";
 
     /**
      * The default number of volumes at which to test each frequency in a calibration test
@@ -57,7 +57,7 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
      */
     public CalibrationTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.results = new CalibrationTestResults();
+        this.results = new CalibrationTestResults(this.getBackgroundNoiseType(), this.getTestTypeName());
     }
 
     /**
@@ -89,19 +89,20 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
 
     @Override
     protected void run() {
+        this.setStartTime();  // set the start time of this test (or do nothing if this has already been done)
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     iModel.setTestThreadActive(true);
 
+                    sleepThread(1800, 3000); // wait before playing the first tone
+
                     while (! isComplete()) {
                         if (iModel.testPaused() || ! iModel.testing()) return;  // exit if paused or returned to login
 
-                        sleepThread(1800, 3000); // wait before playing next tone
                         iModel.resetAnswer();
                         T current = position.next();
-                        saveLine();  // save previous trial immediately before next to register all clicks
                         newCurrentTrial(current);
                         currentTrial.setStartTime();
                         playTone(current);
@@ -111,6 +112,8 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
                         }
                         currentTrial.setCorrect(iModel.answered());
                         ((CalibrationTestResults) results).addResult(current, currentTrial.wasCorrect());
+                        sleepThread(1800, 3000); // wait before playing next tone
+                        saveLine(); // save the line after waiting so we register all the clicks during silence
                     }
 
                     // test complete: finalize results
@@ -130,21 +133,6 @@ public abstract class CalibrationTest<T extends Tone> extends SingleToneTest<T> 
     @Override
     public boolean isComplete() {
         return ! this.position.hasNext();
-    }
-
-    /**
-     * Note: All CalibrationTests MUST have line endings with the format "[freq-label] <freq> [vol-label] <vol> ..."
-     * else they will not be able to be loaded
-     */
-    @Override
-    protected String getLineEnd(SingleTrialResult result) {
-
-        return String.format("freq(Hz) %.1f, vol %.4f, %s, %d clicks: %s",
-                this.currentTrial.tone().freq(),
-                this.currentTrial.tone().vol(),
-                this.currentTrial.wasCorrect() ? "Heard" : "NotHeard",
-                this.currentTrial.nClicks(),
-                this.currentTrial.getClicksAsString());
     }
 
     @Override

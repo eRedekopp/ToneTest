@@ -2,7 +2,6 @@ package ca.usask.cs.tonesetandroid.Control;
 
 import java.util.ArrayList;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Container.CalibrationTestResults;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.CalibrationTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
@@ -166,16 +165,6 @@ public class HearingTestInteractionModel {
         this.currentTest.handleAnswerClick(answer, fromTouchInput);
     }
 
-    /**
-     * @return The results of the confidence test currently stored as a string, or the string "Confidence Statistics
-     * Unavailable" if none stored
-     */
-    public String getConfResultsAsString() {
-        if (this.getConfidenceTest() == null || ! this.getConfidenceTest().isComplete())
-            return "Confidence Statistics Unavailable";
-        return this.getConfidenceTest().summaryStatsAsString();
-    }
-
     public BackgroundNoiseType getCurrentNoise() {
         return this.currentTest.getBackgroundNoiseType();
     }
@@ -233,11 +222,6 @@ public class HearingTestInteractionModel {
      */ 
     public HearingTest getCurrentTest() {
         return currentTest;
-    }
-
-    public CalibrationTestResults getCalibrationResults() {
-        if (this.calibrationTest == null) throw new IllegalStateException("No calibration test stored");
-        else return this.calibrationTest.getResults();
     }
 
     public ConfidenceTest getConfidenceTest() {

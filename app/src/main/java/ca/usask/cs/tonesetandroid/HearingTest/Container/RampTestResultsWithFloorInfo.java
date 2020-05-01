@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.ReduceTest;
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
@@ -20,8 +20,8 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
      */
     private FreqVolPair[] reduceResults = null;
 
-    public RampTestResultsWithFloorInfo() {
-        super();
+    public RampTestResultsWithFloorInfo(BackgroundNoiseType noiseType, String testTypeName) {
+        super(noiseType, testTypeName);
     }
 
     /**
@@ -36,15 +36,14 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
      */
     @SuppressWarnings("unchecked")
     public RampTestResults getRegularRampResults() {
-        RampTestResults newResults = new RampTestResults();
-        newResults.equationID = this.equationID;
+        RampTestResults newResults = new RampTestResults(this.getNoiseType(), this.getTestTypeName());
         newResults.allResults = (HashMap<Float, VolPair>) this.allResults.clone();
         return newResults;
     }
 
     @Override
     @SuppressWarnings("ConstantConditions")
-    protected double getVolFloorEstimate(float freq) {
+    public double getVolFloorEstimate(float freq) {
 
         if (this.reduceResults == null) throw new IllegalStateException("No reduce results stored");
 
@@ -75,5 +74,22 @@ public class RampTestResultsWithFloorInfo extends RampTestResults {
         double volAbove = UtilFunctions.get(results, freqAbove).vol();
 
         return volBelow + pctBetween * (volAbove - volBelow);
+    }
+
+    @Override
+    public String getTestIdentifier() {
+        return this.getTestTypeName() + " with floor data at " + this.getFormattedStartTime();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append(super.toString());
+        builder.append("Floor results:\n");
+        for (FreqVolPair result : this.reduceResults) {
+            builder.append(result.toString());
+            builder.append('\n');
+        }
+        return builder.toString();
     }
 }

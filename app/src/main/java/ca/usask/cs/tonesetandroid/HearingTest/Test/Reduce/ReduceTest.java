@@ -6,9 +6,6 @@ import java.util.HashMap;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.RampTestResults;
-import ca.usask.cs.tonesetandroid.HearingTest.Container.SingleTrialResult;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.RampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.SingleToneTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
@@ -61,11 +58,6 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
         this.testInfo = DEFAULT_TEST_INFO;
     }
 
-    /**
-     * Configure currentVolumes and timesNotHeardPerFreq in preparation for the test to begin
-     */
-    public abstract void initialize();
-
     @Override
     protected void run() {
         if (this.currentVolumes.isEmpty()) throw new IllegalStateException("Test not initialized");
@@ -81,7 +73,6 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
                         for (T trial : currentVolumes) {
                             if (iModel.testPaused() || ! iModel.testing()) return;
 
-                            saveLine();
                             newCurrentTrial(trial);
                             iModel.resetAnswer();
                             currentTrial.setStartTime();
@@ -94,6 +85,8 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
                                 mapIncrement(timesNotHeardPerFreq, trial.freq());
                             currentTrial.setCorrect(iModel.answered());
                             sleepThread(1000, 3000);
+                            saveLine();     // save line after waiting, so we save all the clicks that happened while
+                                            // waiting
                         }
                         reduceCurrentVolumes();
                     }
@@ -110,16 +103,6 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
     @Override
     public boolean isComplete() {
         return this.currentVolumes.isEmpty();
-    }
-
-    @Override
-    protected final String getLineEnd(SingleTrialResult result) {
-        return String.format("freq: %.2f, vol: %.2f, %s, %d clicks: %s",
-                this.currentTrial.tone().freq(),
-                this.currentTrial.tone().vol(),
-                this.currentTrial.wasCorrect() ? "Heard" : "NotHeard",
-                this.currentTrial.nClicks(),
-                this.currentTrial.getClicksAsString());
     }
 
     @Override
@@ -153,19 +136,6 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
 
     public void setRampResults(RampTestResults results) {
         this.rampResults = results;
-    }
-
-    /**
-     * Replace the value associated with the given key in the map with the given new value, or just associate the key
-     * with the value if not already present.
-     *
-     * @param map A HashMap
-     * @param key A valid key for that hashmap (not necessarily present in map)
-     * @param newValue The new value with which to associate the key
-     */
-    public void mapReplace(HashMap<Float, Integer> map, Float key, Integer newValue) { // todo doesn't map.put() already do this?
-        map.remove(key);
-        map.put(key, newValue);
     }
 
     /**
@@ -210,6 +180,10 @@ public abstract class ReduceTest<T extends Tone> extends SingleToneTest<T> {
          */
         public FreqVolPair[] getResults() {
             return results.toArray(new FreqVolPair[]{});
+        }
+
+        public boolean isEmpty() {
+            return this.results.isEmpty();
         }
     }
 

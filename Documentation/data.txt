@@ -1,0 +1,144 @@
+Information about how hearing test results are stored at runtime
+It is highly recommended that you read hearing-tests.txt before reading this document.
+For information on how test results are saved to disk, see file-io.txt.
+
+
+##################################################### Participants #####################################################
+
+A "participant" is an individual person who has taken or will take hearing tests with this application. At login time,
+a Participant object is created, and if there are any, Calibration results are loaded into it. This way, a participant
+can do a calibration one day, then come back another day for confidence tests.
+
+A Participant contains all the calibration tests that this individual has taken, but does not store confidence test
+results (those are intended to be read by humans from the files on disk). More precisely, a Participant contains a
+single HearingTestResultsCollection, described below under "storing test results"
+
+
+######################################################## Clicks ########################################################
+
+The Click class originally represented just a touchscreen button press (or "click"), but this class now represents any
+user input intended to indicate whether they heard a tone. This can be a touchscreen button press, a volume button
+press, or a "shake" event. See interaction.txt for more information about how users can respond to tones played by this
+application.
+
+The Click class stores the time in milliseconds since the epoch at which the user interaction was registered, the answer
+indicated by the user, and whether the event came through a touchscreen button press or through a shake/volume event.
+
+Each tone played by a hearing test has a set of 0 or more Click objects that were registered during or immediately
+following the tone being played, which are stored in that tone's SingleTrialResult (below)
+
+
+################################################## SingleTrialResult ###################################################
+
+A SingleTrialResult stores information about one individual tone played one time. This includes the time at which the
+tone was played, the Click objects registered during the tone, whether the user was correct, and any other information
+that we need to keep track of. These are stored inside a HearingTestResults object of some sort.
+
+
+################################################# Storing Test Results #################################################
+
+Final hearing test results are stored in a special container class, found in the HearingTest.Container module. A
+meta-container for storing the results of many hearing tests is provided by the HearingTestResultsCollection class. Each
+Participant has an associated HearingTestResultsCollection in which all of their tests taken to date (either performed
+recently or read from a file) are stored.
+
+The results of an individual hearing test are stored in an object inheriting from the HearingTestResults abstract class.
+One notable child of the HearingTestResults class is the PredictorResults abstract class, which contains the results of
+any hearing test whose results can be used to make predictions about tones not necessarily performed in the test itself
+(ie. CalibrationTest and RampTest).
+
+All non-abstract child classes of HearingTestResults implement a function called addResult(). This is not declared as
+an abstract function because different subclasses have slightly different parameters for it. During a test, the result
+of whether or not a participant heard an individual tone is added using this addResult() function.
+
+
+RampTestResults and floor info
+
+    The RampTestResults class is not often used, except to indicate that a test was only a ramp test and no reduce test
+    was performed. While performing a RampTest, the results are stored into a RampTestResultsWithFloorInfo class, which
+    inherits from RampTestResults but also has fields in which to store the results of a reduce test. After performing a
+    RampTest, we store the results into a HearingTestResultsCollection as RampTestResults using
+    RampTesResultsWithFloorInfo.getRegularRampResults().
+
+    After performing a ReduceTest (which necessarily must be performed immediately following a RampTest), we find the
+    results of the previously-performed RampTest, then store the ReduceTestResults (in the form of an array of
+    FreqVolPairs, rather than its own Results object) into the RampTestResultsWithFloorInfo from the last test using
+    the setReduceResults() method, then add the RampTestResultsWithFloorInfo directly to the
+    HearingTestResultsCollection without modifying it. Internally, the RampTest class uses a RampTestResults class. This
+    is mostly a legacy thing and doesn't serve any purpose outside of the internals of the class itself. To load the
+    results of a ReduceTest from a file, use the ReduceTest.ResultsBuilder class, add the results with addResult(),
+    then call builder.build().getResults() to get the results in a form suitable for adding to a
+    RampTestResultsWithFloorInfo.
+
+
+################################################## Using Test Results ##################################################
+
+Confidence test results are stored in files and are never added to a Participant object. The application does some
+analysis of the confidence test versus the predicted values from the calibration tests, but only does this immediately
+after a confidence test. If you decide that you want to do extra processing on ConfidenceTestResults and save them with
+the Participant, a rough guide on that is provided in future.txt. More information on confidence test files can be
+found in file-io.txt.
+
+PredictorResults are the only ones saved with a HearingTestResultsCollection object, and they are used for two purposes
+in this system:
+
+    Selecting tones for a Confidence Test
+        Tones for a confidence test are selected by first finding the PredictorResults with the most similar background
+        noise to the background noise of the confidence test, then using the getVolFloorEstimate() and
+        getVolCeilingEstimate() functions in those PredictorResults to find volumes. This all happens by simply using
+        the getVol[Floor/Ceiling]Estimate() functions built into the HearingTestResultsCollection class. Confidence test
+        tones are configured in that test's configureTestTones() method.
+
+    Predicting the probability of hearing a tone that was not tested
+        Getting P(heard) for a tone can be done through the getProbability method. If the predictor results can make
+        more than one prediction, this falls back on some default. The more important method is getPredictionString,
+        which makes one or more predictions about the probability of hearing a tone, then formats it as a string with
+        the different predictions labelled if necessary.
+
+As stated above, some PredictorResults can make more than one prediction. This mainly concerns the RampTest. Since the
+RampTest has so much less information than the CalibrationTest, we might need to do a bit more trial-and-error. This
+way, we can predict using any arbitrary number of techniques, then print them all out through the getPredictionString()
+method to figure out which one works best.
+
+We typically don't directly use a PredictorResults once we've added all of the results to it. PredictorResults are
+usually accessed through their HearingTestResultsCollection, mostly through the compareToConfidenceTest() or
+getVol[Floor/Ceiling]Estimate() methods.
+
+
+############################################### Computing Probabilities ################################################
+
+CalibrationTestResults
+
+    The logic for this is found in the various overrides of CalibrationTestResults.getProbability(). Simply, it finds
+    the frequencies tested immediately below and above the requested frequency, finds what percentage of the way between
+    two it is, then predicts that the probability will be that same proportion of the way between the two probabilities.
+
+    For example, if we call getProbability(freq = 500Hz, vol = 1.0) and during our calibration we tested 250Hz and
+    750Hz, then we would find the probability of hearing 250Hz and 750Hz at the given volume (described below), say
+    250Hz = 0.3 and 750Hz = 0.5. Since 500Hz is 50% of the way between 250Hz and 750Hz, then the probability of hearing
+    it is 50% of the way between 0.3 and 0.5; that is, 0.4.
+
+    Finding the probability of hearing a tone that we DID test at an arbitrary volume is similar: find the volumes that
+    we tested just above and below the queried volume, find the percentage of the way between, then return a number that
+    same percentage of the way between the two experimentally-derived probabilities from the calibration data.
+
+
+RampTestResults
+
+    We find estimates for volumes at which we will hear the tone 100% of the time and 0% of the time via the
+    getVol[Floor/Ceiling]Estimate() functions, then compute the probability based on the queried volume's distance
+    between those two estimates. RampTestResults contains the functions getProbabilityLinear and
+    getProbabilityLogarithmic which use different functions to find the probability based on its distance between the
+    two volumes. Simply calling getProbability() returns the linear function, but both are shown in
+    getPredictionString().
+
+    This is also in RampTestResultsWithFloorInfo, which overrides the getVolFloorEstimate() method to reflect its extra
+    data.
+
+
+Both of these contain half-implemented or implemented but unused methods for computing probabilities for various
+different types of tones. Currently we just use the frequency and volume, but you could very easily change the way
+they're implemented to predict differently based on the type of tone.
+
+Some rough guidelines on how to edit the way that this application computes P(heard) or how it compares PredictorResults
+to ConfidenceTestResults can be found in future.txt

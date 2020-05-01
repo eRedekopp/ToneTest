@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.Model;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
@@ -16,20 +17,7 @@ import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
 import ca.usask.cs.tonesetandroid.UtilFunctions;
 
-public class RampTestResults implements HearingTestResults {
-
-    /**
-     * Recognized values of equationID
-     */
-    public static final int[] EQUATION_ID_NUMS = {0, 1};
-
-    /**
-     * Which equation should be used to calculate probabilities?
-     *
-     * This is necessary in order to fit the getProbability(Tone) requirement for HearingTestResults. Although
-     * it's kind of clunky, it's really not worth the trouble to fix it
-     */
-    protected int equationID = 0;
+public class RampTestResults extends PredictorResults {
 
     /**
      * A mapping of each frequency tested to the first and second volumes selected by the user at
@@ -37,34 +25,30 @@ public class RampTestResults implements HearingTestResults {
      */
     protected HashMap<Float, VolPair> allResults;
 
-    public RampTestResults() {
+    public RampTestResults(BackgroundNoiseType noiseType, String testTypeName) {
+        super(noiseType, testTypeName);
         this.allResults = new HashMap<>();
     }
 
     @Override
     public double getProbability(Tone tone) throws IllegalStateException {
-        if (equationID == 0) return getProbabilityLinear(tone);
-        if (equationID == 1) return getProbabilityLogarithmic(tone);
-        else throw new IllegalStateException("Equation ID set to invalid value: " + equationID);
+        return getProbabilityLinear(tone);
     }
-    
-    @Override
-    public double getProbability(Interval tone) throws IllegalStateException {
+
+    protected double getProbability(Interval tone) throws IllegalStateException {
         double f1Prob = this.getProbability(new FreqVolPair(tone.freq(), tone.vol()));
         double f2Prob = this.getProbability(new FreqVolPair(tone.freq2(), tone.vol()));
         return UtilFunctions.mean(new double[]{f1Prob, f2Prob});
     }
 
-    @Override
-    public double getProbability(Melody tone) {
+    protected double getProbability(Melody tone) {
         FreqVolDurTrio[] tones = tone.getAudibleTones();
         double[] probs = new double[tones.length];
         for (int i = 0; i < tones.length; i++) probs[i] = this.getProbability(tones[i]);
         return UtilFunctions.mean(probs);
     }
 
-    @Override
-    public double getProbability(WavTone tone) {
+    protected double getProbability(WavTone tone) {
         // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
 
         int nAudioSamples = 50;
@@ -81,7 +65,6 @@ public class RampTestResults implements HearingTestResults {
 
         return UtilFunctions.mean(probEstimates);
     }
-
 
     /**
      * Return the probability of hearing the tone given these hearing test results, using the
@@ -134,7 +117,7 @@ public class RampTestResults implements HearingTestResults {
      * Return an estimate for the volume floor (loudest volume which will be heard 0% of the
      * time) for the given frequency - must have results stored to call this method
      */
-    protected double getVolFloorEstimate(float freq) {
+    public double getVolFloorEstimate(float freq) {
         return this.getVolCeilingEstimate(freq) / 2.0;  // floor tends to be about 1/2 ceiling
     }
 
@@ -143,7 +126,7 @@ public class RampTestResults implements HearingTestResults {
      * time) for the given frequency - must have results stored to call this method
      */
     @SuppressWarnings("ConstantConditions")
-    protected double getVolCeilingEstimate(float freq) {
+    public double getVolCeilingEstimate(float freq) {
 
         // Return max ramp vol if freq tested
         if (this.allResults.containsKey(freq)) return this.allResults.get(freq).min();
@@ -166,21 +149,6 @@ public class RampTestResults implements HearingTestResults {
         double volAbove = this.allResults.get(freqAbove).min();
 
         return volBelow + pctBetween * (volAbove - volBelow);
-    }
-
-    /**
-     * Set this results container such that all subsequent calls to getProbability will be
-     * calculated using the equation represented by the given ID
-     *
-     * @param equationID The id of the desired equation
-     * @throws IllegalArgumentException If an invalid ID is given (see EQUATION_ID_NUMS)
-     */
-    public void setModelEquation(int equationID) throws IllegalArgumentException {
-        for (int ID : EQUATION_ID_NUMS) if (equationID == ID) {
-            this.equationID = equationID;
-            return;
-        }
-        throw new IllegalArgumentException("Invalid equation ID number");
     }
 
     /**
@@ -220,6 +188,7 @@ public class RampTestResults implements HearingTestResults {
     @SuppressWarnings("ConstantConditions")
     public String toString() {
         StringBuilder builder = new StringBuilder();
+        builder.append(this.getTestIdentifier() + '\n');
         for (float freq : this.getTestedFreqs())
             builder.append(String.format("Freq: %.1f, vol1 = %.3f, vol2 = %.3f%n",
                     freq, this.allResults.get(freq).vol1(), this.allResults.get(freq).vol2()));
@@ -230,6 +199,20 @@ public class RampTestResults implements HearingTestResults {
     public boolean isEmpty() {
         return this.allResults.isEmpty();
     }
+
+    @Override
+    public String getPredictionString(Tone tone) {
+        return String.format("%s: linear %.4f log %.4f",
+                              this.getTestIdentifier(), this.getProbabilityLinear(tone),
+                              this.getProbabilityLogarithmic(tone));
+    }
+
+    @Override
+    public String getTestIdentifier() {
+        return this.getTestTypeName() + " without floor data at " + this.getFormattedStartTime();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * A class to store a pair of volumes 

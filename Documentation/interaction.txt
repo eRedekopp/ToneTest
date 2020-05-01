@@ -1,0 +1,121 @@
+Information about the different Activities and how the user is meant to interact with them
+
+
+################################################ Registering Responses #################################################
+
+There are four possible responses to a test: heard, up, flat, down. For differentiation tests, we test up, flat, and
+down, for audibility tests, we test "heard" (see hearing-tests.txt if you don't understand that). A test's expected
+answers are accessible through its method getPossibleResponses()
+
+There are 3 ways for a user to register a response during a hearing test:
+    1. Through the on-screen buttons described under "Main Activity"
+    2. Through the physical volume buttons (may only register "up" and "down" this way)
+    3. By shaking the phone (may only register "heard" this way)
+
+You may want to have the physical volume buttons register "heard" in the future. Rough instructions for this are
+provided in future.txt
+
+
+#################################################### Login Activity ####################################################
+
+initial_setup_view.xml
+
+This is where we log in a user and get them set up to start taking tests. We also load data here if necessary, or create
+files for a new participant.
+
++--------------------------------+
+| Participant ID __________      |
+|                                |
+| New Test                       |
+| Load Calibration               |
+| Skip This Step                 |
++--------------------------------+
+
+New Test: Create a new participant with the given participant ID
+    - The participant ID must not already be in use. An error dialog will appear if you attempt to do this
+Load Calibration: Load the files for a participant with the given participant ID
+    - The participant ID must already be in use. An error dialog will appear if you attempt to do this
+Skip This Step: Load or create participant ID 0 (the dummy user)
+    - You cannot use ID 0 for any real participant. An error dialog will appear if you attempt to do this.
+
+
+#################################################### Main Activity #####################################################
+
+activity_main.xml
+
+This is where we tell it to start the test, and register responses during a test
+
++-------------------+
+| Calibration Test  |
+| Confidence Test   |
+| Heard Tone        |
+| Up                |
+| Flat              |
+| Down              |
+| Reset             |
+| Pause / Resume    |
++-------------------+
+
+Not all of these options are valid at all times. Invalid options will be greyed-out (the logic for this is in
+MainActivity.modelChanged()).
+
+Calibration Test: Go to CalibrationSelectActivity to select options for a CalibrationTest, then start it.
+Confidence Test: Same as Calibration but for Confidence tests
+Heard Tone: Indicate during a test that the user heard the tone
+Up: Indicate during a test that the tone went upward
+Down: Indicate during a test that the tone went downward
+Reset: Log out this user and start from the beginning as though we just started the app
+    - A dialog will ask you to confirm before exiting
+Pause / Resume: During a test, pause or resume the playing of the tones
+
+
+############################################# Calibration Select Activity ##############################################
+
+calib_select_view.xml
+
+This is where we select options for a suite of calibration tests before starting it
+
++----------------------------------------------+
+| Noise   _ None  _ White Noise  _ Crowd       |
+|                                              |
+| Volume _______                               |
+|                                              |
+| Tone Timbre   _ Sine  _ Piano                |
+|                                              |
+| Test Type   _ Full  _ Ramp  _ Ramp/Reduce    |
++----------------------------------------------+
+
+Noise: The type of background noise (see noise.txt)
+Volume: The volume of the noise (see noise.txt)
+Tone Timbre: Do we play sine waves, piano notes, or .wav tones
+    - Not all currently implemented
+Test Type: Full = 3-phase calibration. Ramp = ramp test only. Ramp/Reduce = ramp and reduce only.
+
+I have no idea why I didn't give it the option to configure the number of tones. That seems like something you may want
+to do in the future (see future.txt)
+
+############################################## Confidence Select Activity ##############################################
+
+conf_select_view.xml
+
+This is where we select options for a confidence test before starting it
+
++----------------------------------------------+
+| Noise   _ None  _ White Noise  _ Crowd       |
+|                                              |
+| Volume _______                               |
+|                                              |
+| Tone Timbre   _ Sine  _ Piano  _ WAV         |
+|                                              |
+| Tone Type   _ Single  _ Interval  _ Melody   |
+|                                              |
+| Trials per tone _________                    |
+|                                              |
++----------------------------------------------+
+
+Noise: The type of background noise (see noise.txt)
+Volume: The volume of the noise (see noise.txt)
+Tone Timbre: Do we play sine waves, piano notes, or .wav tones
+    - Not all currently implemented
+Tone Type: Just a single note, 2 notes, or the default melodies?
+Trials per tone: For each each volume/frequency, how many times do we test the user on it?

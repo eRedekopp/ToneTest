@@ -1,0 +1,16 @@
+Description of the background noise generator
+
+
+####################################################### Overview #######################################################
+
+Background noise is generated in the BackgroundNoiseController class. This class has its own MediaPlayer and does not
+rely on the Model to play noise. When requested, the BackgroundNoiseController starts a thread that plays background
+noise independently of everything else going on in the application. The generator continuously writes background noise
+to its track until it notices that HearingTestInteractionModel.testing is no longer True, then it turns itself off.
+
+The generator can play white noise, which just writes random gaussians to the line out to create static. It can also
+play "crowd noise", which loops the sound of a crowd in a busy restaurant.
+
+The volume of the noise is passed to the BackgroundNoiseGenerator as an integer from 0 to 100, but internally the
+generator converts that to a number between 0 and Integer.MAX_VALUE. The volume is a multiplier which decides by how
+much to amplify the wavelengths of the sound.

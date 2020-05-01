@@ -5,12 +5,11 @@ import android.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.Control.HearingTestController;
-import ca.usask.cs.tonesetandroid.Click;
+import ca.usask.cs.tonesetandroid.HearingTest.Container.Click;
 import ca.usask.cs.tonesetandroid.HearingTest.Container.HearingTestResults;
 import ca.usask.cs.tonesetandroid.Control.FileIOController;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolPair;
@@ -29,20 +28,17 @@ import ca.usask.cs.tonesetandroid.Control.Model;
  */
 public abstract class HearingTest<T extends Tone> {
 
-    // constants
+    // defaults
     protected static final float[] DEFAULT_CALIBRATION_FREQUENCIES = {200, 500, 1000, 2000, 4000};
     protected static final float[] DEFAULT_CONFIDENCE_FREQUENCIES =  {220, 440, 880, 1760, 3520};
     protected static final int DEFAULT_TONE_DURATION_MS = 1500;
 
-    public static final int DIRECTION_DOWN = -1;
-    public static final int DIRECTION_FLAT =  0;
-    public static final int DIRECTION_UP   =  1;
-
-    public static final int ANSWER_NULL = 0;
-    public static final int ANSWER_UP = 1;
-    public static final int ANSWER_DOWN = 2;
-    public static final int ANSWER_FLAT = 3;
-    public static final int ANSWER_HEARD = 4;
+    // answer type identifiers
+    public static final int ANSWER_NULL = -1;
+    public static final int ANSWER_UP = Tone.DIRECTION_UP;
+    public static final int ANSWER_DOWN = Tone.DIRECTION_DOWN;
+    public static final int ANSWER_FLAT = Tone.DIRECTION_FLAT;
+    public static final int ANSWER_HEARD = -2;
 
     // mvc elements
     protected static Model model;
@@ -58,13 +54,6 @@ public abstract class HearingTest<T extends Tone> {
     protected BackgroundNoiseType backgroundNoiseType;
 
     /**
-     * A string identifying the type of test, to be used in save files and logs.
-     * All ramp tests must contain the word "ramp", reduce tests must contain the
-     * word "reduce", confidence tests must contain the word "confidence"
-     */
-    protected String testTypeName;
-
-    /**
      * Human-readable info about the format of this test
      */
     protected String testInfo;
@@ -73,6 +62,12 @@ public abstract class HearingTest<T extends Tone> {
      * The results of this test
      */
     protected HearingTestResults results;
+
+    /**
+     * The time in milliseconds since the start of the epoch at which setStartTime() was first called, or -1 if
+     * setStartTime() has not yet been called. Used as an identifier for the test
+     */
+    protected long startTime = -1;
 
     /**
      * The current trial being performed in this test, or null if not applicable
@@ -100,12 +95,12 @@ public abstract class HearingTest<T extends Tone> {
     public abstract int[] getPossibleResponses();
 
     /**
-     * Return the information to be written after the header in the save file for the given trial
-     *
-     * @param result The individual trial result to be saved
-     * @return A string with information relating specifically to result to be written after the line's header
+     * Return a string identifying the type of test, to be used in save files and logs.
+     * All ramp tests must contain the word "ramp", reduce tests must contain the
+     * word "reduce", confidence tests must contain the word "confidence", and calibration
+     * tests must contain the word "calibration". Words must be attached by hyphens. No whitespace.
      */
-    protected abstract String getLineEnd(SingleTrialResult result);
+    public abstract String getTestTypeName();
 
     public HearingTest(BackgroundNoiseType backgroundNoiseType) {
         this.completedTrials = new ArrayList<>();
@@ -189,47 +184,11 @@ public abstract class HearingTest<T extends Tone> {
         }
     }
 
-    /**
-     * Save information on the current trial to the output file via the FileIOController
-     */
     protected void saveLine() {
-        if (this.currentTrial != null)
-            this.saveLine(String.format("%s %s", getLineBeginning(), this.getLineEnd(this.currentTrial)));
-    }
-
-    /**
-     * Save the given string on its own line via the FileIOController
-     */
-    protected void saveLine(String line) {
-        fileController.saveLine(line);
-    }
-
-    /**
-     * @return Given the state of model and iModel, return a String with subject ID, current date/time, test type
-     * name, and background noise type/volume to be written at the beginning of a line for an individual trial
-     */
-    protected String getLineBeginning() {
-        Long startTime = null;
-        SimpleDateFormat dateFormat = null;
-        String formattedDateTime = null;
-
-        try {
-            startTime = iModel.getCurrentTest().getLastTrialStartTime();
-            dateFormat = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-            formattedDateTime = dateFormat.format(startTime);
-        } catch (NullPointerException e) {
-            Log.e("getLineBeginning", "Nullpointerexception caused - dateFormat = " +
-                    (dateFormat == null ? "null" : dateFormat.toPattern()) + " Date = " +
-                    (startTime == null ? "null" : startTime.toString()));
-            e.printStackTrace();
-            formattedDateTime = "TimeFetchError";
-        }
-
-        return String.format("%s Subject %d, Test %s, Noise %s,",
-                formattedDateTime,
-                model.getSubjectId(),
-                iModel.getCurrentTest().getTestTypeName(),
-                this.getBackgroundNoiseType().toString());
+        fileController.saveLine(this.currentTrial.getStartTime(), this.currentTrial.tone().freq(),
+                                this.currentTrial.tone().vol(), this.currentTrial.tone().directionAsString(),
+                                this.currentTrial.wasCorrect(), this.currentTrial.nClicks(),
+                                this.currentTrial.getClicksAsString());
     }
 
     /**
@@ -277,23 +236,25 @@ public abstract class HearingTest<T extends Tone> {
         return this.testInfo;
     }
 
-    public String getTestTypeName() {
-        return this.testTypeName;
-    }
-
     /**
-     * @return The time in seconds since 1970 at which the current trial was started
+     * @return The time in seconds since epoch at which the current trial was started
      */
     public long getLastTrialStartTime() {
         return this.currentTrial.getStartTime();
     }
 
-    public BackgroundNoiseType getBackgroundNoiseType() {
-        return backgroundNoiseType;
+    /**
+     * Set startTime to the current time. Only changes startTime on the first call - any subsequent calls will do
+     * nothing
+     */
+    public void setStartTime() {
+        if (this.startTime == -1) // only change startTime if setStartTime has not been called yet
+            this.startTime = System.currentTimeMillis();
+        this.results.setStartTime(this.startTime);
     }
 
-    public void setBackgroundNoiseType(BackgroundNoiseType backgroundNoiseType) {
-        this.backgroundNoiseType = backgroundNoiseType;
+    public BackgroundNoiseType getBackgroundNoiseType() {
+        return backgroundNoiseType;
     }
 
     public HearingTestResults getResults() {

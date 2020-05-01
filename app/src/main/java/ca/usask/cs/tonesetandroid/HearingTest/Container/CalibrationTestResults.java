@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
+import java.util.regex.Pattern;
 
 import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 import ca.usask.cs.tonesetandroid.HearingTest.Tone.FreqVolDurTrio;
@@ -27,19 +28,15 @@ import ca.usask.cs.tonesetandroid.UtilFunctions;
 /**
  * A container class for storing the results of a CalibrationTest
  */
-public class CalibrationTestResults implements HearingTestResults {
+public class CalibrationTestResults extends PredictorResults {
 
     /**
      * Each frequency tested mapped to its corresponding SingleFreqResult
      */
     private HashMap<Float, HearingTestSingleFreqResult> allResults;
 
-    /**
-     * The type of background noise played during the test
-     */
-    private BackgroundNoiseType backgroundNoise;
-
-    public CalibrationTestResults() {
+    public CalibrationTestResults(BackgroundNoiseType backgroundNoise, String testTypeName) {
+        super(backgroundNoise, testTypeName);
         allResults = new HashMap<>();
     }
 
@@ -79,23 +76,20 @@ public class CalibrationTestResults implements HearingTestResults {
         return getProbability(tone.freq(), tone.vol(), testedFreqsPrimitive);
     }
 
-    @Override
-    public double getProbability(Interval tone) throws IllegalStateException {
+    protected double getProbability(Interval tone) throws IllegalStateException {
         double f1Prob = getProbability(new FreqVolPair(tone.freq(), tone.vol()));
         double f2Prob = getProbability(new FreqVolPair(tone.freq2(), tone.vol()));
         return UtilFunctions.mean(new double[]{f1Prob, f2Prob});
     }
 
-    @Override
-    public double getProbability(Melody tone) {
+    protected double getProbability(Melody tone) {
         FreqVolDurTrio[] tones = tone.getAudibleTones();
         double[] probs = new double[tones.length];
         for (int i = 0; i < tones.length; i++) probs[i] = this.getProbability(tones[i]);
         return UtilFunctions.mean(probs);
     }
 
-    @Override
-    public double getProbability(WavTone tone) {
+    protected double getProbability(WavTone tone) {
         // find most prominent frequencies in audio samples from wav file, return mean of their probabilities
 
         int nAudioSamples = 50;
@@ -115,7 +109,11 @@ public class CalibrationTestResults implements HearingTestResults {
 
     /**
      * Given a subset of the tested frequencies, return the probability of hearing a tone of the given frequency and
-     * volume, as though the frequencies in subset
+     * volume, as though the frequencies in subset.
+     *
+     * This function was originally used to check a bunch of different subsets of the calibration data to see how
+     * we'd do if we used more or fewer frequencies. I think the number of frequencies is pretty good where it's at
+     * but you could certainly call this with various subsets in getPredictionString() to double check for yourself.
      *
      * @param freq The frequency of the tone whose probability is to be determined
      * @param vol The volume of the tone whose probability is to be determined
@@ -219,7 +217,7 @@ public class CalibrationTestResults implements HearingTestResults {
      * @return An estimate of the volume floor for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolFloorEstimateForFreq(float freq) {
+    public double getVolFloorEstimate(float freq) {
         if (this.freqTested(freq)) return this.allResults.get(freq).getVolFloor();
 
         float nearestBelow = UtilFunctions.findNearestBelow(freq, this.getTestedFreqs());
@@ -243,7 +241,7 @@ public class CalibrationTestResults implements HearingTestResults {
      * @return An estimate of the volume ceiling for the given frequency
      */
     @SuppressWarnings("ConstantConditions")
-    public double getVolCeilingEstimateForFreq(float freq) {
+    public double getVolCeilingEstimate(float freq) {
         if (this.freqTested(freq)) return this.allResults.get(freq).getVolCeiling();
 
         float nearestBelow = UtilFunctions.findNearestBelow(freq, this.getTestedFreqs());
@@ -265,10 +263,10 @@ public class CalibrationTestResults implements HearingTestResults {
 
         int nAudioSamples = 50;
 
-        float[] topFreqs = topFrequencies(wavResId, nAudioSamples);
+        float[] topFreqs = Model.topFrequencies(wavResId, nAudioSamples);
         double[] floorEstimates = new double[nAudioSamples];
 
-        for (int i = 0; i < nAudioSamples; i++) floorEstimates[i] = this.getVolFloorEstimateForFreq(topFreqs[i]);
+        for (int i = 0; i < nAudioSamples; i++) floorEstimates[i] = this.getVolFloorEstimate(topFreqs[i]);
 
         return UtilFunctions.mean(floorEstimates);
     }
@@ -279,10 +277,10 @@ public class CalibrationTestResults implements HearingTestResults {
 
         int nAudioSamples = 50;
 
-        float[] topFreqs = topFrequencies(wavResId, nAudioSamples);
+        float[] topFreqs = Model.topFrequencies(wavResId, nAudioSamples);
         double[] ceilingEstimates = new double[nAudioSamples];
 
-        for (int i = 0; i < nAudioSamples; i++) ceilingEstimates[i] = this.getVolCeilingEstimateForFreq(topFreqs[i]);
+        for (int i = 0; i < nAudioSamples; i++) ceilingEstimates[i] = this.getVolCeilingEstimate(topFreqs[i]);
 
         return UtilFunctions.mean(ceilingEstimates);
     }
@@ -306,47 +304,6 @@ public class CalibrationTestResults implements HearingTestResults {
     }
 
     /**
-     * Given an ID for a .wav file, return the most prominent frequencies present in the audio
-     *
-     * @param wavResId The resource ID for the wav file to be tested
-     * @param nSamples The number of samples to test from the file (fewer samples -> faster, less precise)
-     * @return An array of length nSamples containing the most prominent frequencies in each sample
-     */
-    public static float[] topFrequencies(int wavResId, int nSamples) {  // todo move to model
-        int sampleSize = 1000;
-        InputStream rawPCM = MainActivity.context.getResources().openRawResource(wavResId);
-        byte[] buf = new byte[2];
-        float[] pcm = new float[sampleSize];
-        float[] results = new float[nSamples];
-        int nSamplesTaken = 0;
-
-        try {
-            int size = rawPCM.available() / 2; // /2 because each sample is 2 bytes
-            for (int i = 0;
-                 i < size - sampleSize;
-                 i += (size - nSamples * sampleSize) / nSamples) {
-
-                for (int j = 0; j < sampleSize; j++, i++) {      // populate pcm for current set of samples
-                    rawPCM.read(buf, 0, 2);       // read data from stream
-
-                    byte b = buf[0];              // convert to big-endian
-                    buf[0] = buf[1];
-                    buf[1] = b;
-                    short sample = ByteBuffer.wrap(buf).getShort();           // convert to short
-                    pcm[j] = (float) sample / (float) Short.MIN_VALUE;
-                }
-
-                FreqVolPair[] periodogram = Model.getPeriodogramFromPcmData(pcm);   // get fft of pcm data
-                FreqVolPair max = FreqVolPair.maxVol(periodogram);
-                results[nSamplesTaken++] = max.freq();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return results;
-    }
-
-    /**
      * Return a new CalibrationTestResults with the same results as this one, but only containing the first n
      * results for each frequency-volume pair (ie. as though Model.NUMBER_OF_TESTS_PER_VOL == n)
      *
@@ -360,7 +317,7 @@ public class CalibrationTestResults implements HearingTestResults {
                     "n = " + n + " is larger than the actual sample size = " + this.getNumOfTrials());
         else if (n == this.getNumOfTrials()) return this;
 
-        CalibrationTestResults newContainer = new CalibrationTestResults();
+        CalibrationTestResults newContainer = new CalibrationTestResults(this.getNoiseType(), this.getTestTypeName());
         for (HearingTestSingleFreqResult htsr : this.allResults.values())
             newContainer.allResults.put(htsr.freq, htsr.getSubsetResult(n));
         return newContainer;
@@ -376,23 +333,19 @@ public class CalibrationTestResults implements HearingTestResults {
         return aResult.getNumSamples(aVol);
     }
 
-    /**
-     * @return The number of times that the given tone was tested
-     */
-    public int getNumOfTrials(Tone tone) {
-        try {
-            return this.allResults.get(tone.freq()).getNumSamples(tone.vol());
-        } catch (NullPointerException e) {
-            return 0;
-        }
-    }
-
     @Override
     @NonNull
     public String toString() {
         StringBuilder builder = new StringBuilder();
+        builder.append("");
         for (HearingTestSingleFreqResult result : allResults.values()) builder.append(result.toString());
         return builder.toString();
+    }
+
+    @Override
+    public String getPredictionString(Tone tone) {
+        return String.format("%s: %.4f",
+                this.getTestIdentifier(), this.getFormattedStartTime(), this.getProbability(tone));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -445,13 +398,12 @@ public class CalibrationTestResults implements HearingTestResults {
             // update to timesHeard / timesNotHeard
             if (heard)
                 if (timesHeardPerVol.containsKey(vol))
-                    mapReplace(timesHeardPerVol, vol, timesHeardPerVol.get(vol) + 1);
-
+                    timesHeardPerVol.put(vol, timesHeardPerVol.get(vol) + 1);
                 else timesHeardPerVol.put(vol, 1);
             else
-            if (timesNotHeardPerVol.containsKey(vol))
-                mapReplace(timesNotHeardPerVol, vol, timesNotHeardPerVol.get(vol) + 1);
-            else timesNotHeardPerVol.put(vol, 1);
+                if (timesNotHeardPerVol.containsKey(vol))
+                    timesNotHeardPerVol.put(vol, timesNotHeardPerVol.get(vol) + 1);
+                else timesNotHeardPerVol.put(vol, 1);
         }
 
         /**
@@ -566,22 +518,20 @@ public class CalibrationTestResults implements HearingTestResults {
         public HearingTestSingleFreqResult getSubsetResult(int n) {
             ListIterator<Boolean> iter = null;
             HearingTestSingleFreqResult newResult = null;
-            double curvol = -1;
-                newResult = new HearingTestSingleFreqResult(this.freq);
-                for (Double vol : this.getVolumes()) {
-                    curvol = vol;
-                    // addResult for the first n responses in the hearing test
-                    iter  = this.testResultsPerVol.get(vol).listIterator();
-                        for (int i = 0; i < n; i++) {
-                            try {
-                                newResult.addResult(vol, iter.next());
-                            } catch (NoSuchElementException e) {
-                                break;  // if not enough trials for volume, use as many samples
-                                        // as possible
-                            }
+            newResult = new HearingTestSingleFreqResult(this.freq);
+            for (Double vol : this.getVolumes()) {
+                // addResult for the first n responses in the hearing test
+                iter  = this.testResultsPerVol.get(vol).listIterator();
+                    for (int i = 0; i < n; i++) {
+                        try {
+                            newResult.addResult(vol, iter.next());
+                        } catch (NoSuchElementException e) {
+                            break;  // if not enough trials for volume, use as many samples
+                                    // as possible
                         }
-                }
-                return newResult;
+                    }
+            }
+            return newResult;
         }
 
         @Override
@@ -615,20 +565,6 @@ public class CalibrationTestResults implements HearingTestResults {
                 builder.append(String.format("%.4f\n", pHeard));
             }
             return builder.toString();
-        }
-
-        /**
-         * Delete any mapping from the given key if it exists, then add a mapping between the given key and the new
-         * value in the given map
-         *
-         * @param map The map to be affected
-         * @param key The key whose value is to be replaced
-         * @param newValue The new value to associate with the key
-         */
-        public void mapReplace(HashMap<Double, Integer> map, Double key, Integer newValue) {  
-            // todo doesn't map.put() already do this?
-            map.remove(key);
-            map.put(key, newValue);
         }
 
         @SuppressWarnings("unchecked")

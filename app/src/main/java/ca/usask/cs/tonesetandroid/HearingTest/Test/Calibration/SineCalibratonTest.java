@@ -17,7 +17,12 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
     public SineCalibratonTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "sine-calibration";
+        this.testInfo = DEFAULT_TEST_INFO;
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "sine-calibration";
     }
 
     @Override
@@ -33,6 +38,7 @@ public class SineCalibratonTest extends CalibrationTest<FreqVolPair> {
 
         ArrayList<FreqVolPair> allTones = new ArrayList<>();
         for (float freq : DEFAULT_CALIBRATION_FREQUENCIES) {
+            // we boost the top volume estimates so that
             double topVolEst = Tone.getVolForFreq(rampResults.getResultsArray(), freq) * 1.2; // boost volumes
             double bottomVolEst = Tone.getVolForFreq(reduceResults, freq) * 1.2;
             for (double vol = bottomVolEst;

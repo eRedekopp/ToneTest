@@ -3,19 +3,19 @@ package ca.usask.cs.tonesetandroid.Control;
 import android.content.Context;
 import android.util.Log;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.PianoCalibrationTest;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.SineCalibratonTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.ConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.IntervalSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.MelodySineConfidenceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SingleSineCalibFreqConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SingleSineConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.HearingTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.PianoRampTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.PianoReduceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.SinglePianoConfidenceTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Ramp.SineRampTest;
 import ca.usask.cs.tonesetandroid.HearingTest.Test.Reduce.SineReduceTest;
-import ca.usask.cs.tonesetandroid.HearingTest.Test.Confidence.PianoConfidenceTest;
+import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
 import ca.usask.cs.tonesetandroid.HearingTestView;
 
 /**
@@ -32,10 +32,19 @@ public class HearingTestController {
     FileIOController fileController;
     Context context;
 
+    // test type identifiers. RR = ramp + reduce
+    public static final int TEST_SUITE_FULL = 0;
+    public static final int TEST_SUITE_RAMP = 1;
+    public static final int TEST_SUITE_RR = 2;
+
     /**
      * Human-readable names of all CalibrationTest type options
-     */
-    public static final String[] CALIB_TEST_OPTIONS = {"Single Tone Sine", "Single Tone Piano"};
+     *
+     * "Full" = a full 3-phase calibration
+     * "Ramp" = ramp test only
+     * "RR" = ramp and reduce only
+     * */
+    public static final String[] CALIB_TEST_OPTIONS = {"Sine Full", "Piano Full", "Sine Ramp", "Sine RR"};
 
     /**
      * Human-readable names of all ConfidenceTest type options
@@ -55,31 +64,98 @@ public class HearingTestController {
     }
 
     /**
-     * Begin the full 3-phase calibration. iModel.rampTest must be fully configured before calling this method. 
-     * This method is only used to begin a new calibration test directly after getting user to input test information. 
-     * To resume a test, use checkForHearingTestResume
+     * Set up a new calibration suite to be run. This method configures the other MVC elements in preparation for a
+     * new calibration suite, then calls view.showInformationDialog, which in turn calls MainActivity.modelChanged(),
+     * which calls this.checkForHearingTestResume to actually begin the test after the user indicates that they've
+     * read the instructions
+     *
+     * @param noiseTypeID The identifier for the type of noise to be used in the test
+     *                    (one of BackgroundNoiseType.TYPE_*)
+     * @param noiseVol The volume from 0 to 100 of the noise in this test
+     * @param toneTimbreID The identifier for the timbre of the tones to be played in this test
+     *                     (one of Tone.TIMBRE_*)
+     * @param testTypeID The identifier for the test suite to be run (one of this.TEST_SUITE_*)
      */
-    public void calibrationTest() {
+    public void calibrationTest(int noiseTypeID, int noiseVol, int toneTimbreID, int testTypeID)
+            throws TestNotAvailableException {
+
+        BackgroundNoiseType noiseType = new BackgroundNoiseType(noiseTypeID, noiseVol);
+
         this.model.configureAudio();
         this.iModel.setTestPaused(true);
-        this.iModel.setCurrentTest(this.iModel.getRampTest());
+        // set current file to current participant's calibration file
+        this.fileController.setCurrentCalib(this.model.getCurrentParticipant());
+
+        // Each test suite must:
+        //  - create and place into the iModel all tests that will be run in this suite
+        //  - call setup*Test() for the first test of the suite
+        // The rest of the setup is generic and is done in the next code block
+        switch (testTypeID) {
+            case TEST_SUITE_FULL:
+                if (toneTimbreID == Tone.TIMBRE_SINE) {
+                    this.iModel.setRampTest(new SineRampTest(noiseType));
+                    this.iModel.setReduceTest(new SineReduceTest(noiseType));
+                    this.iModel.setCalibrationTest(new SineCalibratonTest(noiseType));
+                    this.setupRampTest();
+                } else {
+                    throw new TestNotAvailableException();
+                }
+                break;
+            // Not yet implemented
+            case TEST_SUITE_RAMP:
+            case TEST_SUITE_RR:
+                throw new TestNotAvailableException();
+            default:
+                throw new RuntimeException("Unknown testTypeID: " + testTypeID);
+        }
+
+        // start bg noise
         this.noiseController.playNoise(this.iModel.getCurrentNoise());
-        this.fileController.startNewSaveFile(true);
+        // show the information dialog to the user, which will start the test once the user closes it
         this.view.showInformationDialog(this.iModel.getCurrentTest().getTestInfo());
     }
 
     /**
-     * Perform any necessary steps to finalize the RampTest and prepare the ReduceTest
+     * Perform any necessary steps to get ready for a ramp test.
+     */
+    private void setupRampTest() {
+        // save the header line with test information for the first test
+        this.fileController.saveTestHeader(this.iModel.getRampTest());
+        this.iModel.setCurrentTest(this.iModel.getRampTest());
+    }
+
+    /**
+     * Perform any necessary steps to finalize the RampTest and prepare the ReduceTest or CalibrationTest
      * Only call immediately after completing a RampTest
      */
     public void rampTestComplete() {
-        iModel.setTestPaused(true);
-        view.showInformationDialog(iModel.getReduceTest().getTestInfo());
-        iModel.getReduceTest().setRampResults(iModel.getRampTest().getResults());
-        iModel.getReduceTest().initialize();
-        iModel.setTestThreadActive(false);
-        iModel.notifySubscribers();
-        iModel.setCurrentTest(iModel.getReduceTest());
+        // indicate that the test is complete in the participant's calibration file
+        this.fileController.saveEndTest();
+        // add to model.hearingTestResults without reduce results
+        this.model.getCurrentParticipant().getResults().addResults(
+                this.iModel.getRampTest().getResults().getRegularRampResults());
+        // go to reduce test or calibration test, if necessary
+        if (iModel.getReduceTest() != null) {
+            this.setupReduceTest();
+            this.view.showInformationDialog(this.iModel.getReduceTest().getTestInfo());
+        } else if (iModel.getCalibrationTest() != null) {
+            this.setupCalibrationTest();
+            this.view.showInformationDialog(this.iModel.getCalibrationTest().getTestInfo());
+        } else { // clean up and exit if not doing a full calibration
+            testComplete();
+        }
+    }
+
+    /**
+     * Perform any necessary steps to get ready for a reduce test
+     */
+    private void setupReduceTest() {
+        this.iModel.getReduceTest().setRampResults(this.iModel.getRampTest().getResults());
+        this.iModel.getReduceTest().initialize();
+        this.iModel.setTestThreadActive(false);
+        this.iModel.notifySubscribers();
+        this.iModel.setCurrentTest(this.iModel.getReduceTest());
+        this.fileController.saveTestHeader(this.iModel.getReduceTest());
     }
 
     /**
@@ -87,46 +163,97 @@ public class HearingTestController {
      * Only call immediately after completing a ReduceTest
      */
     public void reduceTestComplete() {
-        // add these results to RampTest
-        iModel.getRampTest().getResults().setReduceResults(iModel.getReduceTest().getLowestVolumes());
+        // indicate that the test is complete
+        this.fileController.saveEndTest();
+        // Add ramp results to model list again, but with floor info this time
+        this.iModel.getRampTest().getResults().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
+        this.model.getCurrentParticipant().getResults().addResults(this.iModel.getRampTest().getResults());
 
-        // set up CalibrationTest to run next
-        iModel.getCalibrationTest().setRampResults(iModel.getRampTest().getResults());
-        iModel.getCalibrationTest().setReduceResults(iModel.getReduceTest().getLowestVolumes());
-        iModel.getCalibrationTest().initialize();
-        iModel.setCurrentTest(iModel.getCalibrationTest());
-        iModel.setTestThreadActive(false);
-        iModel.notifySubscribers();
+        // set up CalibrationTest to run next, if necessary
+        if (this.iModel.getCalibrationTest() != null) {
+            this.setupCalibrationTest();
+            this.view.showInformationDialog(this.iModel.getCalibrationTest().getTestInfo());
+        } else {
+            testComplete();
+        }
+    }
+
+    /**
+     * Perform any necessary steps to get ready for a calibration test
+     */
+    private void setupCalibrationTest() {
+        this.iModel.getCalibrationTest().setRampResults(this.iModel.getRampTest().getResults());
+        this.iModel.getCalibrationTest().setReduceResults(this.iModel.getReduceTest().getLowestVolumes());
+        this.iModel.getCalibrationTest().initialize();
+        this.iModel.setCurrentTest(this.iModel.getCalibrationTest());
+        this.fileController.saveTestHeader(this.iModel.getCurrentTest());
+        this.iModel.setTestThreadActive(false);
+        this.iModel.notifySubscribers();
     }
 
     /**
      * Perform any final actions that need to be done before the calibration test is officially complete
      */
     public void calibrationTestComplete() {
-        this.model.setCalibrationTestResults(this.iModel.getCalibrationResults());
-        this.model.setRampResults(this.iModel.getRampTest().getResults());
-        this.iModel.reset();
-        this.model.printResultsToConsole();
-        this.model.audioTrackCleanup();
-        this.fileController.closeFile();
-        this.iModel.notifySubscribers();
+        this.model.getCurrentParticipant().getResults().addResults(this.iModel.getCalibrationTest().getResults());
+        this.fileController.saveEndTest();
+        testComplete();
     }
 
     /**
-     * Begin a confidence test. Calibration results must be saved and iModel.confidenceTest must be configured before
-     * calling this method. This method is only used to begin a new confidence test directly after getting user to
-     * input test information. To resume a test, use checkForHearingTestResume
+     * Set up a new confidence test to be run. The part where it actually starts running happens in
+     * checkForHearingTestResume, probably called from MainActivity.modelChanged()
+     *
+     * @param noiseTypeID The identifier for the type of noise (one of BackgroundNoiseType.NOISE_TYPE_*)
+     * @param noiseVol The volume from 0 to 100 of the background noise
+     * @param toneTimbreID The identifier for the timbre of the tones to be played in the confidence test (one of
+     *                     Tone.TIMBRE_*)
+     * @param toneTypeID The identifier for the type of tone (one of Tone.TYPE_*)
+     * @param trialsPerTone The number of trials per individual freq-vol combination in the confidence test
+     * @throws TestNotAvailableException If the given configuration is possible in principle but not yet implemented
      */
-    public void confidenceTest() {
+    public void confidenceTest(int noiseTypeID, int noiseVol, int toneTimbreID, int toneTypeID, int trialsPerTone)
+            throws TestNotAvailableException {
+        BackgroundNoiseType noiseType = new BackgroundNoiseType(noiseTypeID, noiseVol);
+        ConfidenceTest confTest = null;
+
+        // TODO why doesn't trialsPerTone get used? Do we still use the default value?
+
+        switch (toneTimbreID) {
+            case Tone.TIMBRE_SINE:
+                if (toneTypeID == Tone.TYPE_SINGLE) {
+                    confTest = new SingleSineConfidenceTest(noiseType);
+                } else if (toneTypeID == Tone.TYPE_MELODY) {
+                    confTest = new MelodySineConfidenceTest(noiseType);
+                } else if (toneTypeID == Tone.TYPE_INTERVAL) {
+                    confTest = new IntervalSineConfidenceTest(noiseType);
+                } else {
+                    throw new RuntimeException("Unknown toneTypeID: " + toneTypeID);
+                }
+                break;
+            case Tone.TIMBRE_PIANO:
+                if (toneTypeID == Tone.TYPE_SINGLE) {
+                    confTest = new SinglePianoConfidenceTest(noiseType);
+                } else if (toneTypeID == Tone.TYPE_MELODY) {
+                    throw new TestNotAvailableException();
+                } else if (toneTypeID == Tone.TYPE_INTERVAL) {
+                    throw new TestNotAvailableException();
+                } else {
+                    throw new RuntimeException("Unknown toneTypeID: " + toneTypeID);
+                }
+                break;
+            case Tone.TIMBRE_WAV:
+                throw new TestNotAvailableException();
+            default:
+                throw new RuntimeException("Unknown toneTimbreID " + toneTimbreID);
+        }
+
         this.model.configureAudio();
         this.iModel.setTestPaused(true);
-        this.iModel.setCurrentTest(this.iModel.getConfidenceTest());
-        this.fileController.startNewSaveFile(false);
-        this.fileController.saveString(String.format("Calibration Results:%n%s%nRamp Results:%n%s%n",
-                                    this.model.calibrationTestResults.toString(), this.model.rampResults.toString()));
-
-        this.view.showSampleDialog( this.iModel.getConfidenceTest().sampleTones(),
-                                    this.iModel.getCurrentTest().getTestInfo());
+        this.iModel.setConfidenceTest(confTest);
+        this.iModel.setCurrentTest(confTest);
+        this.fileController.setCurrentConf(model.getCurrentParticipant());
+        this.view.showSampleDialog(confTest.sampleTones(), confTest.getTestInfo());
     }
 
     /**
@@ -134,81 +261,35 @@ public class HearingTestController {
      */
     public void confidenceTestComplete() {
         this.model.audioTrackCleanup();
-        this.fileController.saveString(this.iModel.getConfResultsAsString());
-        this.fileController.closeFile();
+        this.fileController.saveString(
+                this.model.getCurrentParticipant().getResults().compareToConfidenceTest(
+                        this.iModel.getConfidenceTest().getConfResults()));
+        try {
+            this.fileController.setCurrentFile(null);
+        } catch (IOException e) {
+            Log.e("HearingTestController", "Something very very very very strange has happened in confTestComplete()");
+            e.printStackTrace();
+        }
         this.iModel.reset();
         this.iModel.notifySubscribers();
     }
 
+    /**
+     * To be called once a test or suite of tests is completed and the model etc is to be reset
+     */
+    private void testComplete() {
+        try {
+            this.fileController.setCurrentFile(null);
+        } catch (FileNotFoundException e) {
+            Log.e("HearingTestController", "Something very very very very strange has happened in testComplete()");
+            e.printStackTrace();
+        }
+        this.iModel.reset();
+        this.model.audioTrackCleanup();
+        this.iModel.notifySubscribers();
+    }
+
     //////////////////////////////////// click handlers ////////////////////////////////////////////
-
-    /**
-     * Set up the iModel for a new 3-phase calibration of the appropriate type with the 
-     * appropriate background noise, then begin the test
-     *
-     * @param noise The background noise to be played during this test
-     * @param testTypeID The type of test to begin: given as an index of CALIB_TEST_OPTIONS 
-     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
-     */
-    public void handleCalibClick(BackgroundNoiseType noise, int testTypeID) {
-
-        iModel.reset();
-
-        switch (testTypeID) {
-            case 0:     // single sine
-                iModel.setRampTest(new SineRampTest(noise));
-                iModel.setReduceTest(new SineReduceTest(noise));
-                iModel.setCalibrationTest(new SineCalibratonTest(noise));
-                break;
-            case 1:
-                iModel.setRampTest(new PianoRampTest(noise));
-                iModel.setReduceTest(new PianoReduceTest(noise));
-                iModel.setCalibrationTest(new PianoCalibrationTest(noise));
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
-        }
-
-        this.calibrationTest();
-    }
-
-    /**
-     * Set up the iModel for a new confidence test of the appropriate type with the appropriate background noise,
-     * then begin the test
-     *
-     * @param noise The background noise to be played during this test
-     * @param testTypeID The type of test to begin: given as an index of CONF_TEST_OPTIONS
-     *        (eg. to start the test denoted by CALIB_TEST_OPTIONS[0], pass 0)
-     */
-    public void handleConfClick(BackgroundNoiseType noise, int testTypeID) {
-        if (! model.hasResults()) throw new IllegalStateException("No results stored in model");
-
-        ConfidenceTest newTest;
-
-        switch (testTypeID) {
-            case 0:     // single sine
-                newTest = new SingleSineConfidenceTest(model.getCalibrationTestResults(), noise);
-                break;
-            case 1:     // interval sine
-                newTest = new IntervalSineConfidenceTest(model.getCalibrationTestResults(), noise);
-                break;
-            case 2:     // melody sine
-                newTest = new MelodySineConfidenceTest(model.getCalibrationTestResults(), noise);
-                break;
-            case 3:     // single piano
-                newTest = new PianoConfidenceTest(model.calibrationTestResults, noise);
-                break;
-            case 4:     // single sine, test default calibration frequencies
-                newTest = new SingleSineCalibFreqConfidenceTest(model.calibrationTestResults, noise);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid test type ID given: " + testTypeID);
-        }
-
-        newTest.initialize();
-        iModel.setConfidenceTest(newTest);
-        this.confidenceTest();
-    }
 
     /**
      * Register a UI event with the answer "up"
@@ -242,8 +323,6 @@ public class HearingTestController {
 
     /**
      * Register a UI event with the answer "flat"
-     *
-     * @param fromTouchInput Was the UI event a touchscreen button press?
      */
     public void handleFlatClick() {
         if (iModel.testing())
@@ -295,4 +374,10 @@ public class HearingTestController {
     public void setFileController(FileIOController fileController) {
         this.fileController = fileController;
     }
+
+    ////////////////////////////////////////////// misc ///////////////////////////////////////////////
+
+    public class TestNotAvailableException extends RuntimeException {
+    }
+
 }

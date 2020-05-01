@@ -29,6 +29,14 @@
             android:name=".InitActivity" android:screenOrientation="portrait" android:theme="@style/AppTheme"
         />
 
+        <activity
+            android:name=".CalibSelectActivity" android:screenOrientation="portrait" android:theme="@style/AppTheme"
+        />
+
+        <activity
+            android:name=".ConfSelectActivity" android:screenOrientation="portrait" android:theme="@style/AppTheme"
+        />
+
     </application>
 
 </manifest>

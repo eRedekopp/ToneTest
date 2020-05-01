@@ -13,7 +13,11 @@ public class PianoReduceTest extends WavReduceTest {
 
     public PianoReduceTest(BackgroundNoiseType noiseType) {
         super(noiseType);
-        this.testTypeName = "piano-reduce";
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "piano-reduce";
     }
 
     /**
@@ -22,7 +26,6 @@ public class PianoReduceTest extends WavReduceTest {
      */
     @Override
     public void initialize() throws IllegalStateException {
-        // todo get rid of default constructors and build WavTones here
         this.currentVolumes = new ArrayList<>();
         this.timesNotHeardPerFreq = new HashMap<>();
         this.results = new ReduceTestResults();

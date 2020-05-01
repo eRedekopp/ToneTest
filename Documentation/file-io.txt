@@ -1,0 +1,52 @@
+Information about how hearing tests are stored in persistent storage.
+It is highly recommended that you read hearing-tests.txt before reading this document
+
+
+####################################################### Overview #######################################################
+
+All file I/O is performed through the FileIOController. Before starting a test, we call setCurrentCalib() or
+setCurrentConf() to make sure that we're saving to the right file, then we use saveTestHeader() to write in the test
+header, saveLine() for each tone tested, then saveTestEnd to indicate that the test has completed successfully.
+
+Individual participant files are kept in one folder per participant, which contains a single calibration file containing
+information about all calibrations taken by this participant, and one file per confidence test.
+
+When logging in a new participant, if the participant already exists, then we load their calibration data into a
+HearingTestResultsCollection using the long, gross function FileIOController.loadParticipantData(). If the participant
+doesn't already exist, we create a folder for them and create an empty Calibration file in that folder. This happens in
+InitActivity via the FileIOController.
+
+
+##################################################### File Format ######################################################
+
+Calibration result file (one per participant):
+    Named Calibration_N where N is the participant number
+
+    START-TEST <DATE> <TEST-TYPE> <NOISE>
+    <TIME> <FREQ> <VOL> <DIRECTION> <CORRECT?> <NUM-CLICKS> <CLICK-STRING>
+    <TIME> <FREQ> <VOL> <DIRECTION> <CORRECT?> <NUM-CLICKS> <CLICK-STRING>
+    <TIME> <FREQ> <VOL> <DIRECTION> <CORRECT?> <NUM-CLICKS> <CLICK-STRING>
+    ...
+    END-TEST
+    START-TEST <DATE> <TEST-TYPE> <NOISE>
+    ...
+    END-TEST
+    ...
+
+    A ramp test contains 2 lines per frequency: one for each ramp-up
+
+
+Confidence result file (one per test):
+    Named Confidence_DATE_N where DATE is the current date/time and N is the participant number
+
+    START-TEST <TEST-TYPE> <NOISE> <DATE>
+    <TIME> <FREQ> <VOL> <DIRECTION> <CORRECT?> <NUM-CLICKS> <CLICK-STRING>
+    ...
+    END-TEST
+
+    After the lines for each tone, we call compareToConfidenceTest() on the current participant's
+    HearingTestResultsCollection and insert the results at the bottom of the file. This compares our model's predictions
+    for how often the user would hear the tone compared to how often they actually did.
+
+    These results are intended to be read by a human. We include information about clicks and everything else for the
+    sake of having the data available and so that future programmers can load Calibration files if they want to.

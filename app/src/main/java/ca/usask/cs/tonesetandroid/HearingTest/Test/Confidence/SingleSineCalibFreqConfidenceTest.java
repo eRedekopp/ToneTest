@@ -9,9 +9,13 @@ import ca.usask.cs.tonesetandroid.HearingTest.Test.Calibration.CalibrationTest;
  */
 public class SingleSineCalibFreqConfidenceTest extends SingleSineConfidenceTest {
 
-    public SingleSineCalibFreqConfidenceTest(CalibrationTestResults calibResults, BackgroundNoiseType noiseType) {
-        super(calibResults, noiseType);
-        this.testTypeName = "sine-single-tone-conf-calib-freqs";
+    public SingleSineCalibFreqConfidenceTest(BackgroundNoiseType noiseType) {
+        super(noiseType);
+    }
+
+    @Override
+    public String getTestTypeName() {
+        return "sine-single-tone-conf-calib-freqs";
     }
 
     @Override

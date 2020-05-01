@@ -1,33 +1,76 @@
 package ca.usask.cs.tonesetandroid.HearingTest.Container;
 
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Interval;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Melody;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.Tone;
-import ca.usask.cs.tonesetandroid.HearingTest.Tone.WavTone;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import ca.usask.cs.tonesetandroid.Control.BackgroundNoiseType;
 
 /**
- * Interface for all HearingTest results container classes whose results can be used
- * to generate probabilities.
+ * A class to store the results of any HearingTest
  */
-public interface HearingTestResults {
+public abstract class HearingTestResults {
 
     /**
-     * Get the probability of hearing the given tone, given the results of these HearingTestResults
-     *
-     * @param tone The tone whose probability of being heard is to be estimated
-     * @return The estimated probability of hearing the tone, given these results
-     * @throws IllegalStateException If there is no data stored in these results
+     * The background noise type played during the test
      */
-    double getProbability(Tone tone) throws IllegalStateException;
+    private BackgroundNoiseType noiseType;
 
-    double getProbability(Interval tone) throws IllegalStateException;
+    /**
+     * The time at which this test started
+     */
+    private long startTime = -1;
 
-    double getProbability(Melody tone) throws IllegalStateException;
+    /**
+     * The string identifier for the test type (ie. HearingTest.testTypeName)
+     */
+    private String testTypeName;
 
-    double getProbability(WavTone tone) throws IllegalStateException;
+    public HearingTestResults(BackgroundNoiseType noiseType, String testTypeName) {
+        this.noiseType = noiseType;
+        this.testTypeName = testTypeName;
+    }
 
     /**
      * Are there any results stored in this container?
-     */ 
-    boolean isEmpty();
+     */
+    public abstract boolean isEmpty();
+
+    public BackgroundNoiseType getNoiseType() {
+        return noiseType;
+    }
+
+    /**
+     * @return The time at which the test started in milliseconds since the beginning of the epoch, or -1 if not yet
+     * set
+     */
+    public long getStartTime() {
+        return this.startTime;
+    }
+
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public String getTestTypeName() {
+        return this.testTypeName;
+    }
+
+    /**
+     * @return startTime formatted as yyyy-MM-dd-hh:mm
+     */
+    public String getFormattedStartTime() {
+        if (this.startTime == -1) return "Start_time_not_set";
+        DateFormat format = new SimpleDateFormat("yyyy-MM-dd-HH:mm");
+        Date date = new Date(this.startTime);
+        return format.format(date);
+    }
+
+    /**
+     * @return A string identifying the particular test that these results are referencing - includes the test type
+     * name and the time at which the test was performed
+     */
+    public String getTestIdentifier() {
+        return this.getTestTypeName() + " at " + this.getFormattedStartTime();
+    }
 }
