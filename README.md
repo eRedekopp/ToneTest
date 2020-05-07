@@ -5,7 +5,7 @@
 ToneTest is an Android application that I wrote in the summer of 2017 while working for the HCI lab 
 in the University of Saskatchewan.
 This was just after the second year of my CS degree, and I didn't even know what a thread was when I started writing this.
-At the time of this writing it is the biggest project I have ever worked on, and I did it alone with very little supervision.
+At the time of this writing it is the biggest project I have ever worked on, and I did it alone with little supervision.
 I probably learned more writing this application than I ever have in a class.
 Not just learning how to write for Android, but learning how to quickly and effectively
 find answers in documentation, using Git properly (didn't always do the best job though. Yikes!), organizing a larger project, 
